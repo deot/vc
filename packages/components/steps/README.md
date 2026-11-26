@@ -9,23 +9,33 @@
 
 ### 基础用法
 
-`v-model` 绑定当前步数，从 1 开始：之前的步骤为 `success`，当前步为 `pending`，之后的步骤为 `default`。`0` 表示都未开始，步骤数加 1 表示全部完成。`description` 设置步骤的描述。
+`v-model` 绑定当前步数，从 1 开始：之前的步骤为 `success`，当前步为 `pending`，之后的步骤为 `default`。`0` 表示都未开始，步骤数加 1 表示全部完成。`description` 设置步骤的描述；`title`、`description` 插槽优先于同名属性。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div>
+	<div class="steps-demo">
 		<Steps v-model="current">
-			<Step title="填写信息" description="填写基本信息" />
-			<Step title="确认信息" description="核对填写内容" />
-			<Step title="完成" description="提交成功" />
+			<Step title="第一步" description="步骤一的描述" />
+			<Step title="第二步" description="步骤二的描述" />
+			<Step>
+				<template #title>第三步（插槽）</template>
+				<template #description>步骤三的描述</template>
+			</Step>
 		</Steps>
-		<div class="toolbar">
-			<Button :disabled="current <= 0" @click="current--">上一步</Button>
-			<Button :disabled="current >= 4" @click="current++">下一步</Button>
-			<span>当前步数：{{ current }}</span>
+		<div class="steps-demo__row">
+			<Button :disabled="current <= 0" @click="handlePrevious">上一步</Button>
+			<Button :disabled="current >= 4" @click="handleNext">下一步</Button>
 		</div>
+		<p class="steps-demo__result">当前步数：{{ current }}</p>
 	</div>
 </template>
 
@@ -34,15 +44,32 @@ import { ref } from 'vue';
 import { Button, Steps, Step } from '@deot/vc';
 
 const current = ref(2);
+
+const handlePrevious = () => {
+	current.value--;
+};
+
+const handleNext = () => {
+	current.value++;
+};
 </script>
 
 <style scoped>
-.toolbar {
+.steps-demo {
 	display: flex;
-	align-items: center;
-	flex-wrap: wrap;
+	flex-direction: column;
 	gap: 16px;
-	margin-top: 24px;
+}
+
+.steps-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+.steps-demo__result {
+	margin: 0;
 }
 </style>
 ```
@@ -53,10 +80,17 @@ const current = ref(2);
 Steps 的 `status` 只作用于当前步，默认为 `pending`；设为 `error` 时，前一步的连线同时变为错误色。Step 单独设置的 `status` 优先于推导结果。`lineless` 隐藏连线。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="status-demo">
+	<div class="steps-demo">
 		<Steps :model-value="2" status="error">
 			<Step title="步骤一" description="已完成" />
 			<Step title="步骤二" description="处理失败" />
@@ -81,7 +115,7 @@ import { Steps, Step } from '@deot/vc';
 </script>
 
 <style scoped>
-.status-demo {
+.steps-demo {
 	display: flex;
 	flex-direction: column;
 	gap: 32px;
@@ -95,12 +129,20 @@ import { Steps, Step } from '@deot/vc';
 `labelPosition` 设置标题与描述相对节点的位置，默认在右侧。`vertical` 为 `true` 时纵向展示，此时只支持 `right` / `left`（`bottom` 视为 `right`，`top` 视为 `left`）。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div>
-		<div class="toolbar">
-			<label><span>纵向</span><Switch v-model="isVertical" /></label>
+	<div class="steps-demo">
+		<div class="steps-demo__row">
+			<Switch v-model="isVertical" />
+			<span>纵向</span>
 			<RadioGroup v-model="labelPosition">
 				<Radio value="right">right</Radio>
 				<Radio value="bottom">bottom</Radio>
@@ -109,9 +151,9 @@ import { Steps, Step } from '@deot/vc';
 			</RadioGroup>
 		</div>
 		<Steps :model-value="2" :vertical="isVertical" :label-position="labelPosition">
-			<Step title="填写信息" description="填写基本信息" />
-			<Step title="确认信息" description="核对填写内容" />
-			<Step title="完成" description="提交成功" />
+			<Step title="第一步" description="步骤一的描述" />
+			<Step title="第二步" description="步骤二的描述" />
+			<Step title="第三步" description="步骤三的描述" />
 		</Steps>
 	</div>
 </template>
@@ -125,15 +167,15 @@ const labelPosition = ref('right');
 </script>
 
 <style scoped>
-.toolbar {
+.steps-demo {
 	display: flex;
-	align-items: center;
-	flex-wrap: wrap;
-	gap: 24px;
-	margin-bottom: 24px;
+	flex-direction: column;
+	gap: 16px;
 }
-.toolbar label {
-	display: inline-flex;
+
+.steps-demo__row {
+	display: flex;
+	flex-wrap: wrap;
 	align-items: center;
 	gap: 8px;
 }
@@ -146,17 +188,24 @@ const labelPosition = ref('right');
 `clickable` 开启后，点击步骤会更新 `v-model` 并触发 `change`。点击当前步或设置了 `disabled` 的步骤不会触发。可点击的步骤能用 Tab 聚焦，按 Enter / Space 切换；当前步带 `aria-current="step"`。悬停高亮只在可悬停的设备上生效，触屏点按后不会残留。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div>
+	<div class="steps-demo">
 		<Steps v-model="current" clickable @change="handleChange">
-			<Step title="填写信息" description="填写基本信息" />
-			<Step title="确认信息" description="核对填写内容" />
-			<Step title="上传附件" description="不可跳转" disabled />
-			<Step title="完成" description="提交成功" />
+			<Step title="第一步" description="步骤一的描述" />
+			<Step title="第二步" description="步骤二的描述" />
+			<Step title="第三步" description="不可跳转" disabled />
+			<Step title="第四步" description="步骤四的描述" />
 		</Steps>
-		<p>change：{{ log.join('、') || '-' }}</p>
+		<p class="steps-demo__result">change：{{ log.join('、') || '-' }}</p>
 	</div>
 </template>
 
@@ -166,10 +215,23 @@ import { Steps, Step } from '@deot/vc';
 
 const current = ref(1);
 const log = ref([]);
+
 const handleChange = (value) => {
 	log.value.push(value);
 };
 </script>
+
+<style scoped>
+.steps-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.steps-demo__result {
+	margin: 0;
+}
+</style>
 ```
 :::
 
@@ -180,26 +242,33 @@ const handleChange = (value) => {
 `renderDot` 自定义节点，参数中的 `dot` 为默认节点，可以包裹后返回；`dot` 插槽的参数相同，并优先于 `renderDot`。两者对 `type="arrow"` 以外的类型均有效。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="dot-demo">
+	<div class="steps-demo">
 		<Steps :model-value="2" type="dot" :render-dot="renderDot">
-			<Step title="填写信息" description="悬停圆点查看提示" />
-			<Step title="确认信息" description="核对填写内容" />
-			<Step title="完成" description="提交成功" />
+			<Step title="第一步" description="悬停圆点查看提示" />
+			<Step title="第二步" description="步骤二的描述" />
+			<Step title="第三步" description="步骤三的描述" />
 		</Steps>
 		<Steps :model-value="2" type="dot" vertical>
-			<Step title="填写信息" description="填写基本信息" />
-			<Step title="确认信息" description="核对填写内容" />
-			<Step title="完成" description="提交成功" />
+			<Step title="第一步" description="步骤一的描述" />
+			<Step title="第二步" description="步骤二的描述" />
+			<Step title="第三步" description="步骤三的描述" />
 		</Steps>
 		<Steps :model-value="2">
-			<Step title="填写信息" />
+			<Step title="第一步" />
 			<Step title="搜索" />
-			<Step title="完成" />
+			<Step title="第三步" />
 			<template #dot="{ index, dot }">
-				<Icon v-if="index === 2" type="search" class="search" />
+				<Icon v-if="index === 2" type="search" class="steps-demo__icon" />
 				<component :is="dot" v-else />
 			</template>
 		</Steps>
@@ -216,12 +285,13 @@ const renderDot = ({ index, status, dot }) => {
 </script>
 
 <style scoped>
-.dot-demo {
+.steps-demo {
 	display: flex;
 	flex-direction: column;
 	gap: 32px;
 }
-.search {
+
+.steps-demo__icon {
 	width: 28px;
 	font-size: 20px;
 	line-height: 28px;
@@ -234,22 +304,29 @@ const renderDot = ({ index, status, dot }) => {
 
 ### 箭头与导航
 
-`type="arrow"` 为箭头样式，没有节点；`type="navigation"` 为导航样式，当前步下方显示指示条。两者只支持横向，`navigation` 的文字固定在节点右侧。
+`type="arrow"` 为箭头样式，没有节点；`type="navigation"` 为导航样式，当前步下方显示指示条。两者只支持横向，`navigation` 的文字固定在节点右侧。`tag` 改变外层标签，导航样式可渲染为 `nav`。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="type-demo">
+	<div class="steps-demo">
 		<Steps v-model="current" type="arrow" clickable>
-			<Step title="填写信息" description="填写基本信息" />
-			<Step title="确认信息" description="核对填写内容" />
-			<Step title="完成" description="提交成功" />
+			<Step title="第一步" description="步骤一的描述" />
+			<Step title="第二步" description="步骤二的描述" />
+			<Step title="第三步" description="步骤三的描述" />
 		</Steps>
-		<Steps v-model="current" type="navigation" clickable>
-			<Step title="填写信息" />
-			<Step title="确认信息" />
-			<Step title="完成" />
+		<Steps v-model="current" type="navigation" tag="nav" clickable>
+			<Step title="第一步" />
+			<Step title="第二步" />
+			<Step title="第三步" />
 		</Steps>
 	</div>
 </template>
@@ -262,7 +339,7 @@ const current = ref(2);
 </script>
 
 <style scoped>
-.type-demo {
+.steps-demo {
 	display: flex;
 	flex-direction: column;
 	gap: 32px;
@@ -273,7 +350,108 @@ const current = ref(2);
 
 ## 移动端
 
-`MSteps` 的属性、事件、插槽、结构与 `Steps` 相同，根节点另有标记类 `.vcm-steps`，结构样式、颜色与主题参数共用；`MStep` 即 `Step`。`labelPosition` 默认为 `bottom`：手机宽度下标题在节点右侧会被挤窄。尺寸按 750 稿设计，写为 `calc(var(--vc-rem) * n)`，随 `--vc-rem` 缩放（括号内为 375 宽下的 px）：
+`MSteps` 的属性、事件、插槽、结构与 `Steps` 相同，根节点另有标记类 `.vcm-steps`，结构样式、颜色与主题参数共用；`MStep` 即 `Step`。`labelPosition` 默认为 `bottom`：手机宽度下标题在节点右侧会被挤窄。尺寸按 750 稿设计，写为 `calc(var(--vc-rem) * n)`，随 `--vc-rem` 缩放；底栏切换 `rem` 可查看不同屏宽下的效果。下例依次展示可点按切换、失败状态、圆点、纵向、`labelPosition="right"` 与箭头样式。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	mobile: true,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
+</config>
+-->
+```vue
+<template>
+	<div class="m-steps-demo">
+		<MSteps v-model="current" clickable>
+			<MStep title="已完成" />
+			<MStep title="进行中" />
+			<MStep title="未开始" />
+		</MSteps>
+		<div class="m-steps-demo__row">
+			<MButton size="small" :disabled="current <= 0" @click="handlePrevious">上一步</MButton>
+			<MButton size="small" :disabled="current >= 4" @click="handleNext">下一步</MButton>
+			<span class="m-steps-demo__result">当前：{{ current }}</span>
+		</div>
+		<MSteps :model-value="2" status="error">
+			<MStep title="第一步" description="描述一" />
+			<MStep title="第二步失败" description="描述二" />
+			<MStep title="第三步" description="等待中" />
+		</MSteps>
+		<MSteps v-model="current" type="dot">
+			<MStep title="已完成" description="描述文字" />
+			<MStep title="进行中" description="描述文字" />
+			<MStep title="未开始" description="描述文字" />
+		</MSteps>
+		<MSteps :model-value="2" vertical>
+			<MStep title="第一步" description="描述一" />
+			<MStep title="第二步" :description="text" />
+			<MStep title="第三步" description="描述三" />
+		</MSteps>
+		<MSteps :model-value="2" vertical type="dot">
+			<MStep title="第一步" description="描述一" />
+			<MStep title="第二步" :description="text" />
+			<MStep title="第三步" description="描述三" />
+		</MSteps>
+		<MSteps :model-value="2" label-position="right">
+			<MStep title="已完成" />
+			<MStep title="进行中的步骤" />
+			<MStep title="未开始" />
+		</MSteps>
+		<MSteps :model-value="2" type="arrow">
+			<MStep title="已完成" />
+			<MStep title="进行中" />
+			<MStep title="未开始" />
+		</MSteps>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { MButton, MSteps, MStep } from '@deot/vc';
+
+const text = '内容较长时自动换行，与下一步之间保持间距，这里是一段较长的描述文字。';
+const current = ref(2);
+
+const handlePrevious = () => {
+	current.value--;
+};
+
+const handleNext = () => {
+	current.value++;
+};
+</script>
+
+<style scoped>
+.m-steps-demo {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--vc-rem) * 32);
+	padding-inline: calc(var(--vc-rem) * 32);
+}
+
+.m-steps-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: calc(var(--vc-rem) * 16);
+}
+
+.m-steps-demo__result {
+	font-size: calc(var(--vc-rem) * 24);
+	color: var(--vc-color-dark-extralight);
+}
+</style>
+```
+:::
+
+尺寸如下（括号内为 375 宽下的 px）：
 
 | 项 | 值 |
 | --- | --- |
@@ -293,23 +471,6 @@ const current = ref(2);
 - 可点击的步骤去掉系统的点击高亮。
 
 两端的尺寸都写成局部变量 `--vc-steps-<键>`（见“主题与局部覆盖”），移动端在 `.vcm-steps` 上覆盖，与样式的加载顺序无关。
-
-```vue
-<template>
-	<MSteps v-model="current" clickable>
-		<MStep title="提交申请" description="09-01 10:00" />
-		<MStep title="审核中" />
-		<MStep title="完成" />
-	</MSteps>
-</template>
-
-<script setup>
-import { ref } from 'vue';
-import { MSteps, MStep } from '@deot/vc';
-
-const current = ref(2);
-</script>
-```
 
 ## 主题与局部覆盖
 

@@ -8,38 +8,54 @@
 
 ### 基础用法
 
-联动数据通过 `children` 描述层级，`columns` 指定显示列数。拖动上级列会重建下级列；点击取消保留原值，点击确定才更新 `Picker` 的 `modelValue`。
+联动数据通过 `children` 描述层级，`columns` 指定显示列数。拖动上级列会重建下级列；点击取消保留原值，点击确定才更新 `Picker` 的 `modelValue`。默认触发区域是一个 MListItem：`label`、`labelWidth` 为标题与宽度，`formatter` 格式化选中项文字，没有值时显示 `extra`。确定时依次触发 `ok`、`change`，取消触发 `cancel`，关闭动画结束触发 `close`，`visible-change` 报告弹层显示状态。
 
 :::playground
 <!--
 <config lang="json5">
-{ viewport: 375, previewInset: 16 }
+{
+	mobile: true,
+	local: false,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
 </config>
 -->
 ```vue
 <template>
-	<div class="demo">
-		<Picker
-			v-model="value"
-			:data="data"
-			:columns="2"
-			label="分组"
-			title="选择地区"
-			@visible-change="visible => visible && handleVisibleChange(true)"
-			@close="handleVisibleChange(false)"
-			@change="handleChange"
-		/>
-		<p>已提交：{{ value }}</p>
-		<p>名称：{{ selectedLabel }}</p>
+	<div class="m-picker-demo">
+		<MList>
+			<MPicker
+				v-model="value"
+				:data="data"
+				:columns="2"
+				:label-width="160"
+				:formatter="labels => labels.join(' / ')"
+				label="分组"
+				extra="请选择分组"
+				title="选择分组"
+				@visible-change="handleVisibleChange"
+				@ok="handleOk"
+				@cancel="handleCancel"
+				@change="handleChange"
+				@close="handleClose"
+			/>
+		</MList>
+		<p class="m-picker-demo__result">已提交：{{ value }}</p>
+		<p class="m-picker-demo__result">{{ result }}</p>
 	</div>
 </template>
 
 <script setup>
-import { ref, inject } from 'vue';
-import { Picker } from '@deot/vc';
+import { inject, ref } from 'vue';
+import { MList, MPicker } from '@deot/vc';
 
 const playground = inject('docs:playground');
-const handleVisibleChange = playground.run(460);
+const handlePreview = playground.run(460);
 
 const data = [
 	{ value: 'group-a', label: '分组 A', children: [
@@ -52,56 +68,235 @@ const data = [
 	] }
 ];
 const value = ref(['group-a', 'item-a1']);
-const selectedLabel = ref('分组 A / 条目 A-1');
-const handleChange = (_, labels) => {
-	selectedLabel.value = labels.join(' / ');
+const result = ref('等待操作');
+
+const handleVisibleChange = (visible) => {
+	visible && handlePreview(true);
+	result.value = `visible-change：${visible}`;
+};
+
+const handleOk = (next) => {
+	result.value = `ok：${next.join(',')}`;
+};
+
+const handleCancel = () => {
+	result.value = 'cancel';
+};
+
+const handleChange = (next, labels) => {
+	result.value += `，change：${labels.join(' / ')}`;
+};
+
+const handleClose = () => {
+	handlePreview(false);
+	result.value += '，close';
 };
 </script>
 
 <style scoped>
-.demo { display: grid; gap: 12px; }
-p { margin: 0; overflow-wrap: anywhere; }
+.m-picker-demo {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--vc-rem) * 32);
+}
+
+.m-picker-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: calc(var(--vc-rem) * 16);
+	padding-inline: calc(var(--vc-rem) * 32);
+}
+
+.m-picker-demo__result {
+	margin: 0;
+	padding-inline: calc(var(--vc-rem) * 32);
+	font-size: calc(var(--vc-rem) * 28);
+	color: var(--vc-color-dark-extralight);
+	overflow-wrap: anywhere;
+}
 </style>
 ```
 :::
 
 ### 独立多列与内嵌视图
 
-`cascader=false` 时，`data` 是列数组。下例使用字符串模型和 `|` 分隔符，`PickerView` 在滚动结束时直接提交；`picker-change` 同时提供当前列的值、从零开始的列索引和数据项。
+`cascader=false` 时，`data` 是列数组。下例使用字符串模型和 `|` 分隔符，`PickerView` 在滚动结束时直接提交；`change` 提供完整值、label 数组与选中项；`picker-change` 同时提供当前列的值、从零开始的列索引和数据项。
 
 :::playground
 <!--
 <config lang="json5">
-{ viewport: 375, previewInset: 16 }
+{
+	mobile: true,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
 </config>
 -->
 ```vue
 <template>
-	<div class="demo">
-		<PickerView v-model="value" :data="data" :columns="2" :cascader="false" separator="|" @picker-change="handlePickerChange" />
-		<p>字符串值：{{ value }}</p>
-		<p>{{ lastChange }}</p>
+	<div class="m-picker-demo">
+		<MPickerView
+			v-model="value"
+			:data="data"
+			:columns="2"
+			:cascader="false"
+			separator="|"
+			@change="handleChange"
+			@picker-change="handlePickerChange"
+		/>
+		<p class="m-picker-demo__result">字符串值：{{ value }}</p>
+		<p class="m-picker-demo__result">{{ result }}</p>
 	</div>
 </template>
 
 <script setup>
 import { ref } from 'vue';
-import { PickerView } from '@deot/vc';
+import { MPickerView } from '@deot/vc';
 
 const data = [
 	[{ value: '2026', label: '2026 年' }, { value: '2027', label: '2027 年' }],
 	[{ value: 'spring', label: '春季' }, { value: 'summer', label: '夏季' }]
 ];
 const value = ref('2026|spring');
-const lastChange = ref('拖动任意一列查看结果');
+const result = ref('拖动任意一列查看结果');
+
 const handlePickerChange = (next, index, row) => {
-	lastChange.value = `第 ${index + 1} 列：${row.label}（${next}）`;
+	result.value = `picker-change：第 ${index + 1} 列 ${row.label}（${next}）`;
+};
+
+const handleChange = (next, labels) => {
+	result.value += `；change：${labels.join(' ')}`;
 };
 </script>
 
 <style scoped>
-.demo { display: grid; gap: 12px; }
-p { margin: 0; overflow-wrap: anywhere; }
+.m-picker-demo {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--vc-rem) * 32);
+}
+
+.m-picker-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: calc(var(--vc-rem) * 16);
+	padding-inline: calc(var(--vc-rem) * 32);
+}
+
+.m-picker-demo__result {
+	margin: 0;
+	padding-inline: calc(var(--vc-rem) * 32);
+	font-size: calc(var(--vc-rem) * 28);
+	color: var(--vc-color-dark-extralight);
+	overflow-wrap: anywhere;
+}
+</style>
+```
+:::
+
+### 列与选项渲染
+
+`hideEmptyColumns` 在层级不齐的联动数据中不渲染没有数据的列，其余列平分宽度。`renderLabel` 自定义选项内容，接收 `{ label, row, index }`；`itemStyle` 是每个选项的行内样式（改变高度时应同时设置行高变量）。`--vc-picker-rows` 调整可见行数。`virtualized` 默认只渲染可见窗口附近的行，`renderLabel` 中有状态的内容需要保留时设为 `false`。`numerable` 把模型中的字符串转为 number。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	mobile: true,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
+</config>
+-->
+```vue
+<template>
+	<div class="m-picker-demo">
+		<MPickerView v-model="uneven" :data="unevenData" :columns="3" hide-empty-columns />
+		<p class="m-picker-demo__result">hideEmptyColumns：{{ uneven }}</p>
+		<div class="m-picker-demo__row">
+			<MButton
+				v-for="count in [3, 5, 7]"
+				:key="count"
+				size="small"
+				:type="rows === count ? 'primary' : 'default'"
+				@click="rows = count"
+			>
+				{{ count }} 行
+			</MButton>
+		</div>
+		<MPickerView
+			v-model="numbers"
+			class="m-picker-demo__view"
+			:class="`is-rows-${rows}`"
+			:data="numberData"
+			:cascader="false"
+			:item-style="{ color: 'var(--vc-color-primary)' }"
+			:render-label="renderLabel"
+			:virtualized="false"
+			numerable
+		/>
+		<p class="m-picker-demo__result">numerable：{{ numbers }}（{{ typeof numbers[0] }}）</p>
+	</div>
+</template>
+
+<script setup>
+import { h, ref } from 'vue';
+import { MButton, MPickerView } from '@deot/vc';
+
+const unevenData = [
+	{ value: 'a', label: '分组 A', children: [
+		{ value: 'a-1', label: '条目 A-1', children: [{ value: 'a-1-1', label: '子项 A-1-1' }] },
+		{ value: 'a-2', label: '条目 A-2' }
+	] },
+	{ value: 'b', label: '分组 B' }
+];
+const uneven = ref(['a', 'a-2']);
+
+const rows = ref(5);
+const numberData = Array.from({ length: 10 }, (_, i) => ({ value: i + 1, label: `第 ${i + 1} 项` }));
+const numbers = ref(['3']);
+
+const renderLabel = ({ label, index }) => h('span', `${index + 1}. ${label}`);
+</script>
+
+<style scoped>
+.m-picker-demo {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--vc-rem) * 32);
+}
+
+.m-picker-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: calc(var(--vc-rem) * 16);
+	padding-inline: calc(var(--vc-rem) * 32);
+}
+
+.m-picker-demo__view.is-rows-3 {
+	--vc-picker-rows: 3;
+}
+
+.m-picker-demo__view.is-rows-7 {
+	--vc-picker-rows: 7;
+}
+
+.m-picker-demo__result {
+	margin: 0;
+	padding-inline: calc(var(--vc-rem) * 32);
+	font-size: calc(var(--vc-rem) * 28);
+	color: var(--vc-color-dark-extralight);
+}
 </style>
 ```
 :::
@@ -113,38 +308,50 @@ p { margin: 0; overflow-wrap: anywhere; }
 :::playground
 <!--
 <config lang="json5">
-{ viewport: 375, previewInset: 16 }
+{
+	mobile: true,
+	local: false,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
 </config>
 -->
 ```vue
 <template>
-	<div class="demo">
-		<Picker
-			v-model="value"
-			:data="data"
-			:load-data="loadData"
-			title="选择条目"
-			@visible-change="visible => visible && handleVisibleChange(true)"
-			@close="handleVisibleChange(false)"
-		>
-			<template #default="{ label }">
-				<Button>{{ isLoading ? '加载中…' : label }}</Button>
-			</template>
-		</Picker>
-		<p>当前值：{{ value }}</p>
+	<div class="m-picker-demo">
+		<div class="m-picker-demo__row">
+			<MPicker
+				v-model="value"
+				:data="data"
+				:load-data="loadData"
+				title="选择条目"
+				@visible-change="visible => visible && handlePreview(true)"
+				@close="handlePreview(false)"
+			>
+				<template #default="{ label }">
+					<MButton>{{ isLoading ? '加载中…' : label }}</MButton>
+				</template>
+			</MPicker>
+		</div>
+		<p class="m-picker-demo__result">当前值：{{ value }}</p>
 	</div>
 </template>
 
 <script setup>
-import { ref, inject } from 'vue';
-import { Button, Picker } from '@deot/vc';
+import { inject, ref } from 'vue';
+import { MButton, MPicker } from '@deot/vc';
 
 const playground = inject('docs:playground');
-const handleVisibleChange = playground.run(400);
+const handlePreview = playground.run(400);
 
 const data = ref([]);
 const value = ref(['item-a']);
 const isLoading = ref(false);
+
 const loadData = async () => {
 	isLoading.value = true;
 	await new Promise(resolve => setTimeout(resolve, 300));
@@ -157,8 +364,126 @@ const loadData = async () => {
 </script>
 
 <style scoped>
-.demo { display: grid; gap: 12px; }
-p { margin: 0; overflow-wrap: anywhere; }
+.m-picker-demo {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--vc-rem) * 32);
+}
+
+.m-picker-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: calc(var(--vc-rem) * 16);
+	padding-inline: calc(var(--vc-rem) * 32);
+}
+
+.m-picker-demo__result {
+	margin: 0;
+	padding-inline: calc(var(--vc-rem) * 32);
+	font-size: calc(var(--vc-rem) * 28);
+	color: var(--vc-color-dark-extralight);
+	overflow-wrap: anywhere;
+}
+</style>
+```
+:::
+
+### 确认方式
+
+`confirm` 默认为 `true`（同 `'top'`），顶部为「取消 / 确定」工具栏，`cancelText`、`okText` 修改文案，空字符串隐藏按钮；`'bottom'` 为底部的「确定」大按钮，标题与关闭按钮在 MPopup 的标题栏；`false` 不需要确认，滚轮停下即提交（触发 `update:modelValue`、`change`）。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	mobile: true,
+	local: false,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
+</config>
+-->
+```vue
+<template>
+	<div class="m-picker-demo">
+		<MList>
+			<MPicker
+				v-model="topValue"
+				:data="data"
+				label="顶部工具栏"
+				title="自定义文案"
+				cancel-text="返回"
+				ok-text="完成"
+				@visible-change="visible => visible && handlePreview(true)"
+				@close="handlePreview(false)"
+			/>
+			<MPicker
+				v-model="bottomValue"
+				:data="data"
+				confirm="bottom"
+				label="底部确定"
+				title="底部确定"
+				@visible-change="visible => visible && handlePreview(true)"
+				@close="handlePreview(false)"
+			/>
+			<MPicker
+				v-model="liveValue"
+				:data="data"
+				:confirm="false"
+				label="停下即提交"
+				title="停下即提交"
+				@visible-change="visible => visible && handlePreview(true)"
+				@close="handlePreview(false)"
+			/>
+		</MList>
+		<p class="m-picker-demo__result">{{ topValue }} / {{ bottomValue }} / {{ liveValue }}</p>
+	</div>
+</template>
+
+<script setup>
+import { inject, ref } from 'vue';
+import { MList, MPicker } from '@deot/vc';
+
+const playground = inject('docs:playground');
+const handlePreview = playground.run(460);
+
+const data = [
+	{ value: 'a', label: '选项 A' },
+	{ value: 'b', label: '选项 B' },
+	{ value: 'c', label: '选项 C' }
+];
+const topValue = ref(['a']);
+const bottomValue = ref(['b']);
+const liveValue = ref(['c']);
+</script>
+
+<style scoped>
+.m-picker-demo {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--vc-rem) * 32);
+}
+
+.m-picker-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: calc(var(--vc-rem) * 16);
+	padding-inline: calc(var(--vc-rem) * 32);
+}
+
+.m-picker-demo__result {
+	margin: 0;
+	padding-inline: calc(var(--vc-rem) * 32);
+	font-size: calc(var(--vc-rem) * 28);
+	color: var(--vc-color-dark-extralight);
+	overflow-wrap: anywhere;
+}
 </style>
 ```
 :::
@@ -170,26 +495,38 @@ p { margin: 0; overflow-wrap: anywhere; }
 :::playground
 <!--
 <config lang="json5">
-{ viewport: 375, previewInset: 16 }
+{
+	mobile: true,
+	local: false,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
 </config>
 -->
 ```vue
 <template>
-	<div class="demo">
-		<Button @click="handleOpen">选择条目</Button>
-		<p>{{ result }}</p>
+	<div class="m-picker-demo">
+		<div class="m-picker-demo__row">
+			<MButton @click="handleOpen">选择条目</MButton>
+		</div>
+		<p class="m-picker-demo__result">{{ result }}</p>
 	</div>
 </template>
 
 <script setup>
-import { onBeforeUnmount, ref, inject } from 'vue';
-import { Button, MPicker } from '@deot/vc';
+import { inject, onBeforeUnmount, ref } from 'vue';
+import { MButton, MPicker } from '@deot/vc';
 
 const playground = inject('docs:playground');
 
 const value = ref(['item-a']);
 const result = ref('尚未确认');
 let picker;
+
 const handleOpen = playground.run(400, async () => {
 	picker?.destroy();
 	picker = MPicker.open({
@@ -198,7 +535,7 @@ const handleOpen = playground.run(400, async () => {
 		data: [
 			{ value: 'item-a', label: '条目 A' },
 			{ value: 'item-b', label: '条目 B' }
-		],
+		]
 	});
 	try {
 		const { value: next, labels } = await picker;
@@ -208,71 +545,183 @@ const handleOpen = playground.run(400, async () => {
 		result.value = '已取消，保留原值';
 	}
 });
+
 onBeforeUnmount(() => picker?.destroy());
 </script>
 
 <style scoped>
-.demo { display: grid; gap: 12px; justify-items: start; }
-p { margin: 0; overflow-wrap: anywhere; }
+.m-picker-demo {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--vc-rem) * 32);
+}
+
+.m-picker-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: calc(var(--vc-rem) * 16);
+	padding-inline: calc(var(--vc-rem) * 32);
+}
+
+.m-picker-demo__result {
+	margin: 0;
+	padding-inline: calc(var(--vc-rem) * 32);
+	font-size: calc(var(--vc-rem) * 28);
+	color: var(--vc-color-dark-extralight);
+	overflow-wrap: anywhere;
+}
 </style>
 ```
 :::
 
 ### 组合弹层与视图
 
-`PickerPopup` 负责工具栏和弹层，不包含选择逻辑。可以组合 `PickerView`，由调用方维护草稿值，并在确认后提交。`visible` 为布尔值时优先于 `modelValue`。
+`PickerPopup` 负责工具栏和弹层，不包含选择逻辑。可以组合 `PickerView`，由调用方维护草稿值，并在确认后提交。`visible` 为布尔值时优先于 `modelValue`（两者都支持 `v-model`，并触发 `update:visible`、`update:modelValue`、`visible-change`）。`okDisabled`、`cancelDisabled` 置灰按钮；`confirm="bottom"` 时 `#footer-extra` 放在「确定」之前（加 `vcm-picker-popup__button` 与「确定」平分宽度），`#footer` 替换整个底部，参数含 `close`。
 
 :::playground
 <!--
 <config lang="json5">
-{ viewport: 375, previewInset: 16 }
+{
+	mobile: true,
+	local: false,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
 </config>
 -->
 ```vue
 <template>
-	<div class="demo">
-		<Button @click="handleOpen">打开组合选择器</Button>
-		<p>已提交：{{ value }}</p>
-		<PickerPopup
-			v-model:visible="isVisible"
+	<div class="m-picker-demo">
+		<div class="m-picker-demo__row">
+			<MButton @click="handleOpen('top')">顶部工具栏</MButton>
+			<MButton @click="handleOpen('bottom')">底部按钮</MButton>
+			<MButton @click="handleOpen('custom')">自定义底部</MButton>
+		</div>
+		<p class="m-picker-demo__result">已提交：{{ value }}；{{ result }}</p>
+		<MPickerPopup
+			v-model:visible="isTopVisible"
 			title="选择季节"
-			@close="isPreviewVisible = false"
+			:ok-disabled="draft[0] === 'winter'"
+			:cancel-disabled="false"
+			@visible-change="handleVisibleChange"
+			@close="handleClosed"
+			@cancel="handleCancel"
 			@ok="handleOk"
 		>
-			<PickerView v-model="draft" :data="data" />
-		</PickerPopup>
+			<MPickerView v-model="draft" :data="data" />
+		</MPickerPopup>
+		<MPickerPopup
+			v-model="isBottomVisible"
+			title="选择季节"
+			confirm="bottom"
+			@close="handleClosed"
+			@ok="handleOk"
+		>
+			<MPickerView v-model="draft" :data="data" />
+			<template #footer-extra>
+				<MButton class="vcm-picker-popup__button" size="large" round @click="handleReset">重置</MButton>
+			</template>
+		</MPickerPopup>
+		<MPickerPopup
+			v-model="isCustomVisible"
+			title="选择季节"
+			:confirm="false"
+			@close="handleClosed"
+		>
+			<MPickerView v-model="draft" :data="data" />
+			<template #footer="{ close }">
+				<div class="m-picker-demo__footer">
+					<MButton type="primary" long @click="handleSubmit(close)">提交并关闭</MButton>
+				</div>
+			</template>
+		</MPickerPopup>
 	</div>
 </template>
 
 <script setup>
-import { ref, inject } from 'vue';
-import { Button, PickerPopup, PickerView } from '@deot/vc';
+import { inject, ref } from 'vue';
+import { MButton, MPickerPopup, MPickerView } from '@deot/vc';
 
 const playground = inject('docs:playground');
+const handlePreview = playground.run(460);
 
 const data = [
 	{ value: 'spring', label: '春季' },
 	{ value: 'summer', label: '夏季' },
 	{ value: 'autumn', label: '秋季' },
-	{ value: 'winter', label: '冬季' }
+	{ value: 'winter', label: '冬季（确定置灰）' }
 ];
 const value = ref(['spring']);
 const draft = ref(['spring']);
-const isVisible = ref(false);
-const isPreviewVisible = ref(false);
-const handleOpen = playground.run(460, { visible: isPreviewVisible }, () => {
+const result = ref('等待操作');
+const isTopVisible = ref(false);
+const isBottomVisible = ref(false);
+const isCustomVisible = ref(false);
+
+const handleOpen = (type) => {
 	draft.value = value.value.slice();
-	isPreviewVisible.value = true;
-	isVisible.value = true;
-});
+	handlePreview(true);
+	isTopVisible.value = type === 'top';
+	isBottomVisible.value = type === 'bottom';
+	isCustomVisible.value = type === 'custom';
+};
+
+const handleVisibleChange = (visible) => {
+	result.value = `visible-change：${visible}`;
+};
+
 const handleOk = () => {
 	value.value = draft.value.slice();
+	result.value = 'ok';
+};
+
+const handleCancel = () => {
+	result.value = 'cancel';
+};
+
+const handleReset = () => {
+	draft.value = ['spring'];
+};
+
+const handleSubmit = (close) => {
+	value.value = draft.value.slice();
+	close();
+};
+
+const handleClosed = () => {
+	handlePreview(false);
 };
 </script>
 
 <style scoped>
-.demo { display: grid; gap: 12px; justify-items: start; }
-p { margin: 0; overflow-wrap: anywhere; }
+.m-picker-demo {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--vc-rem) * 32);
+}
+
+.m-picker-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: calc(var(--vc-rem) * 16);
+	padding-inline: calc(var(--vc-rem) * 32);
+}
+
+.m-picker-demo__footer {
+	padding: calc(var(--vc-rem) * 16) calc(var(--vc-rem) * 32) calc(var(--vc-rem) * 32);
+}
+
+.m-picker-demo__result {
+	margin: 0;
+	padding-inline: calc(var(--vc-rem) * 32);
+	font-size: calc(var(--vc-rem) * 28);
+	color: var(--vc-color-dark-extralight);
+}
 </style>
 ```
 :::
@@ -284,20 +733,28 @@ p { margin: 0; overflow-wrap: anywhere; }
 :::playground
 <!--
 <config lang="json5">
-{ viewport: 375, previewInset: 16 }
+{
+	mobile: true,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
 </config>
 -->
 ```vue
 <template>
-	<div class="demo">
-		<PickerView v-model="value" :data="data" :cascader="false" />
-		<p>选中：{{ value }}</p>
+	<div class="m-picker-demo">
+		<MPickerView v-model="value" :data="data" :cascader="false" />
+		<p class="m-picker-demo__result">选中：{{ value }}</p>
 	</div>
 </template>
 
 <script setup>
 import { ref } from 'vue';
-import { PickerView } from '@deot/vc';
+import { MPickerView } from '@deot/vc';
 
 const data = [
 	{ value: 'a', label: '选项 A' },
@@ -310,8 +767,27 @@ const value = ref(['b']);
 </script>
 
 <style scoped>
-.demo { display: grid; gap: 12px; }
-p { margin: 0; overflow-wrap: anywhere; }
+.m-picker-demo {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--vc-rem) * 32);
+}
+
+.m-picker-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: calc(var(--vc-rem) * 16);
+	padding-inline: calc(var(--vc-rem) * 32);
+}
+
+.m-picker-demo__result {
+	margin: 0;
+	padding-inline: calc(var(--vc-rem) * 32);
+	font-size: calc(var(--vc-rem) * 28);
+	color: var(--vc-color-dark-extralight);
+	overflow-wrap: anywhere;
+}
 </style>
 ```
 :::
@@ -327,15 +803,31 @@ p { margin: 0; overflow-wrap: anywhere; }
 :::playground
 <!--
 <config lang="json5">
-{ viewport: 375, previewInset: 16 }
+{
+	mobile: true,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
 </config>
 -->
 ```vue
 <template>
-	<div class="demo">
-		<p>单列：<MPicker :model-value="['b']" :data="data" :cascader="false" plaintext /></p>
-		<p>联动：<MPicker :model-value="['x', 'x-2']" :data="cascaderData" :columns="2" :formatter="labels => labels.join(' / ')" plaintext /></p>
-		<p>空值：<MPicker :data="data" :cascader="false" extra="-" plaintext /></p>
+	<div class="m-picker-demo">
+		<p class="m-picker-demo__result">单列：<MPicker :model-value="['b']" :data="data" :cascader="false" plaintext /></p>
+		<p class="m-picker-demo__result">
+			联动：<MPicker
+				:model-value="['x', 'x-2']"
+				:data="cascaderData"
+				:columns="2"
+				:formatter="labels => labels.join(' / ')"
+				plaintext
+			/>
+		</p>
+		<p class="m-picker-demo__result">空值：<MPicker :data="data" :cascader="false" extra="-" plaintext /></p>
 	</div>
 </template>
 
@@ -352,8 +844,27 @@ const cascaderData = [
 </script>
 
 <style scoped>
-.demo { display: grid; gap: 12px; }
-p { margin: 0; }
+.m-picker-demo {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--vc-rem) * 32);
+}
+
+.m-picker-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: calc(var(--vc-rem) * 16);
+	padding-inline: calc(var(--vc-rem) * 32);
+}
+
+.m-picker-demo__result {
+	margin: 0;
+	padding-inline: calc(var(--vc-rem) * 32);
+	font-size: calc(var(--vc-rem) * 28);
+	color: var(--vc-color-dark-extralight);
+	overflow-wrap: anywhere;
+}
 </style>
 ```
 :::
@@ -460,7 +971,7 @@ p { margin: 0; }
 | Picker.View / MPicker.View | PickerView 的静态组件别名 | - | - |
 | Picker.Popup / MPicker.Popup | PickerPopup 的静态组件别名 | - | - |
 
-`open(options)` 支持 `modelValue`（兼容 `value`）、`data`、`columns`、`cascader`、`itemStyle`、`renderLabel`、`separator`、`numerable`、`nullValue`、`title`、`cancelText`、`okText`、`confirm` 和 `visible`（默认 `true`）。`onOk(value, labels, items)`、`onCancel()`、`onChange(value, labels, items)`、`onPickerChange(value, index, row)`、`onVisibleChange(visible)`、`onClose()` 对应弹层事件。该方法不执行 `loadData`，也没有触发区域的 `label`、`extra` 和 `formatter`。
+`open(options)` 支持 `modelValue`（兼容 `value`）、`data`、`columns`、`cascader`、`hideEmptyColumns`、`virtualized`、`itemStyle`、`renderLabel`、`separator`、`numerable`、`nullValue`、`title`、`cancelText`、`okText`、`confirm` 和 `visible`（默认 `true`）。`onOk(value, labels, items)`、`onCancel()`、`onChange(value, labels, items)`、`onPickerChange(value, index, row)`、`onVisibleChange(visible)`、`onClose()` 对应弹层事件。该方法不执行 `loadData`，也没有触发区域的 `label`、`extra` 和 `formatter`。
 
 ### PickerView 属性
 
@@ -555,4 +1066,4 @@ type PickerSource = PickerColumn | PickerColumn[];
 
 默认文案读取 `vc.Picker.extra`、`vc.Picker.cancelText`、`vc.Picker.okText`，会跟随 `VcInstance.configure({ locale })` 更新；显式文本属性优先。
 
-样式支持 `--vc-picker-background-color-lightest`、`--vc-picker-color-dark-light`、`--vc-picker-color-primary`、`--vc-picker-color-neutral-light`，缺省时使用同名全局主题变量。`--vc-picker-item-height` 控制滚轮行高（750 稿 88，随 `--vc-rem` 缩放），`--vc-picker-rows` 控制可见行数（默认 5）；视图高度、遮罩和拖动计算与之保持一致。通过 `open` 创建的弹层挂载在 body，组件变量需要设置在可覆盖该弹层的祖先元素上。
+样式支持 `--vc-picker-background-color-lightest`、`--vc-picker-color-dark-light`、`--vc-picker-color-primary`、`--vc-picker-color-neutral-light`、`--vc-picker-foreground-color-inactive`，缺省时使用同名全局主题变量。`--vc-picker-item-height` 控制滚轮行高（750 稿 88，随 `--vc-rem` 缩放），`--vc-picker-rows` 控制可见行数（默认 5）；视图高度、遮罩和拖动计算与之保持一致。通过 `open` 创建的弹层挂载在 body，组件变量需要设置在可覆盖该弹层的祖先元素上。

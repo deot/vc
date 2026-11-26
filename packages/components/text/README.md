@@ -2,24 +2,33 @@
 
 根据容器宽度限制文本行数，截断后可悬停查看全文。
 
+移动端入口导出的 `MText` 与 `Text` 是同一实现。
+
 ### 何时使用
 
 需要限制长文本的展示行数，或省略中间内容并保留尾部信息。父容器应提供可测量的宽度。
 
 ### 基础用法
 
-通过`value`绑定要显示的文本内容，`line`控制要显示的文本行数。
+通过 `value` 绑定要显示的文本内容，`line` 控制要显示的文本行数。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
 	<div class="text-demo">
-		<div class="text-demo__toolbar">
+		<div class="text-demo__row">
 			<span>显示行数</span>
-			<InputNumber v-model="line" :min="1" :max="3" />
+			<InputNumber v-model="line" class="text-demo__number" :min="1" :max="3" />
 		</div>
-		<label class="text-demo__editor">
+		<label class="text-demo__field">
 			<span>文本内容</span>
 			<Textarea v-model="content" :rows="4" />
 		</label>
@@ -37,25 +46,28 @@ const line = ref(1);
 
 <style scoped>
 .text-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
 	width: 100%;
 	max-width: 480px;
 }
 
-.text-demo__toolbar {
+.text-demo__row {
 	display: flex;
+	flex-wrap: wrap;
 	align-items: center;
 	gap: 8px;
-	margin-bottom: 16px;
 }
 
-.text-demo__toolbar :deep(.vc-input-number) {
+.text-demo__number {
 	width: 120px;
 }
 
-.text-demo__editor {
-	display: grid;
+.text-demo__field {
+	display: flex;
+	flex-direction: column;
 	gap: 8px;
-	margin-bottom: 20px;
 }
 </style>
 ```
@@ -63,19 +75,26 @@ const line = ref(1);
 
 ### 自定义结尾
 
-通过`ellipsis`自定义结尾内容。
+通过 `ellipsis` 自定义结尾内容。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="ellipsis-demo">
-		<div class="ellipsis-demo__item">
-			<span class="ellipsis-demo__label">默认省略符</span>
+	<div class="text-demo">
+		<div class="text-demo__item">
+			<span class="text-demo__label">默认省略符</span>
 			<Text :value="content" :line="1" />
 		</div>
-		<div class="ellipsis-demo__item">
-			<span class="ellipsis-demo__label">自定义省略符</span>
+		<div class="text-demo__item">
+			<span class="text-demo__label">自定义省略符</span>
 			<Text :value="content" :line="1" ellipsis=" ··· 查看更多" />
 		</div>
 	</div>
@@ -88,16 +107,21 @@ const content = '这是一段较长的说明文字，用来对比默认省略符
 </script>
 
 <style scoped>
-.ellipsis-demo {
-	display: grid;
-	gap: 20px;
+.text-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
 	width: 100%;
 	max-width: 320px;
 }
 
-.ellipsis-demo__label {
-	display: block;
-	margin-bottom: 8px;
+.text-demo__item {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.text-demo__label {
 	font-size: 13px;
 	opacity: 0.65;
 }
@@ -107,25 +131,32 @@ const content = '这是一段较长的说明文字，用来对比默认省略符
 
 ### 保留尾部（slice 模式）
 
-保留的尾部与省略符自身过长时，前缀置空但尾部不会继续裁剪，结果可能超过 `line`，尤其是 `slice = 0`。
-
-通过`slice`指定一段固定保留的尾部，语义等价 `value.slice(slice)`；未超出行数时仍显示原文。
+通过 `slice` 指定一段固定保留的尾部，语义等价 `value.slice(slice)`；未超出行数时仍显示原文。
 
 - `slice = -5`：保留末尾 5 个字符，渲染如 `abc...lmnop`
 - `slice = 0`：尾部 = 整串，省略号被置于最前 `...完整文本`
 - `slice = N`（正整数）：尾部 = `value.slice(N)`，从指定下标开始保留
 
+保留的尾部与省略符自身过长时，前缀置空但尾部不会继续裁剪，结果可能超过 `line`，尤其是 `slice = 0`。
+
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="slice-demo">
-		<div class="slice-demo__item">
-			<span class="slice-demo__label">普通截断</span>
+	<div class="text-demo">
+		<div class="text-demo__item">
+			<span class="text-demo__label">普通截断</span>
 			<Text :value="fileName" :line="1" />
 		</div>
-		<div class="slice-demo__item">
-			<span class="slice-demo__label">保留文件后缀</span>
+		<div class="text-demo__item">
+			<span class="text-demo__label">保留文件后缀</span>
 			<Text :value="fileName" :line="1" :slice="-9" ellipsis="…" />
 		</div>
 	</div>
@@ -138,16 +169,21 @@ const fileName = '2026年第三季度示例内容说明与结构展示文档.fin
 </script>
 
 <style scoped>
-.slice-demo {
-	display: grid;
-	gap: 20px;
+.text-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
 	width: 100%;
 	max-width: 280px;
 }
 
-.slice-demo__label {
-	display: block;
-	margin-bottom: 8px;
+.text-demo__item {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.text-demo__label {
 	font-size: 13px;
 	opacity: 0.65;
 }
@@ -157,31 +193,39 @@ const fileName = '2026年第三季度示例内容说明与结构展示文档.fin
 
 ### 展开 / 收起
 
-提供`expand`插槽即开启：内容超出`line`时，插槽内容跟在省略符后面作为展开入口，点击后显示全文并在末尾显示收起入口。插槽参数`expanded`为当前是否展开；需要从外部控制或读取时使用`v-model:expanded`。
+提供 `expand` 插槽即开启：内容超出 `line` 时，插槽内容跟在省略符后面作为展开入口，点击后显示全文并在末尾显示收起入口。插槽参数 `expanded` 为当前是否展开；需要从外部控制或读取时使用 `v-model:expanded`，点击入口切换时还会触发 `expand-change`。
 
-入口按整体宽度预留，不会拆到两行；需要贴右显示时给`.vc-text__expand`设置`float: right`。
+入口按整体宽度预留，不会拆到两行；需要贴右显示时给 `.vc-text__expand` 设置 `float: right`。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="expand-demo">
-		<div class="expand-demo__item">
-			<span class="expand-demo__label">跟在省略符后（{{ expanded ? '已展开' : '已收起' }}）</span>
-			<Text v-model:expanded="expanded" :value="content" :line="2">
-				<template #expand="{ expanded: v }">
-					<span class="expand-demo__link">{{ v ? '收起' : '展开' }}</span>
+	<div class="text-demo">
+		<div class="text-demo__item">
+			<span class="text-demo__label">跟在省略符后（{{ isExpanded ? '已展开' : '已收起' }}）</span>
+			<Text v-model:expanded="isExpanded" :value="content" :line="2">
+				<template #expand="{ expanded }">
+					<span class="text-demo__link">{{ expanded ? '收起' : '展开' }}</span>
 				</template>
 			</Text>
 		</div>
-		<div class="expand-demo__item is-float">
-			<span class="expand-demo__label">右浮动</span>
-			<Text :value="content" :line="2">
-				<template #expand="{ expanded: v }">
-					<span class="expand-demo__link">{{ v ? '收起' : '展开' }}</span>
+		<div class="text-demo__item is-float">
+			<span class="text-demo__label">右浮动</span>
+			<Text :value="content" :line="2" @expand-change="handleExpandChange">
+				<template #expand="{ expanded }">
+					<span class="text-demo__link">{{ expanded ? '收起' : '展开' }}</span>
 				</template>
 			</Text>
 		</div>
+		<p class="text-demo__result">右浮动示例：{{ status }}</p>
 	</div>
 </template>
 
@@ -190,31 +234,205 @@ import { ref } from 'vue';
 import { Text } from '@deot/vc';
 
 const content = '这是一段较长的说明文字，超出两行后会在省略符后显示展开入口。点击入口查看全文，全文末尾会显示收起入口，再次点击回到截断状态。';
-const expanded = ref(false);
+const isExpanded = ref(false);
+const status = ref('未切换');
+
+const handleExpandChange = (expanded) => {
+	status.value = `expand-change：${expanded ? '展开' : '收起'}`;
+};
 </script>
 
 <style scoped>
-.expand-demo {
-	display: grid;
-	gap: 20px;
+.text-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
 	width: 100%;
 	max-width: 320px;
 }
 
-.expand-demo__label {
-	display: block;
-	margin-bottom: 8px;
+.text-demo__item {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.text-demo__label {
 	font-size: 13px;
 	opacity: 0.65;
 }
 
-.expand-demo__link {
-	margin-left: 4px;
+.text-demo__link {
+	padding-left: 4px;
 	color: var(--vc-color-primary);
 }
 
-.expand-demo__item.is-float :deep(.vc-text__expand) {
+.text-demo__item.is-float :deep(.vc-text__expand) {
 	float: right;
+}
+
+.text-demo__result {
+	margin: 0;
+}
+</style>
+```
+:::
+
+### 全文提示
+
+截断后悬停查看全文。`theme` 设置全文 Popover 的主题，`placement` 设置弹出位置，`portalStyle` 设置弹层样式；不传 `portalStyle` 时弹层宽度取 Text 根节点的宽度。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
+```vue
+<template>
+	<div class="text-demo">
+		<div class="text-demo__item">
+			<span class="text-demo__label">dark · top（默认）</span>
+			<Text :value="content" :line="1" />
+		</div>
+		<div class="text-demo__item">
+			<span class="text-demo__label">light · bottom-left · 宽 240px</span>
+			<Text
+				:value="content"
+				:line="1"
+				theme="light"
+				placement="bottom-left"
+				:portal-style="{ width: '240px' }"
+			/>
+		</div>
+	</div>
+</template>
+
+<script setup>
+import { Text } from '@deot/vc';
+
+const content = '这是一段较长的说明文字，截断后悬停可以在弹层中查看完整内容，弹层的主题、位置与宽度都可以调整。';
+</script>
+
+<style scoped>
+.text-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	width: 100%;
+	max-width: 320px;
+}
+
+.text-demo__item {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.text-demo__label {
+	font-size: 13px;
+	opacity: 0.65;
+}
+</style>
+```
+:::
+
+### 自定义渲染与测量
+
+`renderRow` 接收测量后的展示文本 `value` 与前缀结束下标 `index`，返回要渲染的内容；它额外渲染的节点不参与测量，可用 `indent` 为首行预留同样的宽度（px）。`clip` 在每次计算完成时触发，参数为前缀结束下标（`-1` 表示无需截断）。`resize` 设置尺寸监听的防抖间隔（ms），`shrink` 控制根节点在 flex 布局中的 `flex-shrink`，`tag` 设置根节点标签。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
+```vue
+<template>
+	<div class="text-demo">
+		<div class="text-demo__item">
+			<span class="text-demo__label">renderRow 前置标签 · indent 40 · resize 300</span>
+			<Text
+				:value="content"
+				:line="2"
+				:indent="40"
+				:resize="300"
+				:render-row="renderRow"
+				@clip="handleClip"
+			/>
+		</div>
+		<div class="text-demo__item">
+			<span class="text-demo__label">flex 行内 · shrink · tag="span"</span>
+			<div class="text-demo__row">
+				<span class="text-demo__prefix">前缀</span>
+				<Text tag="span" :value="content" :line="1" shrink />
+			</div>
+		</div>
+		<p class="text-demo__result">clip：{{ clipIndex }}</p>
+	</div>
+</template>
+
+<script setup>
+import { h, ref } from 'vue';
+import { Text } from '@deot/vc';
+
+const content = '这是一段较长的说明文字，用来演示自定义渲染、首行预留宽度与 flex 布局下的测量结果，改变窗口宽度后会重新计算。';
+const clipIndex = ref('-');
+
+const renderRow = ({ value }) => [h('span', { class: 'text-demo__badge' }, '标签'), value];
+
+const handleClip = (index) => {
+	clipIndex.value = index;
+};
+</script>
+
+<style scoped>
+.text-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	width: 100%;
+	max-width: 320px;
+}
+
+.text-demo__item {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.text-demo__label {
+	font-size: 13px;
+	opacity: 0.65;
+}
+
+.text-demo__item :deep(.text-demo__badge) {
+	display: inline-block;
+	box-sizing: border-box;
+	width: 40px;
+	padding-right: 8px;
+	color: var(--vc-color-primary);
+}
+
+.text-demo__row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-width: 0;
+}
+
+.text-demo__prefix {
+	flex-shrink: 0;
+}
+
+.text-demo__result {
+	margin: 0;
 }
 </style>
 ```
@@ -257,7 +475,7 @@ const expanded = ref(false);
 
 ### 使用注意
 
-- `MText` 是 `Text` 的别名，属性和事件相同，全文提示仍由鼠标悬停触发。
+- `MText` 的全文提示同样由鼠标悬停触发；触屏上需要查看全文时可使用 `expand` 插槽。
 - 全文提示在所在的滚动容器（或页面）滚动期间不弹出：内容从静止的鼠标下经过不算悬停，滚动停止后鼠标仍在该文字上时再弹出。
 - 内容通过 `value` 或 `renderRow` 提供；`expand` 插槽只用于展开入口，组件没有内容插槽或公开方法。
 - 截断方式：`line > 0`、`ellipsis` 为默认值、且没有 `slice`、`renderRow`、`indent`、`expand` 插槽，也没有监听 `clip` 时，由 CSS 截断（`line-clamp`）。这时不测量、不监听尺寸，DOM 中是完整文本，是否截断到鼠标移入时才判断，截断才弹出全文。其余情况走 JS 测量，以下几条只针对 JS 测量。

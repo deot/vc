@@ -1,24 +1,37 @@
 ## 图像处理（ImageProcessor）
+
 图像处理组件，基于 canvas 输出原图、抠图、置灰或自定义增强结果。
 
+移动端入口导出的 `MImageProcessor` 与 `ImageProcessor` 是同一实现。
+
 ### 何时使用
-需要在前端把图片绘制到固定尺寸 canvas，并获得处理后的 `ImageData`。
+
+- 需要在前端把图片绘制到固定尺寸的 canvas，并获得处理后的 `ImageData`。
+- 需要对图片做抠图、置灰或自定义像素处理后再展示。
 
 ### 基础用法
-通过 `enhancer` 选择内置处理器，`options` 传递处理参数。
+
+通过 `enhancer` 选择内置处理器，`options` 传递处理参数，`outputSize` 设置 canvas 像素尺寸。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
 	<div class="image-processor-demo">
-		<figure>
-			<figcaption>原图</figcaption>
+		<figure class="image-processor-demo__figure">
+			<figcaption class="image-processor-demo__caption">原图</figcaption>
 			<img :src="image" width="100" height="100" alt="原图">
 		</figure>
-		<figure>
-			<figcaption>抠图</figcaption>
-			<div class="checkerboard">
+		<figure class="image-processor-demo__figure">
+			<figcaption class="image-processor-demo__caption">抠图</figcaption>
+			<div class="image-processor-demo__checkerboard">
 				<ImageProcessor
 					:src="image"
 					:output-size="100"
@@ -28,12 +41,13 @@
 				/>
 			</div>
 		</figure>
-		<figure>
-			<figcaption>置灰</figcaption>
+		<figure class="image-processor-demo__figure">
+			<figcaption class="image-processor-demo__caption">置灰</figcaption>
 			<ImageProcessor :src="image" :output-size="100" enhancer="gray" aria-label="置灰结果" />
 		</figure>
 	</div>
 </template>
+
 <script setup>
 import { ImageProcessor } from '@deot/vc';
 
@@ -42,25 +56,28 @@ const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100">'
 	+ '<circle cx="50" cy="50" r="32" fill="#e08040"/></svg>';
 const image = `data:image/svg+xml,${encodeURIComponent(svg)}`;
 </script>
-<style>
+
+<style scoped>
 .image-processor-demo {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 16px;
 }
 
-figure {
-	display: grid;
+.image-processor-demo__figure {
+	display: flex;
+	flex-direction: column;
 	gap: 8px;
 	margin: 0;
 }
 
-figcaption {
+.image-processor-demo__caption {
 	font-size: 13px;
 	font-weight: 600;
 }
 
-.checkerboard {
+.image-processor-demo__checkerboard {
+	display: flex;
 	background: repeating-conic-gradient(#eee 0 25%, #fff 0 50%) 0 / 16px 16px;
 }
 </style>
@@ -68,29 +85,38 @@ figcaption {
 :::
 
 ### 自定义处理
-自定义增强器接收 `(imageData, options)`，可以直接修改 `imageData` 后返回 `void`，也可以同步或异步返回新的 `ImageData`。
+
+自定义增强器接收 `(imageData, options)`，可以直接修改 `imageData` 后返回 `void`，也可以同步或异步返回新的 `ImageData`。`outputSize` 传双元素数组时分别表示宽、高。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="image-processor-custom-demo">
-		<figure>
-			<figcaption>原图</figcaption>
+	<div class="image-processor-demo">
+		<figure class="image-processor-demo__figure">
+			<figcaption class="image-processor-demo__caption">原图</figcaption>
 			<img :src="image" width="120" height="80" alt="原图">
 		</figure>
-		<figure>
-			<figcaption>仅保留红色通道</figcaption>
+		<figure class="image-processor-demo__figure">
+			<figcaption class="image-processor-demo__caption">仅保留红色通道</figcaption>
 			<ImageProcessor
 				:src="image"
 				:output-size="[120, 80]"
-				:enhancer="enhance"
+				:enhancer="handleEnhance"
 				:options="{ channel: 'red' }"
 				aria-label="红色通道结果"
 			/>
 		</figure>
 	</div>
 </template>
+
 <script setup>
 import { ImageProcessor } from '@deot/vc';
 
@@ -99,7 +125,7 @@ const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="120" height="80">'
 	+ '<circle cx="60" cy="40" r="24" fill="#4080c0"/></svg>';
 const image = `data:image/svg+xml,${encodeURIComponent(svg)}`;
 
-const enhance = (imageData, options) => {
+const handleEnhance = (imageData, options) => {
 	const { data } = imageData;
 
 	for (let i = 0; i < data.length; i += 4) {
@@ -110,22 +136,109 @@ const enhance = (imageData, options) => {
 	}
 };
 </script>
-<style>
-.image-processor-custom-demo {
+
+<style scoped>
+.image-processor-demo {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 16px;
 }
 
-figure {
-	display: grid;
+.image-processor-demo__figure {
+	display: flex;
+	flex-direction: column;
 	gap: 8px;
 	margin: 0;
 }
 
-figcaption {
+.image-processor-demo__caption {
 	font-size: 13px;
 	font-weight: 600;
+}
+</style>
+```
+:::
+
+### 手动刷新与加载失败
+
+通过模板 ref 调用 `refresh()` 重新绘制，返回处理后的 `ImageData`。来源加载或处理失败时触发 `error` 事件，`refresh()` 返回 `undefined`。`crossOrigin` 设置远程图片的跨域方式，服务端仍需允许跨域读取。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
+```vue
+<template>
+	<div class="image-processor-demo">
+		<div class="image-processor-demo__row">
+			<Button @click="handleRefresh">refresh()</Button>
+			<Button @click="handleToggle">{{ isBroken ? '恢复来源' : '切换为无效地址' }}</Button>
+		</div>
+		<ImageProcessor
+			ref="processor"
+			:src="isBroken ? 'https://example.invalid/image.png' : image"
+			:output-size="[120, 80]"
+			enhancer="gray"
+			cross-origin="anonymous"
+			aria-label="处理结果"
+			@error="handleError"
+		/>
+		<p class="image-processor-demo__result">{{ result }}</p>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { Button, ImageProcessor } from '@deot/vc';
+
+const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="120" height="80">'
+	+ '<rect width="120" height="80" fill="#e08040"/>'
+	+ '<circle cx="60" cy="40" r="24" fill="#4080c0"/></svg>';
+const image = `data:image/svg+xml,${encodeURIComponent(svg)}`;
+
+const processor = ref();
+const isBroken = ref(false);
+const result = ref('等待操作');
+
+const handleRefresh = async () => {
+	const imageData = await processor.value.refresh();
+	result.value = imageData
+		? `refresh：${imageData.width} × ${imageData.height}`
+		: 'refresh：undefined';
+};
+
+const handleToggle = () => {
+	isBroken.value = !isBroken.value;
+	result.value = isBroken.value ? '正在加载无效地址' : '已恢复来源';
+};
+
+const handleError = () => {
+	result.value = 'error：来源加载失败';
+};
+</script>
+
+<style scoped>
+.image-processor-demo {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 16px;
+}
+
+.image-processor-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+.image-processor-demo__result {
+	margin: 0;
 }
 </style>
 ```
@@ -178,7 +291,7 @@ figcaption {
 
 普通图片来源会拉伸至输出尺寸；`ImageData` 按原始像素从左上角写入，不会缩放，超出画布部分被裁切。远程图片需要服务端允许跨域读取 canvas；设置 `crossOrigin` 本身不会绕过跨域限制。普通 URL 会追加时间戳参数，data URL 和 blob URL 保持原样。
 
-`MImageProcessor` 是 `ImageProcessor` 的同实现别名，属性、事件、方法和静态工具一致。组件没有插槽。
+组件没有插槽。
 
 公开导出的类型包括 `ImageProcessorSource`、`ImageProcessorOutputSize`、`ImageProcessorOptions` 和 `ImageEnhancer`：
 

@@ -8,23 +8,45 @@
 
 ### 基础用法
 
-`data` 为分组数组，每个分组为 `{ value, label?, children? }`：侧栏显示 `value`，分组标题显示 `label`（不传时取 `value`），`children` 为分组内的各项（为空时只显示标题）。`v-model` 绑定当前分组的 `value`。
+`data` 为分组数组，每个分组为 `{ value, label?, children? }`：侧栏显示 `value`，分组标题显示 `label`（不传时取 `value`），`children` 为分组内的各项（为空时只显示标题）。`v-model` 绑定当前分组的 `value`，滚动或操作侧栏使当前分组改变时触发 `change`。
 
-点按侧栏跳到对应分组；按住后上下拖动连续切换，拖动时显示当前分组的提示。滚动时，标题到达吸附线的分组为当前分组，吸顶标题随之更换，下一个标题到达时把它顶出。
+点按侧栏跳到对应分组；按住后上下拖动连续切换，拖动时显示当前分组的提示。滚动时，标题到达吸附线的分组为当前分组，吸顶标题随之更换，下一个标题到达时把它顶出。通过组件 ref 调用 `scrollTo(value, { duration })` 滚动到指定分组。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 20 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<p>当前分组：{{ current }}</p>
-	<IndexBar v-model="current" :data="data" :height="360" style="border: 1px solid var(--vc-border-color);" />
+	<div class="index-bar-demo">
+		<div class="index-bar-demo__row">
+			<Button size="small" @click="handleScrollTo('M')">滚动到 M</Button>
+			<Button size="small" @click="handleScrollTo('Z')">滚动到 Z</Button>
+			<span>当前分组：{{ current }}；{{ result }}</span>
+		</div>
+		<IndexBar
+			ref="indexBar"
+			v-model="current"
+			class="index-bar-demo__bar"
+			:data="data"
+			:height="360"
+			@change="handleChange"
+		/>
+	</div>
 </template>
 
 <script setup>
 import { ref } from 'vue';
-import { IndexBar } from '@deot/vc';
+import { Button, IndexBar } from '@deot/vc';
 
+const indexBar = ref();
 const current = ref('A');
+const result = ref('尚未触发 change');
 const data = Array.from({ length: 26 }, (_, i) => {
 	const letter = String.fromCharCode(65 + i);
 	return {
@@ -33,7 +55,34 @@ const data = Array.from({ length: 26 }, (_, i) => {
 		children: Array.from({ length: 3 }, (__, j) => ({ label: `${letter} 项 ${j + 1}` }))
 	};
 });
+
+const handleChange = (value) => {
+	result.value = `change：${value}`;
+};
+
+const handleScrollTo = (value) => {
+	indexBar.value.scrollTo(value, { duration: 300 });
+};
 </script>
+
+<style scoped>
+.index-bar-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.index-bar-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+.index-bar-demo__bar {
+	border: 1px solid var(--vc-border-color);
+}
+</style>
 ```
 :::
 
@@ -52,37 +101,115 @@ const data = Array.from({ length: 26 }, (_, i) => {
 
 吸顶标题与侧栏由 `Affix`（`fixed: false`，即 `position: sticky`）承载，所以 IndexBar 与滚动容器之间不能有 `overflow` 非 `visible` 的元素（包括不滚动的 `overflow: hidden`），否则不会吸附；只为裁剪内容时可改用 `overflow: clip`。
 
+下例左侧只设 `maxHeight`，并关闭标题吸顶（`sticky`）与拖动提示（`tip`）；右侧依靠外层容器滚动，容器顶部有 32px 的固定栏，传入 `offset`，并开启 `virtualized`。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<!-- 页面滚动，顶部有 48px 的固定栏；数据多时开启虚拟列表 -->
-	<IndexBar v-model="current" :data="data" :offset="48" virtualized />
+	<div class="index-bar-demo">
+		<IndexBar
+			class="index-bar-demo__bar"
+			:data="data"
+			:max-height="320"
+			:sticky="false"
+			:tip="false"
+		/>
+		<div class="index-bar-demo__scroller">
+			<div class="index-bar-demo__header">固定栏</div>
+			<IndexBar :data="data" :offset="32" virtualized />
+		</div>
+	</div>
 </template>
+
+<script setup>
+import { IndexBar } from '@deot/vc';
+
+const data = Array.from({ length: 26 }, (_, i) => {
+	const letter = String.fromCharCode(65 + i);
+	return {
+		value: letter,
+		label: `${letter} 组`,
+		children: Array.from({ length: 3 }, (__, j) => ({ label: `${letter} 项 ${j + 1}` }))
+	};
+});
+</script>
+
+<style scoped>
+.index-bar-demo {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+	gap: 16px;
+}
+
+.index-bar-demo__bar {
+	border: 1px solid var(--vc-border-color);
+}
+
+.index-bar-demo__scroller {
+	height: 320px;
+	overflow: auto;
+	border: 1px solid var(--vc-border-color);
+}
+
+.index-bar-demo__header {
+	position: sticky;
+	top: 0;
+	z-index: 2;
+	height: 32px;
+	line-height: 32px;
+	padding-inline: 16px;
+	background: var(--vc-background-color-lightest);
+	border-bottom: 1px solid var(--vc-border-color);
+}
+</style>
 ```
+:::
 
 ### 虚拟列表
 
-虚拟列表一次构建全部行，跳转到任意分组都不需要等待；行渲染出来后按实际尺寸校正。分组标题的预估高度取样式中的默认值，项的预估高度用 `estimateSize`（默认为项的默认最小高度，桌面端 40px，`MIndexBar` 为 750 稿 108）；用默认插槽自定义了项的高度时，传入相近的值可以让滚动条从一开始就接近实际长度。
+虚拟列表一次构建全部行，跳转到任意分组都不需要等待；行渲染出来后按实际尺寸校正。分组标题的预估高度取样式中的默认值，项的预估高度用 `estimateSize`（默认为项的默认最小高度，桌面端 40px，`MIndexBar` 为 750 稿 108）；用默认插槽自定义了项的高度时，传入相近的值可以让滚动条从一开始就接近实际长度，见下例。
 
 ### 自定义内容
 
-默认插槽渲染分组内的每一项（参数 `{ row, group, index }`，`index` 为项在分组内的下标），传入后不再套默认的项容器；`title` 渲染分组标题（行内与吸顶共用），`sidebar` 渲染侧栏的单项，`tip` 渲染拖动时的提示。
+默认插槽渲染分组内的每一项（参数 `{ row, group, index }`，`index` 为项在分组内的下标），传入后不再套默认的项容器；`title` 渲染分组标题（行内与吸顶共用），`sidebar` 渲染侧栏的单项，`tip` 渲染拖动时的提示。项的高度改为 48px，`estimateSize` 传入相同的值。内容尺寸在组件之外变化后（如项内的图片加载完成），调用组件 ref 的 `refresh()` 重新测量。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 20 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<IndexBar :data="data" :height="360" style="border: 1px solid var(--vc-border-color);">
+	<IndexBar class="index-bar-demo" :data="data" :height="360" :estimate-size="48">
 		<template #default="{ row, group }">
-			<div class="index-bar-row">
-				<span class="index-bar-row__avatar">{{ group.value }}</span>
+			<div class="index-bar-demo__item">
+				<span class="index-bar-demo__avatar">{{ group.value }}</span>
 				{{ row.label }}
 			</div>
 		</template>
 		<template #title="{ group }">
-			<strong>{{ group.label }}</strong>&nbsp;· {{ group.children.length }} 项
+			<span class="index-bar-demo__title">
+				<strong>{{ group.label }}</strong>
+				<span>· {{ group.children.length }} 项</span>
+			</span>
 		</template>
 		<template #sidebar="{ group, active }">
-			<span :style="{ fontWeight: active ? 600 : 400 }">{{ group.value.toLowerCase() }}</span>
+			<span :class="{ 'is-active': active }">{{ group.value.toLowerCase() }}</span>
+		</template>
+		<template #tip="{ group }">
+			<span>{{ group.label }}</span>
 		</template>
 	</IndexBar>
 </template>
@@ -101,7 +228,11 @@ const data = Array.from({ length: 26 }, (_, i) => {
 </script>
 
 <style scoped>
-.index-bar-row {
+.index-bar-demo {
+	border: 1px solid var(--vc-border-color);
+}
+
+.index-bar-demo__item {
 	display: flex;
 	align-items: center;
 	gap: 12px;
@@ -109,7 +240,7 @@ const data = Array.from({ length: 26 }, (_, i) => {
 	padding: 0 40px 0 16px;
 }
 
-.index-bar-row__avatar {
+.index-bar-demo__avatar {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
@@ -119,13 +250,78 @@ const data = Array.from({ length: 26 }, (_, i) => {
 	background: var(--vc-color-primary);
 	border-radius: 50%;
 }
+
+.index-bar-demo__title {
+	display: inline-flex;
+	gap: 4px;
+}
+
+.is-active {
+	font-weight: 600;
+}
 </style>
 ```
 :::
 
 ## 移动端
 
-`MIndexBar` 的属性、事件、插槽、结构与 `IndexBar` 相同，根节点另有标记类 `.vcm-index-bar`。数字 `height`、`maxHeight`、`offset`、`estimateSize` 为 750 稿长度；尺寸按 750 稿设计，写为 `calc(var(--vc-rem) * n)`，随 `--vc-rem` 缩放（括号内为 375 宽下的 px）：
+`MIndexBar` 的属性、事件、插槽、结构与 `IndexBar` 相同，根节点另有标记类 `.vcm-index-bar`。数字 `height`、`maxHeight`、`offset`、`estimateSize` 为 750 稿长度；尺寸按 750 稿设计，写为 `calc(var(--vc-rem) * n)`，随 `--vc-rem` 缩放，底栏切换 `rem` 可查看不同屏宽下的效果。下例 `height` 为 900（375 宽下 450px）。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	mobile: true,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
+</config>
+-->
+```vue
+<template>
+	<div class="m-index-bar-demo">
+		<p class="m-index-bar-demo__result">当前分组：{{ current }}</p>
+		<MIndexBar v-model="current" :data="data" :height="900" />
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { MIndexBar } from '@deot/vc';
+
+const current = ref('A');
+const data = Array.from({ length: 26 }, (_, i) => {
+	const letter = String.fromCharCode(65 + i);
+	return {
+		value: letter,
+		label: `${letter} 组`,
+		children: Array.from({ length: 3 }, (__, j) => ({ label: `${letter} 项 ${j + 1}` }))
+	};
+});
+</script>
+
+<style scoped>
+.m-index-bar-demo {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--vc-rem) * 16);
+}
+
+.m-index-bar-demo__result {
+	margin: 0;
+	padding-inline: calc(var(--vc-rem) * 32);
+	font-size: calc(var(--vc-rem) * 28);
+	color: var(--vc-color-dark-extralight);
+}
+</style>
+```
+:::
+
+括号内为 375 宽下的 px：
 
 | 项 | 值 |
 | --- | --- |
@@ -135,12 +331,6 @@ const data = Array.from({ length: 26 }, (_, i) => {
 | 拖动提示 | 96（48）见方，字号 48（24），圆角 8（4），居中于可见段 |
 
 与桌面端的差异：桌面端侧栏的当前项为主色圆底白字，拖动提示是侧栏当前项左侧的圆形气泡；移动端拖动侧栏时页面不跟着滚动。
-
-```vue
-<template>
-	<MIndexBar v-model="current" :data="data" />
-</template>
-```
 
 ## 主题与局部覆盖
 

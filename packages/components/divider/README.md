@@ -8,12 +8,15 @@
 
 ### 基础用法
 
-默认显示水平分割线。通过默认插槽添加内容，使用 `placement` 设置内容在分割线上的位置。线由伪元素画出，文字两侧留空，放在任意背景上都不需要底色遮挡。
+默认显示水平分割线，自带 `24px` 的上下外边距。通过默认插槽添加内容，使用 `placement` 设置内容在分割线上的位置。线由伪元素画出，文字两侧留空，放在任意背景上都不需要底色遮挡。
 
 :::playground
 <!--
 <config lang="json5">
-{ previewInset: 24 }
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
 </config>
 -->
 ```vue
@@ -42,8 +45,14 @@ import { Divider } from '@deot/vc';
 </script>
 
 <style scoped>
+.divider-demo__section {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
 .divider-demo__section h4 {
-	margin: 0 0 8px;
+	margin: 0;
 	font-size: 16px;
 }
 
@@ -59,17 +68,20 @@ import { Divider } from '@deot/vc';
 
 ### 竖向分割线
 
-设置 `vertical` 后用于行内分隔，此时不渲染默认插槽，`placement` 不生效。
+设置 `vertical` 后用于行内分隔，自带 `12px` 的左右外边距；此时不渲染默认插槽，`placement` 不生效。
 
 :::playground
 <!--
 <config lang="json5">
-{ previewInset: 24 }
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
 </config>
 -->
 ```vue
 <template>
-	<nav class="divider-nav" aria-label="内容导航">
+	<nav class="divider-demo" aria-label="内容导航">
 		<a href="#overview">概览</a>
 		<Divider vertical />
 		<a href="#details">详情</a>
@@ -83,14 +95,14 @@ import { Divider } from '@deot/vc';
 </script>
 
 <style scoped>
-.divider-nav {
+.divider-demo {
 	display: flex;
-	align-items: center;
 	flex-wrap: wrap;
+	align-items: center;
 	font-size: 14px;
 }
 
-.divider-nav a {
+.divider-demo a {
 	color: var(--vc-color-primary);
 	text-decoration: none;
 }
@@ -100,22 +112,27 @@ import { Divider } from '@deot/vc';
 
 ### 虚线
 
-设置 `dashed` 显示虚线，水平与竖向都适用。线宽、线型也可以通过局部变量 `--vc-divider-line-width`、`--vc-divider-line-style` 覆盖。
+设置 `dashed` 显示虚线，水平与竖向都适用。线宽、线型也可以通过局部变量 `--vc-divider-line-width`、`--vc-divider-line-style` 覆盖，下例最后一条在行内设置了 `--vc-divider-line-style`。
 
 :::playground
 <!--
 <config lang="json5">
-{ previewInset: 24 }
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
 </config>
 -->
 ```vue
 <template>
-	<div>
+	<div class="divider-demo">
 		<Divider dashed />
 		<Divider dashed placement="left">虚线文字</Divider>
-		<span>选项一</span>
-		<Divider vertical dashed />
-		<span>选项二</span>
+		<div class="divider-demo__inline">
+			<span>选项一</span>
+			<Divider vertical dashed />
+			<span>选项二</span>
+		</div>
 		<Divider style="--vc-divider-line-style: dotted;">点线</Divider>
 	</div>
 </template>
@@ -123,12 +140,81 @@ import { Divider } from '@deot/vc';
 <script setup>
 import { Divider } from '@deot/vc';
 </script>
+
+<style scoped>
+.divider-demo__inline {
+	display: flex;
+	align-items: center;
+}
+</style>
 ```
 :::
 
 ## 移动端
 
-`MDivider` 的属性、插槽、结构与 `Divider` 相同，根节点另有标记类 `.vcm-divider`，结构样式与主题参数共用。尺寸按 750 稿设计，写为 `calc(var(--vc-rem) * n)`，随 `--vc-rem` 缩放（括号内为 375 宽下的 px）：
+`MDivider` 的属性、插槽、结构与 `Divider` 相同，根节点另有标记类 `.vcm-divider`，结构样式与主题参数共用。尺寸按 750 稿设计，写为 `calc(var(--vc-rem) * n)`，随 `--vc-rem` 缩放；水平分割线自带四周 32 的内边距，可直接通栏放置。底栏切换 `rem` 可查看不同屏宽下的效果。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	mobile: true,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
+</config>
+-->
+```vue
+<template>
+	<div class="m-divider-demo">
+		<MDivider />
+		<MDivider>居中文字</MDivider>
+		<MDivider placement="left">左侧文字</MDivider>
+		<MDivider placement="right">右侧文字</MDivider>
+		<MDivider dashed />
+		<MDivider dashed>虚线文字</MDivider>
+		<div class="m-divider-demo__gray">
+			<MDivider>没有更多了</MDivider>
+		</div>
+		<div class="m-divider-demo__inline">
+			<span>选项一</span>
+			<MDivider vertical />
+			<span>选项二</span>
+			<MDivider vertical dashed />
+			<span>选项三</span>
+		</div>
+	</div>
+</template>
+
+<script setup>
+import { MDivider } from '@deot/vc';
+</script>
+
+<style scoped>
+.m-divider-demo {
+	display: flex;
+	flex-direction: column;
+}
+
+.m-divider-demo__gray {
+	background: var(--vc-background-color-light);
+}
+
+.m-divider-demo__inline {
+	display: flex;
+	align-items: center;
+	padding: calc(var(--vc-rem) * 32);
+	font-size: calc(var(--vc-rem) * 28);
+}
+</style>
+```
+:::
+
+尺寸对比如下（括号内为 375 宽下的 px）：
 
 | 项 | `Divider` | `MDivider`（750 稿） |
 | --- | --- | --- |
@@ -140,16 +226,6 @@ import { Divider } from '@deot/vc';
 | 文字在左 / 右侧时的短线 | `20px` | 56（28） |
 | 竖线的左右外边距 | `12px` | 24（12） |
 | 线宽 | `1px` | 高分屏 0.5px |
-
-```vue
-<template>
-	<MDivider>没有更多了</MDivider>
-</template>
-
-<script setup>
-import { MDivider } from '@deot/vc';
-</script>
-```
 
 ## 主题与局部覆盖
 

@@ -8,26 +8,57 @@
 
 ### 基础用法
 
-通过 `v-model` 绑定面板的 `value`。未设置 `value` 时使用从 0 开始的索引；动态增删时应显式提供稳定的 `value`。`disabled` 阻止点击切换，`animated` 默认为 `false`。
+通过 `v-model` 绑定面板的 `value`。未设置 `value` 时使用从 0 开始的索引；动态增删时应显式提供稳定的 `value`。`disabled` 阻止点击切换，`animated` 默认为 `false`。点击有效标签时触发 `change` 与 `click`，重复点击当前项也会触发。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<Tabs v-model="value" animated>
-		<TabsPane value="overview" label="概览">内容概览与最新动态。</TabsPane>
-		<TabsPane value="details" label="详情">完整的内容说明。</TabsPane>
-		<TabsPane value="locked" label="暂未开放" disabled />
-	</Tabs>
-	<p>当前面板：{{ value }}</p>
+	<div class="tabs-demo">
+		<Tabs v-model="value" animated @change="handleChange" @click="handleClick">
+			<TabsPane value="first" label="标签一">标签一的内容。</TabsPane>
+			<TabsPane value="second" label="标签二">标签二的内容。</TabsPane>
+			<TabsPane value="third" label="禁用标签" disabled />
+		</Tabs>
+		<p class="tabs-demo__result">当前面板：{{ value }}；change {{ changeCount }} 次，click {{ clickCount }} 次</p>
+	</div>
 </template>
 
 <script setup>
 import { ref } from 'vue';
 import { Tabs, TabsPane } from '@deot/vc';
 
-const value = ref('overview');
+const value = ref('first');
+const changeCount = ref(0);
+const clickCount = ref(0);
+
+const handleChange = () => {
+	changeCount.value++;
+};
+
+const handleClick = () => {
+	clickCount.value++;
+};
 </script>
+
+<style scoped>
+.tabs-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.tabs-demo__result {
+	margin: 0;
+}
+</style>
 ```
 :::
 
@@ -36,18 +67,25 @@ const value = ref('overview');
 `type` 提供六种外观：`line`（默认，下划线）、`card`（连体描边）、`button`（灰底按钮）、`capsule`（灰底容器，选中项浮起）、`text`（文字加分隔线）、`round`（圆角胶囊）。除 `line` 外，其余外观与 RadioGroup 的同名 `type` 一致。`size` 可选 `mini` / `small` / `medium` / `large`，默认 `medium`：`line` 的标签栏高度依次为 32 / 36 / 40 / 44px，其余类型的高度依次为 24 / 28 / 32 / 36px。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="tabs-type-demo">
+	<div class="tabs-demo">
 		<RadioGroup v-model="size" type="capsule" size="small">
-			<Radio v-for="item in sizes" :key="item" :value="item" :label="item" />
+			<Radio v-for="item in SIZES" :key="item" :value="item" :label="item" />
 		</RadioGroup>
-		<Tabs v-for="type in types" :key="type" v-model="value" :type="type" :size="size">
-			<TabsPane value="all" :label="type" />
-			<TabsPane value="pending" label="待处理" />
-			<TabsPane value="done" label="已完成" />
-			<TabsPane value="archived" label="已归档" disabled />
+		<Tabs v-for="type in TYPES" :key="type" v-model="value" :type="type" :size="size">
+			<TabsPane value="a" :label="type" />
+			<TabsPane value="b" label="选项 B" />
+			<TabsPane value="c" label="选项 C" />
+			<TabsPane value="d" label="选项 D" disabled />
 		</Tabs>
 	</div>
 </template>
@@ -56,16 +94,17 @@ const value = ref('overview');
 import { ref } from 'vue';
 import { Tabs, TabsPane, RadioGroup, Radio } from '@deot/vc';
 
-const types = ['line', 'card', 'button', 'capsule', 'text', 'round'];
-const sizes = ['mini', 'small', 'medium', 'large'];
-const value = ref('pending');
+const TYPES = ['line', 'card', 'button', 'capsule', 'text', 'round'];
+const SIZES = ['mini', 'small', 'medium', 'large'];
+const value = ref('b');
 const size = ref('medium');
 </script>
 
 <style scoped>
-.tabs-type-demo {
-	display: grid;
-	gap: 12px;
+.tabs-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
 	min-width: 0;
 }
 </style>
@@ -77,17 +116,24 @@ const size = ref('medium');
 `placement` 设置标签栏相对内容的位置：`top`（默认）、`bottom`、`left`、`right`，各类型都支持。line 的分隔线和下划线在靠内容的一侧。左右两侧时标签纵向排列、宽度一致，`extra` 插槽放在标签栏底部；标签栏默认随内容撑高，给 Tabs 设置高度后，超出的标签可以上下滚动。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="tabs-placement-demo">
+	<div class="tabs-demo">
 		<RadioGroup v-model="placement" type="capsule" size="small">
-			<Radio v-for="item in placements" :key="item" :value="item" :label="item" />
+			<Radio v-for="item in PLACEMENTS" :key="item" :value="item" :label="item" />
 		</RadioGroup>
 		<Tabs v-model="value" :placement="placement">
-			<TabsPane value="overview" label="概览">内容概览与最新动态。</TabsPane>
-			<TabsPane value="details" label="详情">完整的内容说明。</TabsPane>
-			<TabsPane value="history" label="历史记录">按时间排列的变更记录。</TabsPane>
+			<TabsPane value="first" label="标签一">标签一的内容。</TabsPane>
+			<TabsPane value="second" label="标签二">标签二的内容。</TabsPane>
+			<TabsPane value="third" label="标签三">标签三的内容。</TabsPane>
 		</Tabs>
 	</div>
 </template>
@@ -96,15 +142,16 @@ const size = ref('medium');
 import { ref } from 'vue';
 import { Tabs, TabsPane, RadioGroup, Radio } from '@deot/vc';
 
-const placements = ['top', 'bottom', 'left', 'right'];
+const PLACEMENTS = ['top', 'bottom', 'left', 'right'];
 const placement = ref('left');
-const value = ref('overview');
+const value = ref('first');
 </script>
 
 <style scoped>
-.tabs-placement-demo {
-	display: grid;
-	gap: 12px;
+.tabs-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
 	min-width: 0;
 }
 </style>
@@ -116,33 +163,43 @@ const value = ref('overview');
 关闭按钮要求父组件和面板同时开启 `closable`，所有类型都支持；禁用的面板不显示关闭按钮。`tab-remove` 只通知调用方；删除数据、关闭前确认及删除当前页后的选中值均由调用方处理。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<Tabs v-model="value" type="card" closable @tab-remove="handleRemove">
-		<TabsPane
-			v-for="item in items"
-			:key="item.value"
-			:value="item.value"
-			:label="item.label"
-			:closable="item.value !== 'home'"
-		>
-			{{ item.label }}的内容
-		</TabsPane>
-	</Tabs>
-	<p>首页保留；其他标签可以关闭。</p>
+	<div class="tabs-demo">
+		<Tabs v-model="value" type="card" closable @tab-remove="handleRemove">
+			<TabsPane
+				v-for="item in items"
+				:key="item.value"
+				:value="item.value"
+				:label="item.label"
+				:closable="item.value !== 'first'"
+			>
+				{{ item.label }}的内容
+			</TabsPane>
+		</Tabs>
+		<p class="tabs-demo__result">标签一保留；其他标签可以关闭。</p>
+	</div>
 </template>
 
 <script setup>
 import { ref } from 'vue';
 import { Tabs, TabsPane } from '@deot/vc';
 
-const value = ref('summary');
+const value = ref('second');
 const items = ref([
-	{ value: 'home', label: '首页' },
-	{ value: 'summary', label: '摘要' },
-	{ value: 'history', label: '历史记录' }
+	{ value: 'first', label: '标签一' },
+	{ value: 'second', label: '标签二' },
+	{ value: 'third', label: '标签三' }
 ]);
+
 const handleRemove = (removedValue, index) => {
 	items.value.splice(index, 1);
 	if (value.value === removedValue) {
@@ -150,6 +207,18 @@ const handleRemove = (removedValue, index) => {
 	}
 };
 </script>
+
+<style scoped>
+.tabs-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.tabs-demo__result {
+	margin: 0;
+}
+</style>
 ```
 :::
 
@@ -158,11 +227,19 @@ const handleRemove = (removedValue, index) => {
 标签总宽度超出标签栏时，可以用滚轮或触控板横向滚动；纵向滚轮同样会滚动标签栏，滚到两端后再交给页面。溢出时两端显示前后翻页按钮（`stepper`，为 `false` 时不显示），点击翻一屏，滚到端点的按钮置灰。切换选中项、增删标签或标签栏尺寸变化后，选中项会自动滚入可视区。滚动由 [Scroller](../scroller/README.md) 承载（`axis` 锁定为标签栏的排列方向），不显示滚动条；触摸设备上为原生滚动。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="tabs-overflow-demo">
-		<Tabs v-model="value" type="card">
+	<div class="tabs-demo">
+		<Checkbox v-model="isStepper">翻页按钮（stepper）</Checkbox>
+		<Tabs v-model="value" type="card" :stepper="isStepper">
 			<TabsPane v-for="item in 30" :key="item" :value="item" :label="`条目 ${item}`">
 				条目 {{ item }} 的内容
 			</TabsPane>
@@ -172,15 +249,24 @@ const handleRemove = (removedValue, index) => {
 
 <script setup>
 import { ref } from 'vue';
-import { Tabs, TabsPane } from '@deot/vc';
+import { Checkbox, Tabs, TabsPane } from '@deot/vc';
 
 const value = ref(24);
+const isStepper = ref(true);
 </script>
 
 <style scoped>
-.tabs-overflow-demo {
+.tabs-demo {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 16px;
 	min-width: 0;
 	max-width: 480px;
+}
+
+.tabs-demo > .vc-tabs {
+	align-self: stretch;
 }
 </style>
 ```
@@ -191,90 +277,330 @@ const value = ref(24);
 `lazy`（默认 `true`）让面板首次激活时才渲染内容，`false` 时挂载即渲染全部面板；`alive`（默认 `true`）让隐藏的面板保留内容，`false` 时隐藏即卸载，重新激活后内容（如输入框的值）重建。两者在 Tabs 上统一设置，TabsPane 的同名属性可单独覆盖。`alive` 为 `false` 时隐藏的面板一律不渲染，`lazy` 不再起作用。面板容器始终保留，`animated` 的切换动画不受影响。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<Tabs v-model="value" :alive="false">
-		<TabsPane value="search" label="搜索">
-			<Input v-model="keyword" placeholder="绑定在外部，切换后仍保留" />
-		</TabsPane>
-		<TabsPane value="draft" label="草稿">
-			<Input placeholder="切换后清空" />
-		</TabsPane>
-		<TabsPane value="note" label="备注" alive>
-			<Input placeholder="此面板设置了 alive，切换后保留" />
-		</TabsPane>
-	</Tabs>
+	<div class="tabs-demo">
+		<Tabs v-model="value" :alive="false">
+			<TabsPane value="first" label="外部绑定">
+				<Input v-model="keyword" placeholder="绑定在外部，切换后仍保留" />
+			</TabsPane>
+			<TabsPane value="second" label="卸载重建">
+				<Input placeholder="切换后清空" />
+			</TabsPane>
+			<TabsPane value="third" label="单独保留" alive>
+				<Input placeholder="此面板设置了 alive，切换后保留" />
+			</TabsPane>
+		</Tabs>
+		<Tabs v-model="eager" :lazy="false">
+			<TabsPane value="first" label="挂载即渲染">两个面板在挂载时都已渲染。</TabsPane>
+			<TabsPane value="second" label="面板二">面板二的内容在挂载时已渲染。</TabsPane>
+			<TabsPane value="third" label="首次激活再渲染" lazy>此面板设置了 lazy，首次激活时才渲染。</TabsPane>
+		</Tabs>
+	</div>
 </template>
 
 <script setup>
 import { ref } from 'vue';
-import { Tabs, TabsPane, Input } from '@deot/vc';
+import { Input, Tabs, TabsPane } from '@deot/vc';
 
-const value = ref('search');
+const value = ref('first');
+const eager = ref('first');
 const keyword = ref('');
 </script>
+
+<style scoped>
+.tabs-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+</style>
 ```
 :::
 
-### 自定义标签
+### 自定义标签与样式
 
-`label` 插槽接收 `{ row, index }`，其中 `row` 是面板的 props。也可将渲染函数传入面板的 `label`，函数接收 `{ it, index }`。移动端会把标签内容放进一个 `span`，自动下划线按它的宽度计算。
+`label` 插槽接收 `{ row, index }`，其中 `row` 是面板的 props。也可将渲染函数传入面板的 `label`，函数接收 `{ it, index }`。`extra` 插槽放在标签栏末端。`barStyle` / `barClass` 作用于标签栏，`contentStyle` / `contentClass` 作用于内容区。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<Tabs v-model="value">
-		<template #label="{ row, index }">
-			<span>{{ index + 1 }} · {{ row.label }}</span>
-		</template>
-		<template #extra>共 2 项</template>
-		<TabsPane value="pending" label="待处理">待处理事项。</TabsPane>
-		<TabsPane value="done" label="已完成">已完成事项。</TabsPane>
-	</Tabs>
+	<div class="tabs-demo">
+		<Tabs
+			v-model="value"
+			:bar-style="{ background: 'var(--vc-background-color-light)' }"
+			bar-class="tabs-demo__bar"
+			:content-style="{ padding: '12px 16px' }"
+			content-class="tabs-demo__content"
+		>
+			<template #label="{ row, index }">
+				<span>{{ index + 1 }} · {{ row.label }}</span>
+			</template>
+			<template #extra>共 2 项</template>
+			<TabsPane value="first" label="标签一">标签一的内容。</TabsPane>
+			<TabsPane value="second" label="标签二">标签二的内容。</TabsPane>
+		</Tabs>
+		<Tabs v-model="value">
+			<TabsPane value="first" :label="renderLabel">渲染函数生成的标签。</TabsPane>
+			<TabsPane value="second" :label="renderLabel">渲染函数生成的标签。</TabsPane>
+		</Tabs>
+	</div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { h, ref } from 'vue';
 import { Tabs, TabsPane } from '@deot/vc';
 
-const value = ref('pending');
+const value = ref('first');
+const renderLabel = ({ index }) => h('strong', `函数标签 ${index + 1}`);
 </script>
+
+<style scoped>
+.tabs-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.tabs-demo :deep(.tabs-demo__bar) {
+	padding-inline: 8px;
+}
+
+.tabs-demo :deep(.tabs-demo__content) {
+	color: var(--vc-color-dark-light);
+}
+</style>
 ```
 :::
 
-### 移动端
+### 锚点导航
 
-移动端标签栏同样由 Scroller 承载，触摸时为原生横向滚动（带惯性），选中的标签尽量滚到中间；另支持均分和翻页按钮（`stepper`）。`swipeable` 时在内容区左右滑动切换到相邻的标签（跳过禁用的），配合 `animated` 有滑入动画。`theme="light"` 跟随全局亮暗主题；`theme="dark"` 是深色金色的独立视觉风格，不等同于切换全局主题。
+面板的 `anchor` 为 CSS 选择器，点击标签时滚动所在的滚动容器，使目标元素位于标签栏下方；配合外层 [Affix](../affix/README.md) 吸附标签栏，滚动时选中项随可视区同步。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16, viewport: 375, viewportOptions: ['auto', 375] }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="tabs-mobile-demo">
-		<label><input v-model="isDark" type="checkbox"> 深色金色风格</label>
-		<MTabs v-model="value" :theme="isDark ? 'dark' : 'light'" :average="false" stepper swipeable animated>
-			<MTabsPane v-for="item in 8" :key="item" :value="item" :label="`分类 ${item}`">
-				分类 {{ item }} 的内容
+	<Scroller height="240px" class="tabs-demo">
+		<Affix :fixed="false">
+			<Tabs :model-value="0" class="tabs-demo__tabs">
+				<TabsPane v-for="item in 3" :key="item" :label="`段落 ${item}`" :anchor="`#tabs-demo-anchor-${item}`" />
+			</Tabs>
+		</Affix>
+		<section v-for="item in 3" :id="`tabs-demo-anchor-${item}`" :key="item" class="tabs-demo__section">
+			<strong>段落 {{ item }}</strong>
+			<p v-for="line in 8" :key="line" class="tabs-demo__line">段落 {{ item }} 的第 {{ line }} 行</p>
+		</section>
+	</Scroller>
+</template>
+
+<script setup>
+import { Affix, Scroller, Tabs, TabsPane } from '@deot/vc';
+</script>
+
+<style scoped>
+.tabs-demo__tabs {
+	background: var(--vc-background-color-lightest);
+}
+
+.tabs-demo__section {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 16px 0;
+}
+
+.tabs-demo__line {
+	margin: 0;
+}
+</style>
+```
+:::
+
+## 移动端
+
+`MTabs`、`MTabsPane` 与 `Tabs`、`TabsPane` 共享 `modelValue`、`animated`、`closable`、`lazy`、`alive` 和事件，属性差异见下方 API 的「MTabs 属性」。移动端标签栏同样由 Scroller 承载，触摸时为原生横向滚动（带惯性），选中的标签尽量滚到中间；`average` 时标签均分宽度，`stepper`（移动端默认 `false`）显示翻页按钮。`swipeable` 时在内容区左右滑动切换到相邻的标签（跳过禁用的），配合 `animated` 有滑入动画。`theme="light"` 跟随全局亮暗主题；`theme="dark"` 是深色金色的独立视觉风格，不等同于切换全局主题。
+
+下例中的按钮依次切换 `theme`、`average`、`afloat`（下划线）、`autoAfloatWidth`（下划线按文字宽度）、`showWrapper`（标签栏）；`prepend`、`append` 插槽放在标签栏两端。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	mobile: true,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
+</config>
+-->
+```vue
+<template>
+	<div class="m-tabs-demo">
+		<div class="m-tabs-demo__row">
+			<MButton size="small" @click="handleToggle('isDark')">theme：{{ state.isDark ? 'dark' : 'light' }}</MButton>
+			<MButton size="small" @click="handleToggle('isAverage')">average：{{ state.isAverage }}</MButton>
+			<MButton size="small" @click="handleToggle('isAfloat')">afloat：{{ state.isAfloat }}</MButton>
+			<MButton size="small" @click="handleToggle('isAutoWidth')">autoAfloatWidth：{{ state.isAutoWidth }}</MButton>
+			<MButton size="small" @click="handleToggle('isWrapper')">showWrapper：{{ state.isWrapper }}</MButton>
+		</div>
+		<MTabs
+			v-model="value"
+			:theme="state.isDark ? 'dark' : 'light'"
+			:average="state.isAverage"
+			:afloat="state.isAfloat"
+			:auto-afloat-width="state.isAutoWidth"
+			:show-wrapper="state.isWrapper"
+			swipeable
+			animated
+		>
+			<MTabsPane v-for="item in 4" :key="item" :value="item" :label="`分类 ${item}`">
+				<p class="m-tabs-demo__content">分类 {{ item }} 的内容，左右滑动切换</p>
+			</MTabsPane>
+		</MTabs>
+		<MTabs v-model="more" stepper :average="false" closable @tab-remove="handleRemove">
+			<template #prepend>
+				<span class="m-tabs-demo__side">前置</span>
+			</template>
+			<template #append>
+				<span class="m-tabs-demo__side">后置</span>
+			</template>
+			<template #label="{ row, index }">
+				<span>{{ index + 1 }}. {{ row.label }}</span>
+			</template>
+			<MTabsPane v-for="item in panes" :key="item" :value="item" :label="`标签 ${item}`" closable>
+				<p class="m-tabs-demo__content">标签 {{ item }} 的内容</p>
 			</MTabsPane>
 		</MTabs>
 	</div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
-import { MTabs, MTabsPane } from '@deot/vc';
+import { reactive, ref } from 'vue';
+import { MButton, MTabs, MTabsPane } from '@deot/vc';
 
 const value = ref(1);
-const isDark = ref(false);
+const more = ref(3);
+const panes = ref(Array.from({ length: 10 }, (_, index) => index + 1));
+const state = reactive({
+	isDark: false,
+	isAverage: true,
+	isAfloat: true,
+	isAutoWidth: true,
+	isWrapper: true
+});
+
+const handleToggle = (key) => {
+	state[key] = !state[key];
+};
+
+const handleRemove = (removedValue, index) => {
+	panes.value.splice(index, 1);
+	if (more.value === removedValue) {
+		more.value = panes.value[Math.max(0, index - 1)];
+	}
+};
 </script>
 
 <style scoped>
-.tabs-mobile-demo {
-	display: grid;
-	gap: 16px;
-	min-width: 0;
+.m-tabs-demo {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--vc-rem) * 32);
+}
+
+.m-tabs-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: calc(var(--vc-rem) * 16);
+	padding-inline: calc(var(--vc-rem) * 32);
+}
+
+.m-tabs-demo__content {
+	padding: calc(var(--vc-rem) * 32);
+	margin: 0;
+	font-size: calc(var(--vc-rem) * 28);
+}
+
+.m-tabs-demo__side {
+	padding-inline: calc(var(--vc-rem) * 16);
+	font-size: calc(var(--vc-rem) * 24);
+	color: var(--vc-color-dark-extralight);
+}
+</style>
+```
+:::
+
+### 吸顶
+
+`sticky` 时标签栏由 `MAffix`（`position: sticky`）吸附在所在滚动容器的顶部，Tabs 滚出后随之离开；`offsetTop` 为吸顶偏移（750 稿）。Tabs 与滚动容器之间不能有 `overflow` 非 `visible` 的元素。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	mobile: true,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
+</config>
+-->
+```vue
+<template>
+	<MScroller height="calc(var(--vc-rem) * 640)" class="m-tabs-demo">
+		<p v-for="index in 3" :key="index" class="m-tabs-demo__line">前置内容 {{ index }}</p>
+		<MTabs v-model="value" sticky :offset-top="0">
+			<MTabsPane v-for="pane in PANES" :key="pane" :label="pane" :value="pane">
+				<p v-for="index in 20" :key="index" class="m-tabs-demo__line">{{ pane }} 的内容 {{ index }}</p>
+			</MTabsPane>
+		</MTabs>
+		<p v-for="index in 10" :key="index" class="m-tabs-demo__line">后置内容 {{ index }}</p>
+	</MScroller>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { MScroller, MTabs, MTabsPane } from '@deot/vc';
+
+const PANES = ['标签一', '标签二', '标签三', '标签四'];
+const value = ref('标签一');
+</script>
+
+<style scoped>
+.m-tabs-demo__line {
+	padding: calc(var(--vc-rem) * 16) calc(var(--vc-rem) * 32);
+	margin: 0;
+	font-size: calc(var(--vc-rem) * 28);
 }
 </style>
 ```

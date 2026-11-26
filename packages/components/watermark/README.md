@@ -1,6 +1,8 @@
 ## 水印（Watermark）
 
-在内容上方平铺一层文字或图片水印。`Watermark` 与 `MWatermark` 指向同一个组件。
+在内容上方平铺一层文字或图片水印。
+
+移动端入口导出的 `MWatermark` 与 `Watermark` 是同一实现。
 
 ### 何时使用
 
@@ -12,14 +14,21 @@
 把内容放进默认插槽，`value` 为水印文字。水印层不响应鼠标事件，不影响内容的交互。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
 	<Watermark value="内部资料">
 		<div class="watermark-demo">
-			<h4>标题</h4>
-			<p>这是一段用于演示的正文内容，水印平铺在它的上方。</p>
-			<p>这是一段用于演示的正文内容，水印平铺在它的上方。</p>
+			<h4 class="watermark-demo__title">标题</h4>
+			<p class="watermark-demo__text">这是一段用于演示的正文内容，水印平铺在它的上方。</p>
+			<p class="watermark-demo__text">这是一段用于演示的正文内容，水印平铺在它的上方。</p>
 		</div>
 	</Watermark>
 </template>
@@ -30,39 +39,74 @@ import { Watermark } from '@deot/vc';
 
 <style scoped>
 .watermark-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
 	min-height: 240px;
 	padding: 16px;
 	line-height: 1.7;
 }
 
-.watermark-demo h4 {
-	margin: 0 0 8px;
+.watermark-demo__title {
+	margin: 0;
 	font-size: 16px;
 }
 
-.watermark-demo p {
-	margin: 0 0 8px;
+.watermark-demo__text {
+	margin: 0;
 }
 </style>
 ```
 :::
 
-### 多行文字
+### 多行文字与布局
 
-`value` 传数组时每项一行，逐行居中。
+`value` 传数组时每项一行，逐行居中。`width`、`height` 设置旋转前单个水印的大小，`gap` 为水印之间的间距，`offset` 为首个水印相对容器左上角的偏移，数组依次为水平、垂直方向。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<Watermark :value="['内部资料', '请勿外传']">
-		<div style="height: 240px;" />
-	</Watermark>
+	<div class="watermark-demo">
+		<Watermark :value="['内部资料', '请勿外传']">
+			<div class="watermark-demo__content">默认布局</div>
+		</Watermark>
+		<Watermark
+			:value="['内部资料', '请勿外传']"
+			:width="120"
+			:height="60"
+			:gap="[40, 24]"
+			:offset="[0, 0]"
+		>
+			<div class="watermark-demo__content">width 120 · height 60 · gap [40, 24] · offset [0, 0]</div>
+		</Watermark>
+	</div>
 </template>
 
 <script setup>
 import { Watermark } from '@deot/vc';
 </script>
+
+<style scoped>
+.watermark-demo {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+	gap: 16px;
+}
+
+.watermark-demo__content {
+	height: 240px;
+	padding: 12px;
+	border: 1px solid var(--vc-color-neutral-light);
+}
+</style>
 ```
 :::
 
@@ -71,11 +115,18 @@ import { Watermark } from '@deot/vc';
 `src` 为图片地址，优先于 `value`；图片加载失败时回退到 `value`。只传 `width` 或 `height` 时另一边按图片比例计算，都不传时宽为 `100`。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
 	<Watermark :src="src" value="内部资料" :width="120">
-		<div style="height: 240px;" />
+		<div class="watermark-demo" />
 	</Watermark>
 </template>
 
@@ -90,28 +141,41 @@ const svg = [
 ].join('');
 const src = `data:image/svg+xml,${encodeURIComponent(svg)}`;
 </script>
+
+<style scoped>
+.watermark-demo {
+	height: 240px;
+}
+</style>
 ```
 :::
 
 ### 自定义样式
 
-`class` 与 `style` 作用在水印层上，不影响插槽里的内容。文字的颜色、字号、字重、字体与行高取自水印层的样式，`opacity` 等其它样式直接生效。
+`class` 与 `style` 作用在水印层上，不影响插槽里的内容。文字的颜色、字号、字重、字体与行高取自水印层的样式，`opacity` 等其它样式直接生效；`rotate` 设置旋转角度。下例的 `style` 用于演示该属性本身。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="watermark-style-demo">
+	<div class="watermark-demo">
 		<Watermark
 			value="内部资料"
 			:rotate="0"
 			:gap="[80, 40]"
 			style="font-size: 20px; color: rgb(245 34 45 / 30%);"
 		>
-			<div class="watermark-style-demo__content">style：字号与颜色</div>
+			<div class="watermark-demo__content">style：字号与颜色</div>
 		</Watermark>
-		<Watermark value="内部资料" :rotate="30" class="watermark-style-demo__mark">
-			<div class="watermark-style-demo__content">class：加粗并跟随主色</div>
+		<Watermark value="内部资料" :rotate="30" class="watermark-demo__mark">
+			<div class="watermark-demo__content">class：加粗并跟随主色</div>
 		</Watermark>
 	</div>
 </template>
@@ -120,20 +184,20 @@ const src = `data:image/svg+xml,${encodeURIComponent(svg)}`;
 import { Watermark } from '@deot/vc';
 </script>
 
-<style>
-.watermark-style-demo {
+<style scoped>
+.watermark-demo {
 	display: grid;
-	grid-template-columns: repeat(2, 1fr);
+	grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
 	gap: 16px;
 }
 
-.watermark-style-demo__content {
+.watermark-demo__content {
 	height: 220px;
 	padding: 12px;
 	border: 1px solid var(--vc-color-neutral-light);
 }
 
-.watermark-style-demo__mark {
+.watermark-demo :deep(.watermark-demo__mark) {
 	font-weight: bold;
 	color: var(--vc-color-primary);
 	opacity: .25;
@@ -147,25 +211,32 @@ import { Watermark } from '@deot/vc';
 不使用默认插槽时，水印层通过 `to` 挂到目标容器（CSS 选择器或元素）；`to` 也不传则留在原位，铺满父元素。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="watermark-to-demo">
+	<div class="watermark-demo">
 		<div
 			v-for="item in ['a', 'b']"
-			:id="`watermark-to-demo-${item}`"
+			:id="`watermark-demo-${item}`"
 			:key="item"
-			class="watermark-to-demo__box"
-			@click="current = item"
+			class="watermark-demo__box"
+			@click="handleSelect(item)"
 		>
 			点击把水印挂到这里
 		</div>
-		<div class="watermark-to-demo__box">
+		<div class="watermark-demo__box">
 			原位（不传 to）
 			<Watermark value="原位水印" />
 		</div>
+		<Watermark :to="`#watermark-demo-${current}`" value="内部资料" />
 	</div>
-	<Watermark :to="`#watermark-to-demo-${current}`" value="内部资料" />
 </template>
 
 <script setup>
@@ -173,16 +244,20 @@ import { ref } from 'vue';
 import { Watermark } from '@deot/vc';
 
 const current = ref('a');
+
+const handleSelect = (item) => {
+	current.value = item;
+};
 </script>
 
 <style scoped>
-.watermark-to-demo {
+.watermark-demo {
 	display: grid;
-	grid-template-columns: repeat(3, 1fr);
+	grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
 	gap: 16px;
 }
 
-.watermark-to-demo__box {
+.watermark-demo__box {
 	height: 200px;
 	padding: 12px;
 	cursor: pointer;
@@ -194,24 +269,45 @@ const current = ref('a');
 
 ### 满屏
 
-设置 `fullscreen` 后水印层使用固定定位铺满视口，不随页面滚动；默认挂到 `body`，层级为 `5000`，盖住弹层与提示。
+设置 `fullscreen` 后水印层使用固定定位铺满视口，不随页面滚动；默认挂到 `body`，层级为 `5000`，盖住弹层与提示。`zIndex` 可以调低层级，下例的「低层级」为 `1000`，弹层会显示在它上方。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<Button @click="isVisible = !isVisible">
-		{{ isVisible ? '关闭' : '打开' }}满屏水印
-	</Button>
-	<Watermark v-if="isVisible" fullscreen value="内部资料" />
+	<div class="watermark-demo">
+		<Button @click="handleToggle(5000)">{{ zIndex === 5000 ? '关闭' : '打开' }}满屏水印</Button>
+		<Button @click="handleToggle(1000)">{{ zIndex === 1000 ? '关闭' : '打开' }}低层级满屏水印</Button>
+		<Watermark v-if="zIndex" fullscreen value="内部资料" :z-index="zIndex" />
+	</div>
 </template>
 
 <script setup>
 import { ref } from 'vue';
 import { Button, Watermark } from '@deot/vc';
 
-const isVisible = ref(false);
+const zIndex = ref(0);
+
+const handleToggle = (value) => {
+	zIndex.value = zIndex.value === value ? 0 : value;
+};
 </script>
+
+<style scoped>
+.watermark-demo {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+</style>
 ```
 :::
 

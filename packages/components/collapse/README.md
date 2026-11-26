@@ -11,35 +11,56 @@
 
 ### 基础用法
 
-普通模式使用数组保存展开项，可同时展开多个面板。标题可用 `title` 属性或默认插槽，内容放在 `content` 插槽。
+普通模式使用数组保存展开项，可同时展开多个面板。标题可用 `title` 属性或默认插槽，内容放在 `content` 插槽；点击标题切换时触发 `change`。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 20 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
 	<div class="collapse-demo">
-		<Collapse v-model="value">
+		<Collapse v-model="value" @change="handleChange">
 			<CollapseItem v-for="item in items" :key="item.value" :value="item.value" :title="item.title">
 				<template #content>{{ item.content }}</template>
 			</CollapseItem>
 		</Collapse>
-		<p>已展开：{{ value.length ? value.join('、') : '无' }}</p>
+		<p class="collapse-demo__result">已展开：{{ value.length ? value.join('、') : '无' }}；change 触发 {{ count }} 次</p>
 	</div>
 </template>
+
 <script setup>
 import { ref } from 'vue';
 import { Collapse, CollapseItem } from '@deot/vc';
 
-const value = ref(['install']);
+const value = ref(['a']);
+const count = ref(0);
 const items = [
-	{ value: 'install', title: '安装', content: '通过包管理器安装后，按需引入 Collapse 与 CollapseItem。' },
-	{ value: 'usage', title: '使用', content: '使用 v-model 绑定展开项，普通模式下为数组，可同时展开多个面板。' },
-	{ value: 'style', title: '样式', content: '默认提供边框、间距与展开箭头，颜色与字号跟随主题变量。' }
+	{ value: 'a', title: '面板一', content: '使用 v-model 绑定展开项，普通模式下为数组。' },
+	{ value: 'b', title: '面板二', content: '普通模式可同时展开多个面板。' },
+	{ value: 'c', title: '面板三', content: '默认提供边框、间距与展开箭头，颜色与字号跟随主题变量。' }
 ];
+
+const handleChange = () => {
+	count.value++;
+};
 </script>
+
 <style scoped>
-.collapse-demo { display: grid; gap: 12px; }
-.collapse-demo p { margin: 0; }
+.collapse-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.collapse-demo__result {
+	margin: 0;
+}
 </style>
 ```
 :::
@@ -49,7 +70,14 @@ const items = [
 设置 `accordion` 后同一时间只展开一项，绑定值为单个标识，收起当前项时为 `undefined`。`:alive="false"` 在收起时卸载内容，重新展开后内容状态会重建；CollapseItem 的 `alive` 可单独覆盖。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 20 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
 	<div class="collapse-demo">
@@ -65,9 +93,10 @@ const items = [
 				</template>
 			</CollapseItem>
 		</Collapse>
-		<p>当前展开：{{ value === undefined ? '无' : value }}</p>
+		<p class="collapse-demo__result">当前展开：{{ value === undefined ? '无' : value }}</p>
 	</div>
 </template>
+
 <script setup>
 import { ref } from 'vue';
 import { Collapse, CollapseItem, Input } from '@deot/vc';
@@ -76,9 +105,17 @@ const value = ref(1);
 const draft = ref('');
 const kept = ref('');
 </script>
+
 <style scoped>
-.collapse-demo { display: grid; gap: 12px; }
-.collapse-demo p { margin: 0; }
+.collapse-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.collapse-demo__result {
+	margin: 0;
+}
 </style>
 ```
 :::
@@ -88,35 +125,51 @@ const kept = ref('');
 `:collapsible="false"` 时点击已展开的面板不会收起，不触发 `change`。与 `accordion` 一起使用即同一时间有且只有一项展开，适合步骤说明、设置分组等场景；未设置初始展开项时，首次点击后才开始保持展开。也可只在某个 CollapseItem 上设置，仅锁定该项。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 20 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
 	<div class="collapse-demo">
 		<Collapse v-model="value" accordion :collapsible="false">
 			<CollapseItem v-for="item in steps" :key="item.value" :value="item.value" :title="item.title" :content="item.content" />
 		</Collapse>
-		<p>当前步骤：{{ value }}</p>
+		<p class="collapse-demo__result">当前步骤：{{ value }}</p>
 		<Collapse v-model="opened">
-			<CollapseItem value="basic" title="基本信息（不可收起）" :collapsible="false" content="此项设置了 :collapsible='false'，展开后不能收起。" />
-			<CollapseItem value="more" title="更多信息" content="其余面板正常展开、收起。" />
+			<CollapseItem value="basic" title="面板一（不可收起）" :collapsible="false" content="此项设置了 :collapsible='false'，展开后不能收起。" />
+			<CollapseItem value="more" title="面板二" content="其余面板正常展开、收起。" />
 		</Collapse>
 	</div>
 </template>
+
 <script setup>
 import { ref } from 'vue';
 import { Collapse, CollapseItem } from '@deot/vc';
 
-const value = ref('account');
+const value = ref('first');
 const opened = ref(['basic']);
 const steps = [
-	{ value: 'account', title: '1. 账号信息', content: '点击当前展开的面板不会收起。' },
-	{ value: 'profile', title: '2. 个人资料', content: '点击其他面板时切换展开项。' },
-	{ value: 'confirm', title: '3. 确认提交', content: '任何时候都有且只有一项展开。' }
+	{ value: 'first', title: '1. 第一步', content: '点击当前展开的面板不会收起。' },
+	{ value: 'second', title: '2. 第二步', content: '点击其他面板时切换展开项。' },
+	{ value: 'third', title: '3. 第三步', content: '任何时候都有且只有一项展开。' }
 ];
 </script>
+
 <style scoped>
-.collapse-demo { display: grid; gap: 12px; }
-.collapse-demo p { margin: 0; }
+.collapse-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.collapse-demo__result {
+	margin: 0;
+}
 </style>
 ```
 :::
@@ -126,34 +179,54 @@ const steps = [
 `extra` 显示在标题右侧，可用属性或插槽（插槽接收 `{ visible }`）。点击附加内容不会展开或收起面板，适合放置操作按钮。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 20 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
 	<div class="collapse-demo">
 		<Collapse v-model="value">
-			<CollapseItem :value="1" title="订单信息" extra="3 项">
-				<template #content>订单编号、下单时间、支付方式。</template>
+			<CollapseItem :value="1" title="面板一" extra="3 项">
+				<template #content>条目一、条目二、条目三。</template>
 			</CollapseItem>
-			<CollapseItem :value="2" title="收货地址">
+			<CollapseItem :value="2" title="面板二">
 				<template #extra="{ visible }">
-					<Button size="small" @click="count++">{{ visible ? '保存' : '编辑' }}</Button>
+					<Button size="small" @click="handleClick">{{ visible ? '保存' : '编辑' }}</Button>
 				</template>
 				<template #content>点击右侧按钮不会切换面板。</template>
 			</CollapseItem>
 		</Collapse>
-		<p>按钮点击次数：{{ count }}</p>
+		<p class="collapse-demo__result">按钮点击次数：{{ count }}</p>
 	</div>
 </template>
+
 <script setup>
 import { ref } from 'vue';
 import { Button, Collapse, CollapseItem } from '@deot/vc';
 
 const value = ref([]);
 const count = ref(0);
+
+const handleClick = () => {
+	count.value++;
+};
 </script>
+
 <style scoped>
-.collapse-demo { display: grid; gap: 12px; }
-.collapse-demo p { margin: 0; }
+.collapse-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.collapse-demo__result {
+	margin: 0;
+}
 </style>
 ```
 :::
@@ -163,19 +236,26 @@ const count = ref(0);
 `arrow` 设置箭头位置，`false` 时隐藏，CollapseItem 可单独覆盖；`arrow` 插槽可替换内置箭头。`triggerRegion="arrow"` 时只有点击箭头才会切换。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 20 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
 	<div class="collapse-demo">
-		<div class="toolbar">
+		<div class="collapse-demo__row">
 			<RadioGroup v-model="arrow">
 				<Radio value="left">左侧</Radio>
 				<Radio value="right">右侧</Radio>
 				<Radio :value="false">隐藏</Radio>
 			</RadioGroup>
-			<Checkbox v-model="arrowOnly">仅点击箭头切换</Checkbox>
+			<Checkbox v-model="isArrowOnly">仅点击箭头切换</Checkbox>
 		</div>
-		<Collapse v-model="value" :arrow="arrow" :trigger-region="arrowOnly ? 'arrow' : 'header'">
+		<Collapse v-model="value" :arrow="arrow" :trigger-region="isArrowOnly ? 'arrow' : 'header'">
 			<CollapseItem :value="1" title="跟随 Collapse">
 				<template #content>箭头位置由 Collapse 的 arrow 决定。</template>
 			</CollapseItem>
@@ -189,17 +269,29 @@ const count = ref(0);
 		</Collapse>
 	</div>
 </template>
+
 <script setup>
 import { ref } from 'vue';
 import { Checkbox, Collapse, CollapseItem, Radio, RadioGroup } from '@deot/vc';
 
 const value = ref([1]);
 const arrow = ref('left');
-const arrowOnly = ref(false);
+const isArrowOnly = ref(false);
 </script>
+
 <style scoped>
-.collapse-demo { display: grid; gap: 12px; }
-.toolbar { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
+.collapse-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.collapse-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
 </style>
 ```
 :::
@@ -209,15 +301,22 @@ const arrowOnly = ref(false);
 `border` 控制外边框；`disabled` 可作用于整个 Collapse，也可单独设置在 CollapseItem 上。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 20 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
 	<div class="collapse-demo">
-		<div class="toolbar">
-			<Checkbox v-model="border">边框</Checkbox>
-			<Checkbox v-model="disabled">全部禁用</Checkbox>
+		<div class="collapse-demo__row">
+			<Checkbox v-model="isBorder">边框</Checkbox>
+			<Checkbox v-model="isDisabled">全部禁用</Checkbox>
 		</div>
-		<Collapse v-model="value" :border="border" :disabled="disabled">
+		<Collapse v-model="value" :border="isBorder" :disabled="isDisabled">
 			<CollapseItem :value="1" title="可用面板">
 				<template #content>勾选“全部禁用”后此项也无法切换。</template>
 			</CollapseItem>
@@ -227,17 +326,29 @@ const arrowOnly = ref(false);
 		</Collapse>
 	</div>
 </template>
+
 <script setup>
 import { ref } from 'vue';
 import { Checkbox, Collapse, CollapseItem } from '@deot/vc';
 
 const value = ref([1]);
-const border = ref(true);
-const disabled = ref(false);
+const isBorder = ref(true);
+const isDisabled = ref(false);
 </script>
+
 <style scoped>
-.collapse-demo { display: grid; gap: 12px; }
-.toolbar { display: flex; gap: 16px; }
+.collapse-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.collapse-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
 </style>
 ```
 :::
@@ -247,73 +358,113 @@ const disabled = ref(false);
 `headerStyle` / `headerClass` 作用于标题栏，`contentStyle` / `contentClass` 作用于内容区。Collapse 与 CollapseItem 都可设置：类名叠加，样式同名时以 CollapseItem 为准。例如在 Collapse 上去掉内容区灰底，再单独给某一项设置背景。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 20 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
 	<div class="collapse-demo">
-		<Checkbox v-model="plain">内容区去掉灰底</Checkbox>
+		<Checkbox v-model="isPlain">内容区去掉灰底</Checkbox>
 		<Collapse
 			v-model="value"
-			:content-style="plain ? { background: 'transparent' } : undefined"
-			header-class="demo-header"
+			:content-style="isPlain ? { background: 'transparent' } : undefined"
+			header-class="collapse-demo__header"
 		>
 			<CollapseItem :value="1" title="跟随 Collapse" content="内容区样式由 Collapse 的 contentStyle 决定。" />
 			<CollapseItem
 				:value="2"
 				title="单独设置"
-				content="此项的 contentStyle 覆盖了 Collapse 的同名样式。"
+				content="此项的 contentStyle 覆盖了 Collapse 的同名样式，contentClass 加粗了文字。"
+				content-class="collapse-demo__content"
 				:header-style="{ color: 'var(--vc-color-primary)' }"
 				:content-style="{ background: 'var(--vc-background-color-primary-light)' }"
 			/>
 		</Collapse>
 	</div>
 </template>
+
 <script setup>
 import { ref } from 'vue';
 import { Checkbox, Collapse, CollapseItem } from '@deot/vc';
 
 const value = ref([1, 2]);
-const plain = ref(true);
+const isPlain = ref(true);
 </script>
+
 <style scoped>
-.collapse-demo { display: grid; gap: 12px; }
-.collapse-demo :deep(.demo-header) { padding-top: 10px; padding-bottom: 10px; }
+.collapse-demo {
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	gap: 16px;
+}
+
+.collapse-demo :deep(.collapse-demo__header) {
+	padding-top: 10px;
+	padding-bottom: 10px;
+}
+
+.collapse-demo :deep(.collapse-demo__content) {
+	font-weight: 500;
+}
 </style>
 ```
 :::
 
 ### 无样式
 
-设置 `styleless` 后不添加任何默认类名，也不渲染内置箭头，外观完全由插槽决定；默认插槽同样接收 `{ visible }`，折叠行为不变。
+设置 `styleless` 后不添加任何默认类名，也不渲染内置箭头，外观完全由插槽决定；默认插槽同样接收 `{ visible }`，折叠行为不变。`tag` 改变 Collapse 与 CollapseItem 渲染的标签，例如渲染为列表。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 20 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<Collapse v-model="value" styleless class="faq">
-		<CollapseItem v-for="item in items" :key="item.q" :value="item.q">
+	<Collapse v-model="value" styleless tag="ul" class="collapse-demo">
+		<CollapseItem v-for="item in items" :key="item.question" :value="item.question" tag="li">
 			<template #default="{ visible }">
-				<div class="faq__question">
-					<span>{{ item.q }}</span>
+				<div class="collapse-demo__question">
+					<span>{{ item.question }}</span>
 					<span>{{ visible ? '−' : '+' }}</span>
 				</div>
 			</template>
-			<template #content><p class="faq__answer">{{ item.a }}</p></template>
+			<template #content>
+				<p class="collapse-demo__answer">{{ item.answer }}</p>
+			</template>
 		</CollapseItem>
 	</Collapse>
 </template>
+
 <script setup>
 import { ref } from 'vue';
 import { Collapse, CollapseItem } from '@deot/vc';
 
 const value = ref([]);
 const items = [
-	{ q: '是否支持手风琴模式？', a: '支持，设置 accordion 即可。' },
-	{ q: '能否完全自定义外观？', a: '可以，设置 styleless 后只保留折叠行为。' }
+	{ question: '问题一：是否支持手风琴模式？', answer: '支持，设置 accordion 即可。' },
+	{ question: '问题二：能否完全自定义外观？', answer: '可以，设置 styleless 后只保留折叠行为。' }
 ];
 </script>
+
 <style scoped>
-.faq__question {
+.collapse-demo {
+	padding: 0;
+	margin: 0;
+	list-style: none;
+}
+
+.collapse-demo__question {
 	display: flex;
 	justify-content: space-between;
 	padding: 12px 0;
@@ -321,14 +472,99 @@ const items = [
 	font-weight: 500;
 	cursor: pointer;
 }
-.faq__answer { margin: 0; padding: 12px 0; font-size: 13px; opacity: .8; }
+
+.collapse-demo__answer {
+	padding: 12px 0;
+	margin: 0;
+	font-size: 13px;
+	opacity: .8;
+}
 </style>
 ```
 :::
 
 ## 移动端
 
-`MCollapse`、`MCollapseItem` 的属性、事件、插槽、方法与 `Collapse`、`CollapseItem` 相同，结构也相同，根节点另有标记类 `.vcm-collapse`、`.vcm-collapse-item`，结构样式、颜色与主题参数共用。尺寸按 750 稿设计，写为 `calc(var(--vc-rem) * n)`，随 `--vc-rem` 缩放（括号内为 375 宽下的 px）：
+`MCollapse`、`MCollapseItem` 的属性、事件、插槽、方法与 `Collapse`、`CollapseItem` 相同，结构也相同，根节点另有标记类 `.vcm-collapse`、`.vcm-collapse-item`，结构样式、颜色与主题参数共用。尺寸按 750 稿设计，写为 `calc(var(--vc-rem) * n)`，随 `--vc-rem` 缩放；底栏切换 `rem` 可查看不同屏宽下的效果。下例依次展示基础用法、手风琴与右侧箭头、附加内容插槽与自定义箭头、无边框。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	mobile: true,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
+</config>
+-->
+```vue
+<template>
+	<div class="m-collapse-demo">
+		<MCollapse v-model="value">
+			<MCollapseItem :value="1" title="标题一" :content="text" />
+			<MCollapseItem :value="2" title="标题二" extra="附加内容" :content="text" />
+			<MCollapseItem :value="3" title="禁用" disabled :content="text" />
+		</MCollapse>
+		<MCollapse v-model="active" accordion arrow="right">
+			<MCollapseItem v-for="item in 3" :key="item" :value="item" :title="`手风琴 ${item}`" :content="text" />
+		</MCollapse>
+		<MCollapse v-model="custom" arrow="right">
+			<MCollapseItem :value="1" title="附加按钮">
+				<template #extra="{ visible }">
+					<MButton size="mini" @click="handleClick">{{ visible ? '展开中' : '收起中' }} · {{ count }}</MButton>
+				</template>
+				<template #content>点击按钮不会切换面板</template>
+			</MCollapseItem>
+			<MCollapseItem :value="2" title="自定义箭头" :content="text">
+				<template #arrow="{ visible }">
+					<span class="m-collapse-demo__arrow">{{ visible ? '收起' : '展开' }}</span>
+				</template>
+			</MCollapseItem>
+		</MCollapse>
+		<MCollapse v-model="plain" :border="false">
+			<MCollapseItem :value="1" title="无边框一" :content="text" />
+			<MCollapseItem :value="2" title="无边框二" :content="text" />
+		</MCollapse>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { MButton, MCollapse, MCollapseItem } from '@deot/vc';
+
+const text = '这里是内容区域，字号与行高随屏幕宽度等比缩放，内容较长时自动换行显示。';
+const value = ref([1]);
+const active = ref(1);
+const custom = ref([]);
+const plain = ref([]);
+const count = ref(0);
+
+const handleClick = () => {
+	count.value++;
+};
+</script>
+
+<style scoped>
+.m-collapse-demo {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--vc-rem) * 32);
+}
+
+.m-collapse-demo__arrow {
+	font-size: calc(var(--vc-rem) * 28);
+	font-weight: 400;
+	color: var(--vc-color-primary);
+}
+</style>
+```
+:::
+
+尺寸如下（括号内为 375 宽下的 px）：
 
 | 项 | 值 |
 | --- | --- |
@@ -346,22 +582,6 @@ const items = [
 边框保持 1px（高分屏 0.5px），不随 `--vc-rem` 缩放。
 
 两端的尺寸都写成局部变量 `--vc-collapse-<键>`，桌面端的默认值为 px 或主题参数，移动端在 `.vcm-collapse`、`.vcm-collapse-item` 上覆盖，与样式的加载顺序无关。键为 `font-size`（即主题参数）、`line-height`、`radius`、`header-padding`、`extra-gap`、`extra-font-size`、`arrow-size`、`arrow-gap`、`arrow-color`、`icon-transform`、`icon-active-transform`、`content-padding`、`content-font-size`、`content-background`。
-
-```vue
-<template>
-	<MCollapse v-model="value" accordion>
-		<MCollapseItem :value="1" title="标题一" content="内容一" />
-		<MCollapseItem :value="2" title="标题二" content="内容二" />
-	</MCollapse>
-</template>
-
-<script setup>
-import { ref } from 'vue';
-import { MCollapse, MCollapseItem } from '@deot/vc';
-
-const value = ref(1);
-</script>
-```
 
 ## API
 

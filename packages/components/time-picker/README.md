@@ -2,22 +2,38 @@
 
 通过时间面板选择时、分、秒或起止时间。
 
+移动端入口导出的 `MTimePicker` 与 `TimePicker` 是同一实现；需要滚轮选择时使用 [MDatePicker](../date-picker/README.md#移动端) 的 `time`、`timerange` 类型。
+
 ### 何时使用
 
 用于预约时间、营业时段等只需录入时间的场景。
 
 ### 基础用法
 
-`type="time"` 选择单个时间，`type="timerange"` 选择范围。选择后分别输出格式化字符串和两个字符串组成的数组；默认格式为 `HH:mm:ss`。
+`type="time"` 选择单个时间，`type="timerange"` 选择范围。选择后分别输出格式化字符串和两个字符串组成的数组；默认格式为 `HH:mm:ss`。每次提交触发 `change`，参数为 `(value, reset)`。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="demo">
-		<label>时间<TimePicker v-model="time" /></label>
-		<label>时间范围<TimePicker v-model="range" type="timerange" confirm /></label>
-		<p>时间：{{ time }}；范围：{{ range }}</p>
+	<div class="time-picker-demo">
+		<label class="time-picker-demo__field">
+			<span>时间</span>
+			<TimePicker v-model="time" @change="handleChange" />
+		</label>
+		<label class="time-picker-demo__field">
+			<span>时间范围</span>
+			<TimePicker v-model="range" type="timerange" confirm @change="handleChange" />
+		</label>
+		<p class="time-picker-demo__result">时间：{{ time }}；范围：{{ range }}</p>
+		<p class="time-picker-demo__result">change：{{ changed }}</p>
 	</div>
 </template>
 
@@ -27,36 +43,68 @@ import { TimePicker } from '@deot/vc';
 
 const time = ref('08:30:00');
 const range = ref(['09:00:00', '18:00:00']);
+const changed = ref('-');
+
+const handleChange = (value) => {
+	changed.value = JSON.stringify(value);
+};
 </script>
 
 <style scoped>
-.demo { display: grid; gap: 16px; max-width: 420px; }
-.demo label { display: grid; gap: 8px; }
-.demo p { margin: 0; overflow-wrap: anywhere; }
+.time-picker-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	max-width: 420px;
+}
+
+.time-picker-demo__field {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.time-picker-demo__result {
+	margin: 0;
+	overflow-wrap: anywhere;
+}
 </style>
 ```
 :::
 
-### 确认、步长与禁用时间
+### 确认、步长与清空
 
-`confirm` 开启后，点击确定才提交值。`steps` 依次设置时、分、秒的步长；禁用列表中使用数字。下面的示例仅显示时、分，分钟以 15 分钟递增。
+`confirm` 开启后，点击确定才提交值并触发 `ok`。`steps` 依次设置时、分、秒的步长；`format="HH:mm"` 只显示时、分，下例分钟以 15 分钟递增。`@before-ok` 在确认前调用，接收未格式化的 `Date[]`，返回的 Promise reject 时中止提交；`@before-clear` 同理作用于清空，同步抛错时触发 `error`。清空后单值返回 `nullValue`，`clearable` 为 `false` 时不显示清除图标。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="demo">
-		<TimePicker
-			v-model="time"
-			:steps="[1, 15]"
-			:disabled-hours="[0, 1, 2, 3, 4, 5, 6, 7]"
-			format="HH:mm"
-			confirm
-			@ok="handleOk"
-			@clear="handleClear"
-		/>
-		<p>已提交：{{ time || '未选择' }}</p>
-		<p>{{ status }}</p>
+	<div class="time-picker-demo">
+		<div class="time-picker-demo__row">
+			<TimePicker
+				v-model="time"
+				:steps="[1, 15]"
+				:null-value="null"
+				format="HH:mm"
+				confirm
+				@before-ok="handleBeforeOk"
+				@before-clear="handleBeforeClear"
+				@ok="handleOk"
+				@clear="handleClear"
+				@error="handleError"
+			/>
+			<TimePicker v-model="fixed" :clearable="false" format="HH:mm" />
+		</div>
+		<p class="time-picker-demo__result">已提交：{{ time === null ? 'null' : time }}</p>
+		<p class="time-picker-demo__result">{{ status }}</p>
 	</div>
 </template>
 
@@ -65,14 +113,115 @@ import { ref } from 'vue';
 import { TimePicker } from '@deot/vc';
 
 const time = ref('09:00');
-const status = ref('请选择时间并确认');
-const handleOk = (value) => { status.value = '已确认：' + value; };
-const handleClear = () => { status.value = '已清空'; };
+const fixed = ref('18:00');
+const status = ref('选择时间后点击确定；确认前会等待 0.5 秒');
+
+const handleBeforeOk = () => new Promise((resolve) => {
+	status.value = '确认中…';
+	setTimeout(resolve, 500);
+});
+
+const handleBeforeClear = () => {
+	if (time.value === '12:00') {
+		throw new Error('12:00 不允许清空');
+	}
+};
+
+const handleOk = (value) => {
+	status.value = `已确认：${value}`;
+};
+
+const handleClear = () => {
+	status.value = '已清空';
+};
+
+const handleError = (error) => {
+	status.value = `error：${error.message}`;
+};
 </script>
 
 <style scoped>
-.demo { max-width: 360px; }
-.demo p { overflow-wrap: anywhere; }
+.time-picker-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	max-width: 420px;
+}
+
+.time-picker-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+.time-picker-demo__result {
+	margin: 0;
+	overflow-wrap: anywhere;
+}
+</style>
+```
+:::
+
+### 禁用时间
+
+`disabledHours`、`disabledMinutes`、`disabledSeconds` 按数字禁用时、分、秒，`disabledTime` 按完整时间判断；`filterable` 隐藏被禁用的选项。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
+```vue
+<template>
+	<div class="time-picker-demo">
+		<label class="time-picker-demo__field">
+			<span>禁用 0–7 点、每小时前 10 分钟与 30 秒之后</span>
+			<TimePicker
+				v-model="time"
+				:disabled-hours="[0, 1, 2, 3, 4, 5, 6, 7]"
+				:disabled-minutes="[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]"
+				:disabled-seconds="seconds"
+			/>
+		</label>
+		<label class="time-picker-demo__field">
+			<span>disabledTime 只允许 9:00–18:00，filterable 隐藏禁用项</span>
+			<TimePicker v-model="limited" :disabled-time="handleDisabledTime" format="HH:mm" filterable />
+		</label>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { TimePicker } from '@deot/vc';
+
+const time = ref('08:10:00');
+const limited = ref('09:30');
+const seconds = Array.from({ length: 29 }, (_, i) => i + 31);
+
+const handleDisabledTime = (date) => {
+	const minutes = date.getHours() * 60 + date.getMinutes();
+	return minutes < 9 * 60 || minutes > 18 * 60;
+};
+</script>
+
+<style scoped>
+.time-picker-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	max-width: 420px;
+}
+
+.time-picker-demo__field {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
 </style>
 ```
 :::
@@ -83,16 +232,24 @@ const handleClear = () => { status.value = '已清空'; };
 
 - `timerange` 在一个输入框里输入起止，中间用 `separator` 分隔，起止颠倒时自动调换。
 - 开启 `confirm` 时，键入只预览，按 Enter 等同点“确定”，焦点离开或直接关闭不提交。
-- Esc 放弃键入的文字并关闭面板，Tab 关闭并按上面的规则提交；完整的规则与按键见 [DatePicker 的手动输入](../date-picker/README.md#手动输入)。不需要输入时设置 `editable` 为 `false`。
+- Esc 放弃键入的文字并关闭面板，Tab 关闭并按上面的规则提交；完整的规则与按键见 [DatePicker 的手动输入](../date-picker/README.md#手动输入)。不需要输入时设置 `editable` 为 `false`，输入框只读，仍可点击打开面板。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="time-picker-editable-demo">
+	<div class="time-picker-demo">
 		<TimePicker v-model="time" :disabled-hours="[12, 13]" placeholder="如 9:5:7" />
-		<TimePicker v-model="range" type="timerange" format="HH:mm" placeholder="如 9:00 - 18:00" />
-		<p>time：{{ time || '无' }}；range：{{ range.join(' ~ ') || '无' }}</p>
+		<TimePicker v-model="range" type="timerange" format="HH:mm" separator=" ~ " placeholder="如 9:00 ~ 18:00" />
+		<TimePicker v-model="readonly" :editable="false" placeholder="只能在面板中选择" />
+		<p class="time-picker-demo__result">time：{{ time || '无' }}；range：{{ range.join(' ~ ') || '无' }}；readonly：{{ readonly || '无' }}</p>
 	</div>
 </template>
 
@@ -102,26 +259,144 @@ import { TimePicker } from '@deot/vc';
 
 const time = ref('08:30:00');
 const range = ref(['09:00', '18:00']);
+const readonly = ref('');
 </script>
 
 <style scoped>
-.time-picker-editable-demo { display: grid; gap: 12px; max-width: 360px; }
-.time-picker-editable-demo p { margin: 0; overflow-wrap: anywhere; }
+.time-picker-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	max-width: 360px;
+}
+
+.time-picker-demo__result {
+	margin: 0;
+	overflow-wrap: anywhere;
+}
 </style>
 ```
 :::
 
-### 只读文字
+### 弹层与触发
 
-`plaintext` 时只把值按 `format` 格式化后显示，不渲染输入框与浮层：输出一个没有样式的 `<span class="vc-time-picker-plaintext">`，不能交互；没有值时显示 `extra`，未传时为空。规则同 [DatePicker 的只读文字](../date-picker/README.md#只读文字)。
+`placement` 设置弹出位置，`arrow` 显示箭头，`trigger` 设置 Popover 的触发方式；`changeOnSelect` 点选后立即提交并关闭面板。`portal` 为 `false` 时弹层挂到组件根节点内，`tag` 设置触发容器的标签，`id` 写到内部输入框上，可与 `label` 的 `for` 关联。默认插槽替换输入框作为触发内容。`open` 从外部同步面板的显示状态；面板打开、关闭时依次触发 `visible-change`、`ready`、`close`。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="time-picker-plaintext-demo">
-		<p>时间：<TimePicker model-value="08:30:00" plaintext /></p>
-		<p>范围：<TimePicker :model-value="['09:00', '18:00']" type="timerange" format="HH:mm" plaintext /></p>
+	<div class="time-picker-demo">
+		<div class="time-picker-demo__row">
+			<label for="time-picker-demo-input">右上弹出</label>
+			<TimePicker
+				id="time-picker-demo-input"
+				v-model="time"
+				placement="top-right"
+				trigger="click"
+				arrow
+				change-on-select
+			/>
+		</div>
+		<div class="time-picker-demo__row">
+			<TimePicker
+				v-model="slotTime"
+				:open="isOpen"
+				:portal="false"
+				tag="section"
+				format="HH:mm"
+				@visible-change="handleVisibleChange"
+				@ready="handleReady"
+				@close="handleClose"
+			>
+				<Button>时间：{{ slotTime }}</Button>
+			</TimePicker>
+			<Button type="primary" @click="handleOpen">从外部打开</Button>
+		</div>
+		<p class="time-picker-demo__result">{{ events.join(' → ') || '暂无事件' }}</p>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { Button, TimePicker } from '@deot/vc';
+
+const time = ref('10:00:00');
+const slotTime = ref('14:30');
+const isOpen = ref(false);
+const events = ref([]);
+
+const record = (name) => {
+	events.value = [...events.value, name].slice(-4);
+};
+
+const handleOpen = () => {
+	isOpen.value = true;
+};
+
+const handleVisibleChange = (visible) => {
+	isOpen.value = visible;
+	record(`visible-change(${visible})`);
+};
+
+const handleReady = () => {
+	record('ready');
+};
+
+const handleClose = () => {
+	isOpen.value = false;
+	record('close');
+};
+</script>
+
+<style scoped>
+.time-picker-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.time-picker-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+.time-picker-demo__result {
+	margin: 0;
+}
+</style>
+```
+:::
+
+### 禁用与只读文字
+
+`disabled` 禁用选择器。`plaintext` 时只把值按 `format` 格式化后显示，不渲染输入框与浮层：输出一个没有样式的 `<span class="vc-time-picker-plaintext">`，不能交互；没有值时显示 `extra`，未传时为空。规则同 [DatePicker 的只读文字](../date-picker/README.md#只读文字)。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
+```vue
+<template>
+	<div class="time-picker-demo">
+		<TimePicker model-value="08:30:00" disabled />
+		<p class="time-picker-demo__result">时间：<TimePicker model-value="08:30:00" plaintext /></p>
+		<p class="time-picker-demo__result">范围：<TimePicker :model-value="['09:00', '18:00']" type="timerange" format="HH:mm" plaintext /></p>
+		<p class="time-picker-demo__result">空值：<TimePicker model-value="" extra="未设置" plaintext /></p>
 	</div>
 </template>
 
@@ -130,7 +405,16 @@ import { TimePicker } from '@deot/vc';
 </script>
 
 <style scoped>
-.time-picker-plaintext-demo p { margin: 0 0 12px; }
+.time-picker-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	max-width: 360px;
+}
+
+.time-picker-demo__result {
+	margin: 0;
+}
 </style>
 ```
 :::
@@ -179,7 +463,7 @@ TimePicker 共用 DatePicker 时间面板，使用 date-picker 命名空间；In
 | open | 值变化时同步显示状态；面板仍能通过交互关闭 | `boolean` | - | `false` |
 | placeholder | 占位文本，允许空字符串 | `string` | - | 当前语言的“请选择” |
 | disabled | 禁用选择器 | `boolean` | - | `false` |
-| plaintext | 只显示格式化后的文字，不渲染输入框与浮层，没有样式、不能交互；见[只读文字](#只读文字) | `boolean` | - | `false` |
+| plaintext | 只显示格式化后的文字，不渲染输入框与浮层，没有样式、不能交互；见[只读文字](#禁用与只读文字) | `boolean` | - | `false` |
 | extra | `plaintext` 没有值时显示的文字 | `string` | - | `''` |
 | clearable | 有值且悬停时显示清除图标 | `boolean` | - | `true` |
 | editable | 可直接在输入框里键入，见[手动输入](#手动输入) | `boolean` | - | `true` |

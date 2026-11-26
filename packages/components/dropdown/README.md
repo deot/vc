@@ -1,6 +1,6 @@
 ## 下拉菜单（Dropdown）
 
-将操作收纳到浮层菜单中，通过 DropdownMenu 和 DropdownItem 展示并选择操作。
+将操作收纳到浮层菜单中，通过 DropdownMenu 和 DropdownItem 展示并选择操作。移动端入口导出 `MDropdown`、`MDropdownMenu`、`MDropdownItem`，见[移动端](#移动端)。
 
 ### 何时使用
 
@@ -8,51 +8,67 @@
 
 ### 基础用法
 
-默认悬停展开；点击菜单项会触发 `click` 并关闭菜单。回调优先使用 `value`，缺省时使用 `label`。
+默认悬停展开；点击菜单项会触发 `click` 并关闭菜单。回调优先使用 `value`，缺省时使用 `label`；DropdownItem 的默认插槽优先于 `label` 显示，但不用于推断回调值。DropdownItem 自身也触发 `click`。浮层就绪时触发 `ready`。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="dropdown-basic-demo">
-		<Dropdown
-			placement="bottom-left"
-			@visible-change="visible => visible && handleVisibleChange(true)"
-			@close="handleVisibleChange(false)"
-			@click="handleClick"
-		>
+	<div class="dropdown-demo">
+		<Dropdown placement="bottom-left" @click="handleClick" @ready="handleReady">
 			<Button>悬停查看操作</Button>
 			<template #content>
 				<DropdownMenu>
 					<DropdownItem value="edit" label="编辑" />
-					<DropdownItem value="copy" label="复制" />
-					<DropdownItem label="查看详情" />
+					<DropdownItem value="copy" label="复制" @click="handleItemClick" />
+					<DropdownItem value="detail">
+						<strong>查看详情</strong>
+					</DropdownItem>
+					<DropdownItem label="更多" />
 				</DropdownMenu>
 			</template>
 		</Dropdown>
-		<p>最近操作：{{ action }}</p>
+		<p class="dropdown-demo__result">最近操作：{{ action }}；{{ status }}</p>
 	</div>
 </template>
 
 <script setup>
-import { ref, inject } from 'vue';
-import { Button, Dropdown, DropdownMenu, DropdownItem } from '@deot/vc';
-
-const playground = inject('docs:playground');
-const handleVisibleChange = playground.run(320);
+import { ref } from 'vue';
+import { Button, Dropdown, DropdownItem, DropdownMenu } from '@deot/vc';
 
 const action = ref('尚未选择');
+const status = ref('');
+
 const handleClick = (value) => {
 	action.value = value;
+};
+
+const handleItemClick = (value) => {
+	status.value = `DropdownItem click：${value}`;
+};
+
+const handleReady = () => {
+	status.value = '触发 ready';
 };
 </script>
 
 <style scoped>
-.dropdown-basic-demo {
+.dropdown-demo {
 	display: flex;
 	flex-direction: column;
 	align-items: flex-start;
 	gap: 16px;
+}
+
+.dropdown-demo__result {
+	margin: 0;
 }
 </style>
 ```
@@ -60,20 +76,26 @@ const handleClick = (value) => {
 
 ### 点击触发与菜单项状态
 
-`selected` 只控制选中样式，选中值由调用方维护。`disabled` 阻止菜单项事件和关闭；`:closable="false"` 允许连续选择。`divided` 添加上分割线，`arrow` 显示浮层的箭头，`caret` 在触发内容之后显示箭头（展开时翻转）。
+`selected` 只控制选中样式，选中值由调用方维护。`disabled` 阻止菜单项事件和关闭；`:closable="false"` 允许连续选择。`divided` 添加上分割线，`arrow` 显示浮层的箭头，`caret` 在触发内容之后显示箭头（展开时翻转）。`v-model` 同步菜单的显隐，内部显隐操作时还会触发 `visible-change`。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="dropdown-states-demo">
+	<div class="dropdown-demo">
 		<Dropdown
 			v-model="isVisible"
 			trigger="click"
 			placement="bottom-left"
 			arrow
-			@visible-change="visible => visible && handleVisibleChange(true)"
-			@close="handleVisibleChange(false)"
+			@visible-change="handleVisibleChange"
 			@click="handleClick"
 		>
 			<Button>点击选择排序</Button>
@@ -86,7 +108,7 @@ const handleClick = (value) => {
 				</DropdownMenu>
 			</template>
 		</Dropdown>
-		<p>排序：{{ sort }}；菜单{{ isVisible ? '已展开' : '已关闭' }}</p>
+		<p class="dropdown-demo__result">排序：{{ sort }}；菜单{{ isVisible ? '已展开' : '已关闭' }}；{{ status }}</p>
 		<Dropdown caret placement="bottom-left" @click="handleClick">
 			<span>{{ sort === 'time' ? '按时间排序' : '按名称排序' }}</span>
 			<template #content>
@@ -100,25 +122,32 @@ const handleClick = (value) => {
 </template>
 
 <script setup>
-import { ref, inject } from 'vue';
-import { Button, Dropdown, DropdownMenu, DropdownItem } from '@deot/vc';
-
-const playground = inject('docs:playground');
-const handleVisibleChange = playground.run(400);
+import { ref } from 'vue';
+import { Button, Dropdown, DropdownItem, DropdownMenu } from '@deot/vc';
 
 const isVisible = ref(false);
 const sort = ref('time');
+const status = ref('');
+
 const handleClick = (value) => {
 	if (value !== 'done') sort.value = value;
+};
+
+const handleVisibleChange = (visible) => {
+	status.value = `visible-change：${visible}`;
 };
 </script>
 
 <style scoped>
-.dropdown-states-demo {
+.dropdown-demo {
 	display: flex;
 	flex-direction: column;
 	align-items: flex-start;
 	gap: 16px;
+}
+
+.dropdown-demo__result {
+	margin: 0;
 }
 </style>
 ```
@@ -126,27 +155,29 @@ const handleClick = (value) => {
 
 ### 手动控制与弹出位置
 
-`trigger="custom"` 配合 `v-model` 控制显隐，也可以通过实例 `close()` 关闭。下例切换位置后重新展开，弹层靠近视口边缘时会自动调整位置。
+`trigger="custom"` 配合 `v-model` 控制显隐，也可以通过实例 `close()` 关闭。下例切换位置后重新展开，弹层靠近视口边缘时会自动调整位置；浮层关闭时触发 `close`。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="dropdown-placement-demo">
-		<label>
-			弹出位置
-			<select v-model="placement" @change="handlePlacement">
-				<option v-for="item in placements" :key="item" :value="item">{{ item }}</option>
-			</select>
-		</label>
-		<div class="dropdown-placement-demo__stage">
+	<div class="dropdown-demo">
+		<Select v-model="placement" :data="placements" label="弹出位置" class="dropdown-demo__select" @change="handlePlacement" />
+		<div class="dropdown-demo__stage">
 			<Dropdown
-				ref="dropdown"
+				ref="dropdownRef"
 				v-model="isVisible"
-				trigger="custom"
 				:placement="placement"
+				trigger="custom"
 				arrow
-				@close="isPreviewVisible = false"
+				@close="handleClose"
 			>
 				<Button @click="handleToggle">{{ isVisible ? '收起' : '展开' }}菜单</Button>
 				<template #content>
@@ -157,55 +188,278 @@ const handleClick = (value) => {
 				</template>
 			</Dropdown>
 		</div>
-		<Button @click="handleClose">调用 close()</Button>
+		<div class="dropdown-demo__row">
+			<Button @click="handleCall">调用 close()</Button>
+		</div>
+		<p class="dropdown-demo__result">{{ status }}</p>
 	</div>
 </template>
 
 <script setup>
-import { ref, inject } from 'vue';
-import { Button, Dropdown, DropdownMenu, DropdownItem } from '@deot/vc';
+import { ref } from 'vue';
+import { Button, Dropdown, DropdownItem, DropdownMenu, Select } from '@deot/vc';
 
-const playground = inject('docs:playground');
-
-const dropdown = ref();
+const dropdownRef = ref();
 const isVisible = ref(false);
-const isPreviewVisible = ref(false);
 const placement = ref('bottom');
+const status = ref('等待操作');
 const placements = [
 	'top', 'top-left', 'top-right', 'bottom', 'bottom-left', 'bottom-right',
 	'left', 'left-top', 'left-bottom', 'right', 'right-top', 'right-bottom'
-];
-const handleOpen = playground.run(400, { visible: isPreviewVisible }, () => {
-	isPreviewVisible.value = true;
-	isVisible.value = true;
-});
+].map(value => ({ value, label: value }));
+
 const handleToggle = () => {
-	if (isVisible.value) isVisible.value = false;
-	else handleOpen();
+	isVisible.value = !isVisible.value;
 };
+
 const handlePlacement = () => {
 	isVisible.value = false;
 };
+
+const handleCall = () => {
+	dropdownRef.value?.close();
+};
+
 const handleClose = () => {
-	dropdown.value?.close();
+	status.value = '触发 close';
 };
 </script>
 
 <style scoped>
-.dropdown-placement-demo {
-	display: grid;
+.dropdown-demo {
+	display: flex;
+	flex-direction: column;
 	gap: 16px;
-	justify-items: start;
 }
-.dropdown-placement-demo__stage {
+
+.dropdown-demo__select {
+	width: 240px;
+}
+
+.dropdown-demo__stage {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	width: 100%;
+}
+
+.dropdown-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.dropdown-demo__result {
+	margin: 0;
 }
 </style>
 ```
 :::
+
+### 固定的页头与页脚
+
+`header`、`footer` 插槽放在浮层的顶部和底部，不随菜单内容滚动，可放置说明或「重置」等按钮。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
+```vue
+<template>
+	<div class="dropdown-demo">
+		<Dropdown trigger="click" placement="bottom-left" @click="handleClick">
+			<Button>筛选条目</Button>
+			<template #header>
+				<div class="dropdown-demo__header">选择一个分组</div>
+			</template>
+			<template #content>
+				<DropdownMenu>
+					<DropdownItem v-for="item in groups" :key="item" :label="item" :selected="current === item" />
+				</DropdownMenu>
+			</template>
+			<template #footer>
+				<div class="dropdown-demo__footer">
+					<Button size="small" type="text" @click="current = ''">重置</Button>
+				</div>
+			</template>
+		</Dropdown>
+		<p class="dropdown-demo__result">当前分组：{{ current || '全部' }}</p>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { Button, Dropdown, DropdownItem, DropdownMenu } from '@deot/vc';
+
+const groups = ['分组 A', '分组 B', '分组 C'];
+const current = ref('');
+
+const handleClick = (value) => {
+	current.value = value;
+};
+</script>
+
+<style scoped>
+.dropdown-demo {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 16px;
+}
+
+.dropdown-demo__header {
+	padding: 8px 16px 4px;
+	font-size: 12px;
+	color: var(--vc-color-dark-extralight);
+}
+
+.dropdown-demo__footer {
+	display: flex;
+	justify-content: flex-end;
+	padding: 4px 8px;
+}
+
+.dropdown-demo__result {
+	margin: 0;
+}
+</style>
+```
+:::
+
+## 移动端
+
+`MDropdown`、`MDropdownMenu`、`MDropdownItem` 与桌面端的结构相同：默认插槽为触发区，`content` 插槽放 `MDropdownMenu`（`ul`）与 `MDropdownItem`（`li`）。根节点另有标记类 `.vcm-dropdown`、`.vcm-dropdown-menu`、`.vcm-dropdown-item`，颜色与主题参数共用。尺寸按 750 稿设计，写为 `calc(var(--vc-rem) * n)`，随 `--vc-rem` 缩放，底栏切换 `rem` 可查看不同屏宽下的效果。
+
+弹层不是跟随触发区的气泡，而是占满视口宽度的面板：从触发区下沿向下滑出，其余区域为蒙层，触发区保持可见；`placement` 为 `top*`，或下方剩余空间不足（小于上方且不到视口一半）时，从触发区上沿向上展开。面板为直角，最高为可用高度的 80%，超出时滚动。点击蒙层、面板与触发区以外的区域时关闭。同一时间只展开一个：展开另一个时，前一个立即收起，蒙层保持显示。
+
+属性与 `Dropdown` 的差异：
+
+- `trigger` 只有 `click`（默认）与 `custom`。
+- 没有 `arrow`、`scrollable`、`scrollerOptions`；`portalClass`、`portalStyle` 作用于弹层容器。
+- `tag`、`disabled`、`portal`、`to` 为声明的属性（桌面端经 Popover 透传）。
+- `header`、`footer` 插槽放在面板的顶部和底部，不随内容滚动，可放置「重置」「确定」等按钮。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	mobile: true,
+	local: false,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
+</config>
+-->
+```vue
+<template>
+	<div class="m-dropdown-demo">
+		<div class="m-dropdown-demo__bar">
+			<MDropdown caret @click="handleSort">
+				{{ sort }}
+				<template #content>
+					<MDropdownMenu>
+						<MDropdownItem v-for="item in sorts" :key="item" :label="item" :selected="sort === item" />
+					</MDropdownMenu>
+				</template>
+			</MDropdown>
+			<MDropdown v-model="isFilterVisible" trigger="custom" caret>
+				<span @click="isFilterVisible = !isFilterVisible">筛选</span>
+				<template #content>
+					<MDropdownMenu>
+						<MDropdownItem
+							v-for="item in groups"
+							:key="item"
+							:label="item"
+							:selected="filters.includes(item)"
+							:closable="false"
+							@click="handleToggle"
+						/>
+						<MDropdownItem label="不可用" disabled divided />
+					</MDropdownMenu>
+				</template>
+				<template #footer>
+					<div class="m-dropdown-demo__footer">
+						<MButton class="m-dropdown-demo__button" @click="filters = []">重置</MButton>
+						<MButton type="primary" class="m-dropdown-demo__button" @click="isFilterVisible = false">确定</MButton>
+					</div>
+				</template>
+			</MDropdown>
+		</div>
+		<p class="m-dropdown-demo__result">排序：{{ sort }}；筛选：{{ filters.join('、') || '全部' }}</p>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { MButton, MDropdown, MDropdownItem, MDropdownMenu } from '@deot/vc';
+
+const sorts = ['默认排序', '最新', '名称'];
+const groups = ['分组 A', '分组 B', '分组 C'];
+const sort = ref(sorts[0]);
+const filters = ref([]);
+const isFilterVisible = ref(false);
+
+const handleSort = (value) => {
+	sort.value = value;
+};
+
+const handleToggle = (value) => {
+	filters.value = filters.value.includes(value)
+		? filters.value.filter(item => item !== value)
+		: [...filters.value, value];
+};
+</script>
+
+<style scoped>
+.m-dropdown-demo {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--vc-rem) * 32);
+}
+
+.m-dropdown-demo__bar {
+	display: flex;
+	justify-content: space-around;
+	padding: calc(var(--vc-rem) * 24) calc(var(--vc-rem) * 32);
+	background: var(--vc-background-color-lightest);
+}
+
+.m-dropdown-demo__footer {
+	display: flex;
+	gap: calc(var(--vc-rem) * 24);
+	padding: calc(var(--vc-rem) * 16) calc(var(--vc-rem) * 32);
+}
+
+.m-dropdown-demo__button {
+	flex: 1;
+}
+
+.m-dropdown-demo__result {
+	margin: 0;
+	padding-inline: calc(var(--vc-rem) * 32);
+}
+</style>
+```
+:::
+
+尺寸如下（括号内为 375 宽下的 px）：
+
+| 项 | 值 |
+| --- | --- |
+| 菜单项 | 字号 32（16），行高 44（22），内边距 32（16），单行时高 108（54），与 `MList` 一致；占满面板宽度，超出省略 |
+| 选中项 | 文字为主色，右侧对勾 32（16）（`correct` 图标，同 Select 选项） |
+| `caret` | 实心三角 24（12），与文字间距 8（4），收起时 `color-neutral`；展开时与触发区文字一起变为主色 |
+| `divided` | 上方一条细线，没有间距；其余项之间不画线 |
+
+按下菜单项时显示 `background-color-light` 底色（同 `MListItem`），不使用悬停样式。
 
 ## 主题与局部覆盖
 
@@ -247,51 +501,6 @@ const handleClose = () => {
 | item-color | 菜单项文字 | 全局 `color-dark-lighter` |
 | divided-gap | `divided` 分割线上方的间距 | `5px` |
 
-## 移动端
-
-`MDropdown`、`MDropdownMenu`、`MDropdownItem` 与桌面端的结构相同：默认插槽为触发区，`content` 插槽放 `MDropdownMenu`（`ul`）与 `MDropdownItem`（`li`）。根节点另有标记类 `.vcm-dropdown`、`.vcm-dropdown-menu`、`.vcm-dropdown-item`，颜色与主题参数共用。
-
-弹层不是跟随触发区的气泡，而是占满视口宽度的面板：从触发区下沿向下滑出，其余区域为蒙层，触发区保持可见；`placement` 为 `top*`，或下方剩余空间不足（小于上方且不到视口一半）时，从触发区上沿向上展开。面板为直角，最高为可用高度的 80%，超出时滚动。点击蒙层、面板与触发区以外的区域时关闭。同一时间只展开一个：展开另一个时，前一个立即收起，蒙层保持显示。
-
-尺寸按 750 稿设计，随 `--vc-rem` 缩放（括号内为 375 宽下的 px）：
-
-| 项 | 值 |
-| --- | --- |
-| 菜单项 | 字号 32（16），行高 44（22），内边距 32（16），单行时高 108（54），与 `MList` 一致；占满面板宽度，超出省略 |
-| 选中项 | 文字为主色，右侧对勾 32（16）（`correct` 图标，同 Select 选项） |
-| `caret` | 实心三角 24（12），与文字间距 8（4），收起时 `color-neutral`；展开时与触发区文字一起变为主色 |
-| `divided` | 上方一条细线，没有间距；其余项之间不画线 |
-
-按下菜单项时显示 `background-color-light` 底色（同 `MListItem`），不使用悬停样式。
-
-属性与 `Dropdown` 的差异：
-
-- `trigger` 只有 `click`（默认）与 `custom`。
-- 没有 `arrow`、`scrollable`、`scrollerOptions`；`portalClass`、`portalStyle` 作用于弹层容器。
-- `tag`、`disabled`、`portal`、`to` 为声明的属性（桌面端经 Popover 透传）。
-- `header`、`footer` 插槽放在面板的顶部和底部，不随内容滚动，可放置「重置」「确定」等按钮。
-
-```vue
-<template>
-	<MDropdown caret @click="value => sort = value">
-		{{ sort }}
-		<template #content>
-			<MDropdownMenu>
-				<MDropdownItem v-for="item in sorts" :key="item" :label="item" :selected="sort === item" />
-			</MDropdownMenu>
-		</template>
-	</MDropdown>
-</template>
-
-<script setup>
-import { ref } from 'vue';
-import { MDropdown, MDropdownMenu, MDropdownItem } from '@deot/vc';
-
-const sorts = ['默认排序', '最新', '名称'];
-const sort = ref(sorts[0]);
-</script>
-```
-
 ## API
 
 ### Dropdown 属性
@@ -304,6 +513,8 @@ const sort = ref(sorts[0]);
 | arrow | 是否显示浮层的箭头 | `boolean` | - | `false` |
 | caret | 是否在触发内容之后显示箭头；展开时翻转 | `boolean` | - | `false` |
 | portalClass | 浮层附加类名 | `string \| object` | - | - |
+| scrollable | 内容区是否由内置的 Scroller 滚动；`false` 时由内容自行收缩并滚动，同 [Popover](../popover/README.md) | `boolean` | - | `true` |
+| scrollerOptions | 内置 Scroller 的属性（如 `maxHeight`、`always`），同 Popover | `object` | - | - |
 
 其他属性透传给 Popover，例如 `portal`、`portalStyle`、`to`、`outsideClickable` 和 `tag`；`class`、`style` 应用于触发根节点。`focus` 模式可搭配 `tabindex="0"`。当前不支持 `contextMenu` 触发。
 

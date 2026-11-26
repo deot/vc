@@ -2,18 +2,21 @@
 
 点击包裹的内容，将指定文本复制到剪贴板。
 
+移动端入口导出的 `MClipboard` 与 `Clipboard` 的属性、事件、插槽和静态方法相同，默认的成功提示换为 `MToast`，见 [移动端](#移动端)。
+
 ### 何时使用
 
 用于复制页面内的文字、链接或编号。
 
 ### 基础用法
 
-通过 `value` 绑定需要复制的内容。未提供 `after` 回调时，成功后显示默认提示，文案跟随当前 locale。
+通过 `value` 绑定需要复制的内容，`tag` 设置外层的标签或组件。未提供 `after` 回调时，成功后显示默认提示，文案跟随当前 locale。
 
 :::playground
 <!--
 <config lang="json5">
 {
+	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -21,15 +24,13 @@
 ```vue
 <template>
 	<div class="clipboard-demo">
-		<label>
-			<span>复制内容</span>
-			<Input v-model="msg" aria-label="复制内容" clearable />
-		</label>
+		<Input v-model="msg" class="clipboard-demo__input" aria-label="复制内容" clearable />
 		<Clipboard :value="msg" :tag="Button">
 			复制
 		</Clipboard>
 	</div>
 </template>
+
 <script setup>
 import { ref } from 'vue';
 import { Button, Clipboard, Input } from '@deot/vc';
@@ -41,13 +42,13 @@ const msg = ref('我是被复制的内容');
 .clipboard-demo {
 	display: flex;
 	flex-wrap: wrap;
-	align-items: end;
-	gap: 12px;
+	align-items: center;
+	gap: 8px;
 }
 
-label {
-	display: grid;
-	gap: 6px;
+.clipboard-demo__input {
+	width: 240px;
+	max-width: 100%;
 }
 </style>
 ```
@@ -55,12 +56,13 @@ label {
 
 ### 修改复制的内容
 
-`before` 的返回值会替换本次复制内容，支持返回 `Promise<string>`，不会修改绑定的 `value`。提供 `after` 后，由调用方处理成功反馈，组件不再显示默认提示。
+`before` 的返回值会替换本次复制内容，支持返回 `Promise<string>`，不会修改绑定的 `value`；`before` 抛出异常或拒绝时中止复制并触发 `error`（下例在内容为空时中止）。提供 `after` 后，由调用方处理成功反馈，组件不再显示默认提示。静态方法 `Clipboard.set` 直接写入内容，不触发组件回调。
 
 :::playground
 <!--
 <config lang="json5">
 {
+	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -68,23 +70,30 @@ label {
 ```vue
 <template>
 	<div class="clipboard-demo">
-		<label>
-			<span>待处理的内容</span>
-			<Textarea v-model="msg" aria-label="待处理的复制内容" :autosize="{ minRows: 2, maxRows: 4 }" />
-		</label>
-		<Clipboard
-			:value="msg"
-			:tag="Button"
-			type="primary"
-			@before="handleBefore"
-			@after="handleAfter"
-		>
-			处理后复制
-		</Clipboard>
-		<p role="status">{{ feedback }}</p>
-		<Button type="text" @click="handleApi">调用 Clipboard.set</Button>
+		<Textarea
+			v-model="msg"
+			class="clipboard-demo__input"
+			aria-label="待处理的复制内容"
+			placeholder="清空后再复制，触发 error"
+			:autosize="{ minRows: 2, maxRows: 4 }"
+		/>
+		<div class="clipboard-demo__row">
+			<Clipboard
+				:value="msg"
+				:tag="Button"
+				type="primary"
+				@before="handleBefore"
+				@after="handleAfter"
+				@error="handleError"
+			>
+				处理后复制
+			</Clipboard>
+			<Button type="text" @click="handleApi">调用 Clipboard.set</Button>
+		</div>
+		<p class="clipboard-demo__result" role="status">{{ feedback }}</p>
 	</div>
 </template>
+
 <script setup>
 import { ref } from 'vue';
 import { Button, Clipboard, Textarea } from '@deot/vc';
@@ -92,35 +101,46 @@ import { Button, Clipboard, Textarea } from '@deot/vc';
 const msg = ref('我是被复制的内容');
 const feedback = ref('等待复制');
 
+const handleBefore = async (e, value) => {
+	if (!value) throw new Error('内容为空');
+	return `${value}（已处理）`;
+};
+
 const handleAfter = (value) => {
 	feedback.value = `复制成功：${value}`;
 };
 
-const handleBefore = async (e, value) => {
-	return `${value}（已处理）`;
+const handleError = (error) => {
+	feedback.value = `已中止：${error.message}`;
 };
 
 const handleApi = () => {
-	Clipboard.set(msg.value);
-	feedback.value = '已调用 Clipboard.set';
+	const isSuccess = Clipboard.set(msg.value);
+	feedback.value = `Clipboard.set 返回 ${isSuccess}`;
 };
 </script>
 
 <style scoped>
 .clipboard-demo {
 	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 16px;
+}
+
+.clipboard-demo__input {
+	width: 320px;
+	max-width: 100%;
+}
+
+.clipboard-demo__row {
+	display: flex;
 	flex-wrap: wrap;
-	align-items: end;
-	gap: 12px;
+	align-items: center;
+	gap: 8px;
 }
 
-label {
-	display: grid;
-	gap: 6px;
-}
-
-[role='status'] {
-	flex-basis: 100%;
+.clipboard-demo__result {
 	margin: 0;
 }
 </style>
@@ -129,12 +149,13 @@ label {
 
 ### 复制多种格式
 
-`value` 传入以 MIME 类型为键的对象时，会一次写入多种格式。例如同时提供 `text/html` 和 `text/plain` 复制表格：粘贴到表格软件或富文本编辑器时保留单元格，粘贴到纯文本输入框时得到制表符分隔的文本。`Clipboard.set` 接受同样的对象。
+`value` 传入以 MIME 类型为键的对象时，会一次写入多种格式。例如同时提供 `text/html` 和 `text/plain` 复制表格：粘贴到表格软件或富文本编辑器时保留单元格，粘贴到纯文本输入框时得到制表符分隔的文本。`Clipboard.set` 接受同样的对象。默认插槽可以是任意内容，`tag="button"` 让它可通过键盘操作。
 
 :::playground
 <!--
 <config lang="json5">
 {
+	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -142,14 +163,15 @@ label {
 ```vue
 <template>
 	<div class="clipboard-demo">
-		<Clipboard :value="value" :tag="Button" type="primary">
+		<Clipboard :value="value" tag="button" class="clipboard-demo__trigger">
 			复制表格
 		</Clipboard>
-		<div class="paste" contenteditable="true" aria-label="粘贴区">粘贴到这里查看效果</div>
+		<div class="clipboard-demo__paste" contenteditable="true" aria-label="粘贴区">粘贴到这里查看效果</div>
 	</div>
 </template>
+
 <script setup>
-import { Button, Clipboard } from '@deot/vc';
+import { Clipboard } from '@deot/vc';
 
 const rows = [
 	['名称', '数值'],
@@ -168,17 +190,89 @@ const value = {
 
 <style scoped>
 .clipboard-demo {
-	display: grid;
-	justify-items: start;
-	gap: 12px;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 16px;
 }
 
-.paste {
+.clipboard-demo__trigger {
+	padding: 4px 12px;
+	border: 1px solid var(--vc-color-light-deeper);
+	border-radius: var(--vc-border-radius);
+	color: inherit;
+	font: inherit;
+	background: transparent;
+	cursor: pointer;
+}
+
+.clipboard-demo__paste {
 	box-sizing: border-box;
 	width: 100%;
 	min-height: 96px;
 	padding: 8px;
 	border: 1px dashed currentcolor;
+}
+</style>
+```
+:::
+
+## 移动端
+
+`MClipboard` 从 `@deot/vc` 导入，属性、事件、插槽和静态方法与 `Clipboard` 相同，没有额外样式。区别只在默认的成功提示：桌面端使用 `Message.success`，移动端使用 `MToast.info`，均使用 `vc.Clipboard.copySuccess` 文案；提供 `after` 时两端都不显示默认提示。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	mobile: true,
+	local: false,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
+</config>
+-->
+```vue
+<template>
+	<div class="m-clipboard-demo">
+		<MInput v-model="msg" aria-label="复制内容" clearable />
+		<MClipboard :value="msg" :tag="MButton" type="primary" long>
+			复制（默认 MToast 提示）
+		</MClipboard>
+		<MClipboard :value="msg" :tag="MButton" long @after="handleAfter">
+			复制（自定义反馈）
+		</MClipboard>
+		<p class="m-clipboard-demo__result">{{ feedback }}</p>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { MButton, MClipboard, MInput } from '@deot/vc';
+
+const msg = ref('我是被复制的内容');
+const feedback = ref('等待复制');
+
+const handleAfter = (value) => {
+	feedback.value = `复制成功：${value}`;
+};
+</script>
+
+<style scoped>
+.m-clipboard-demo {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--vc-rem) * 32);
+	padding-inline: calc(var(--vc-rem) * 32);
+}
+
+.m-clipboard-demo__result {
+	margin: 0;
+	font-size: calc(var(--vc-rem) * 28);
 }
 </style>
 ```
@@ -219,10 +313,6 @@ const value = {
 | get | 读取剪贴板文本 | - | `Promise<string>`，读取失败时拒绝 |
 | clear | 写入空字符串 | - | 同 `set` |
 | clearSelection | 清除当前页面文字选区 | - | 恢复选区的函数；无选区时返回空函数 |
-
-### 移动端
-
-`MClipboard` 从 `@deot/vc` 导入，与 `Clipboard` 共享属性、事件、插槽和静态方法。桌面端默认使用 `Message.success`，移动端使用 `MToast.info`，均使用 `vc.Clipboard.copySuccess` 文案。
 
 ### 使用限制
 

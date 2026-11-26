@@ -2,7 +2,7 @@
 
 基于 canvas 的手写画板，支持绘制、重置、撤销、重做和导出图片。
 
-移动端入口导出的 `MArtboard` 当前是 `Artboard` 的别名，共用相同的属性、事件和方法。
+移动端入口导出的 `MArtboard` 与 `Artboard` 是同一实现。
 
 ### 何时使用
 
@@ -10,12 +10,13 @@
 
 ### 基础用法
 
-通过组件引用调用撤销、重做和重置方法，也可以从暴露的 `canvas` 导出图片。
+通过组件引用调用 `undo`、`redo` 和 `reset`；`change` 返回当前历史状态，可据此切换按钮的可用状态。暴露的 `canvas` 可直接导出图片，`options` 在挂载时合并到画布的 2D 上下文。
 
 :::playground
 <!--
 <config lang="json5">
 {
+	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -26,33 +27,23 @@
 		<div class="artboard-demo__surface">
 			<Artboard
 				ref="artboard"
-				class="artboard-demo__canvas"
 				:options="drawingOptions"
 				@change="handleChange"
 			/>
 		</div>
-		<div class="artboard-demo__actions">
-			<Button :disabled="!state.undoable" @click="handleUndo">
-				撤销
-			</Button>
-			<Button :disabled="!state.redoable" @click="handleRedo">
-				重做
-			</Button>
-			<Button @click="handleReset">
-				重置
-			</Button>
-			<Button @click="handleExport">
-				导出图片
-			</Button>
+		<div class="artboard-demo__row">
+			<Button :disabled="!state.allowUndo" @click="handleUndo">撤销</Button>
+			<Button :disabled="!state.allowRedo" @click="handleRedo">重做</Button>
+			<Button @click="handleReset">重置</Button>
+			<Button type="primary" @click="handleExport">导出图片</Button>
 		</div>
-		<div v-if="imageUrl" class="artboard-demo__result">
-			<div class="artboard-demo__result-title">导出预览</div>
-			<img
-				class="artboard-demo__preview"
-				:src="imageUrl"
-				alt="导出的画板内容"
-			>
-		</div>
+		<p class="artboard-demo__result">共 {{ state.snapshots.length }} 笔，当前应用 {{ state.current }} 笔</p>
+		<img
+			v-if="imageUrl"
+			class="artboard-demo__preview"
+			:src="imageUrl"
+			alt="导出的画板内容"
+		>
 	</div>
 </template>
 
@@ -63,8 +54,10 @@ import { Artboard, Button } from '@deot/vc';
 const artboard = ref(null);
 const imageUrl = ref('');
 const state = reactive({
-	undoable: false,
-	redoable: false
+	snapshots: [],
+	current: 0,
+	allowUndo: false,
+	allowRedo: false
 });
 const drawingOptions = {
 	strokeStyle: '#456cf6',
@@ -72,8 +65,7 @@ const drawingOptions = {
 };
 
 const handleChange = (payload) => {
-	state.undoable = payload.allowUndo;
-	state.redoable = payload.allowRedo;
+	Object.assign(state, payload);
 };
 
 const handleUndo = () => artboard.value?.undo();
@@ -86,39 +78,122 @@ const handleExport = () => {
 
 <style scoped>
 .artboard-demo {
-	width: 100%;
-	max-width: 480px;
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	width: 480px;
+	max-width: 100%;
 }
 
 .artboard-demo__surface {
-	background: var(--vc-background-color-lightest, #fff);
-	border-radius: 8px;
-}
-
-.artboard-demo__canvas {
 	height: 240px;
+	background: var(--vc-background-color-lightest, #fff);
 }
 
-.artboard-demo__actions {
+.artboard-demo__row {
 	display: flex;
 	flex-wrap: wrap;
+	align-items: center;
 	gap: 8px;
-	margin-top: 12px;
 }
 
 .artboard-demo__result {
-	margin-top: 16px;
-}
-
-.artboard-demo__result-title {
-	margin-bottom: 8px;
-	font-size: 13px;
-	color: var(--vc-color-dark-lighter, #515151);
+	margin: 0;
 }
 
 .artboard-demo__preview {
 	display: block;
 	max-width: 100%;
+}
+</style>
+```
+:::
+
+### 固定尺寸与回放
+
+`width`、`height` 设置画布的固定尺寸（为 `0` 时读取布局尺寸），只在挂载时读取。`draw` 把一组坐标点画到画布上、`redraw` 只清空像素，两者都不改变历史，可配合 `change` 中的 `snapshots` 逐笔回放。暴露的 `context` 是画布的 2D 上下文，可在运行时修改笔触。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
+```vue
+<template>
+	<div class="artboard-demo">
+		<Artboard
+			ref="artboard"
+			:width="320"
+			:height="160"
+			@change="handleChange"
+		/>
+		<div class="artboard-demo__row">
+			<Button :disabled="!snapshots.length || isReplaying" @click="handleReplay">逐笔回放</Button>
+			<Button @click="handleRedraw">清空像素</Button>
+			<Button @click="handleToggleWidth">{{ isBold ? '细笔触' : '粗笔触' }}</Button>
+		</div>
+		<p class="artboard-demo__result">{{ status }}</p>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { Artboard, Button } from '@deot/vc';
+
+const artboard = ref(null);
+const snapshots = ref([]);
+const isReplaying = ref(false);
+const isBold = ref(false);
+const status = ref('在画布上写几笔后点击回放');
+
+const handleChange = (payload) => {
+	snapshots.value = payload.snapshots.slice(0, payload.current);
+};
+
+const handleReplay = () => {
+	isReplaying.value = true;
+	artboard.value.redraw();
+	snapshots.value.forEach((step, index) => {
+		setTimeout(() => {
+			artboard.value.draw(step);
+			status.value = `回放第 ${index + 1} / ${snapshots.value.length} 笔`;
+			index === snapshots.value.length - 1 && (isReplaying.value = false);
+		}, (index + 1) * 300);
+	});
+};
+
+const handleRedraw = () => {
+	artboard.value.redraw();
+	status.value = '已清空像素，历史保留，可回放恢复';
+};
+
+const handleToggleWidth = () => {
+	isBold.value = !isBold.value;
+	artboard.value.context.lineWidth = isBold.value ? 6 : 2;
+};
+</script>
+
+<style scoped>
+.artboard-demo {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 16px;
+}
+
+.artboard-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+.artboard-demo__result {
+	margin: 0;
 }
 </style>
 ```

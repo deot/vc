@@ -10,33 +10,74 @@
 
 每个节点提供全树唯一的 `value` 和显示用的 `label`，通过 `children` 组织子节点。点击标签会设置当前节点，默认也会展开或收起（带高度过渡，过渡中再次点击立即反向）；`accordion` 使同级节点互斥展开。可见节点逐行渲染（行是同级元素，层级由缩进与 `aria-level` 表达），收起的子孙不渲染。
 
+`expandedValues` 指定要展开的节点，`autoExpandParent`（默认开启）同时展开它们的祖先；`currentNodeValue` 设置初始的当前节点，`highlightCurrent` 高亮它。点击节点触发 `node-click`，当前节点变化触发 `current-change`，点击展开 / 收起触发 `node-expand-change`。
+
 键盘：节点获得焦点后，↑ / ↓ 在可用节点间移动（首尾循环）；→ 展开收起的节点，已展开时进入第一个子节点；← 收起展开的节点，已收起时回到父节点；显示复选框时 Enter / 空格切换勾选。整棵树只有一个节点可由 Tab 进入：初始为第一个勾选的可用节点，之后跟随焦点。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 20 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
 	<div class="tree-demo">
 		<Checkbox v-model="isAccordion">同级手风琴</Checkbox>
-		<Tree :data="data" :accordion="isAccordion" highlight-current @node-click="handleNodeClick" />
-		<p>当前节点：{{ current || '尚未选择' }}</p>
+		<Tree
+			:data="data"
+			:accordion="isAccordion"
+			:expanded-values="['install']"
+			current-node-value="install"
+			auto-expand-parent
+			highlight-current
+			@node-click="handleNodeClick"
+			@current-change="handleCurrentChange"
+			@node-expand-change="handleExpandChange"
+		/>
+		<p class="tree-demo__result">当前节点：{{ current }}；{{ status }}</p>
 	</div>
 </template>
+
 <script setup>
 import { ref } from 'vue';
 import { Checkbox, Tree } from '@deot/vc';
 
 const isAccordion = ref(false);
-const current = ref('');
+const current = ref('条目 A-2');
+const status = ref('等待操作');
 const data = [
-	{ value: 'guide', label: '使用指南', children: [{ value: 'start', label: '快速开始' }, { value: 'install', label: '安装' }] },
-	{ value: 'components', label: '组件', children: [{ value: 'tree', label: '树形控件' }, { value: 'table', label: '表格' }] }
+	{ value: 'guide', label: '分组 A', children: [{ value: 'start', label: '条目 A-1' }, { value: 'install', label: '条目 A-2' }] },
+	{ value: 'components', label: '分组 B', children: [{ value: 'tree', label: '条目 B-1' }, { value: 'table', label: '条目 B-2' }] }
 ];
-const handleNodeClick = ({ data: row }) => { current.value = row.label; };
+
+const handleNodeClick = ({ data: row }) => {
+	status.value = `node-click：${row.label}`;
+};
+
+const handleCurrentChange = ({ data: row, oldNode }) => {
+	current.value = `${oldNode ? oldNode.getter.label : '无'} → ${row.label}`;
+};
+
+const handleExpandChange = ({ data: row, expanded }) => {
+	status.value = `node-expand-change：${row.label} ${expanded ? '展开' : '收起'}`;
+};
 </script>
+
 <style scoped>
-.tree-demo { display: grid; gap: 12px; }
-.tree-demo p { margin: 0; }
+.tree-demo {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 16px;
+}
+
+.tree-demo__result {
+	margin: 0;
+}
 </style>
 ```
 :::
@@ -62,10 +103,17 @@ const handleNodeClick = ({ data: row }) => { current.value = row.label; };
 
 传入的值不必与回填方式一致：联动时，值里的父节点表示整棵子树勾选，三种形态都能还原出同样的勾选状态，下次交互再按当前方式回填；运行时切换 `checkStrategy` 不会主动改写 `v-model`。节点的 `disabled` 只限制交互勾选，不禁止展开或设置当前节点；子孙里有未勾选的禁用节点时，父节点不会变为勾选，`parent` 回填的是能勾选的子节点。
 
-调用 `filter(value)` 时，必须提供 `filterNode(value, data, node)`；命中节点的祖先会保留显示并展开。以空值（如 `''`）调用时清除筛选，并恢复第一次筛选前的展开状态：筛选期间展开的节点收起，筛选期间手动收起的保持收起。`renderNodeLabel` 接收 `{ row, store }`，分别为原始数据和节点对象。
+调用 `filter(value)` 时，必须提供 `filterNode(value, data, node)`；命中节点的祖先会保留显示并展开。以空值（如 `''`）调用时清除筛选，并恢复第一次筛选前的展开状态：筛选期间展开的节点收起，筛选期间手动收起的保持收起。`renderNodeLabel` 接收 `{ row, store }`，分别为原始数据和节点对象。`checkOnClickNode` 让点击标签也切换勾选；用户切换勾选后触发 `check`，每个勾选或半选状态变化的节点触发 `check-change`。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 20 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
 	<div class="tree-demo">
@@ -79,18 +127,22 @@ const handleNodeClick = ({ data: row }) => { current.value = row.label; };
 			:filter-node="filterNode"
 			:render-node-label="renderLabel"
 			:expand-on-click-node="false"
+			check-on-click-node
 			show-checkbox
 			default-expand-all
+			@check="handleCheck"
+			@check-change="handleCheckChange"
 		/>
-		<div class="tree-demo__actions">
+		<div class="tree-demo__row">
 			<Button @click="handleSelect">选择条目 A</Button>
 			<Button @click="handleClear">清空勾选</Button>
 			<Button @click="handleRead">读取叶节点</Button>
 		</div>
-		<p>节点值：{{ values.join(', ') || '无' }}</p>
-		<p>最近读取：{{ result || '尚未读取' }}</p>
+		<p class="tree-demo__result">节点值：{{ values.join(', ') || '无' }}；最近读取：{{ result || '尚未读取' }}</p>
+		<p class="tree-demo__result">{{ status }}</p>
 	</div>
 </template>
+
 <script setup>
 import { h, ref } from 'vue';
 import { Button, Input, Select, Tree } from '@deot/vc';
@@ -101,56 +153,317 @@ const values = ref([]);
 const strategies = ['all', 'parent', 'child', 'strict'].map(value => ({ value, label: value }));
 const checkStrategy = ref('all');
 const result = ref('');
+const status = ref('等待操作');
 const data = [{ value: 'group-a', label: '分组 A', children: [
 	{ value: 'item-a', label: '条目 A' },
 	{ value: 'item-b', label: '条目 B' },
 	{ value: 'item-c', label: '条目 C（禁用）', disabled: true }
 ] }];
+
 const filterNode = (value, row) => !value || row.label.includes(value);
 const renderLabel = ({ row }) => h('span', `${row.label} · ${row.value}`);
-const handleFilter = () => tree.value.filter(keyword.value);
-const handleSelect = () => { values.value = ['item-a']; };
-const handleClear = () => { values.value = []; };
+
+const handleFilter = () => {
+	tree.value.filter(keyword.value);
+};
+
+const handleSelect = () => {
+	values.value = ['item-a'];
+};
+
+const handleClear = () => {
+	values.value = [];
+};
+
 const handleRead = () => {
 	result.value = tree.value.getCheckedNodes(true).map(node => node.states.data.label).join('、') || '无';
 };
+
+const handleCheck = ({ data: row, checked, checkedValues }) => {
+	status.value = `check：${row.label} ${checked ? '勾选' : '取消'}，共 ${checkedValues.length} 项`;
+};
+
+const handleCheckChange = ({ data: row, checked, indeterminate }) => {
+	status.value += `；check-change：${row.label} ${checked ? '勾选' : indeterminate ? '半选' : '未选'}`;
+};
 </script>
+
 <style scoped>
-.tree-demo { display: grid; gap: 12px; max-width: 480px; }
-.tree-demo__actions { display: flex; flex-wrap: wrap; gap: 8px; }
-.tree-demo p { margin: 0; overflow-wrap: anywhere; }
+.tree-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	max-width: 480px;
+}
+
+.tree-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.tree-demo__result {
+	margin: 0;
+	overflow-wrap: anywhere;
+}
+</style>
+```
+:::
+
+### 字段映射与值的形状
+
+`keyValue` 把节点字段映射到自己的数据（只传需要改的字段）。非数组的 `v-model` 按 `separator` 拆分与连接；数字节点值配字符串 `v-model` 时开启 `numerable`；`nullValue` 指定非数组值清空后返回的值。`indent` 设置每级缩进（px）。没有数据时显示 `emptyText`，`empty` 插槽优先。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
+```vue
+<template>
+	<div class="tree-demo">
+		<Tree
+			v-model="value"
+			:data="data"
+			:key-value="{ value: 'id', label: 'name', children: 'items' }"
+			:indent="32"
+			:null-value="null"
+			separator="|"
+			numerable
+			show-checkbox
+			default-expand-all
+		/>
+		<p class="tree-demo__result">v-model：{{ JSON.stringify(value) }}</p>
+		<div class="tree-demo__row">
+			<Tree :data="[]" empty-text="没有节点" class="tree-demo__empty" />
+			<Tree :data="[]" class="tree-demo__empty">
+				<template #empty>
+					<span>插槽：暂无内容</span>
+				</template>
+			</Tree>
+		</div>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { Tree } from '@deot/vc';
+
+const value = ref('11|12');
+const data = [
+	{ id: 1, name: '分组一', items: [{ id: 11, name: '条目 1-1' }, { id: 12, name: '条目 1-2' }] },
+	{ id: 2, name: '分组二', items: [{ id: 21, name: '条目 2-1' }] }
+];
+</script>
+
+<style scoped>
+.tree-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	max-width: 480px;
+}
+
+.tree-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.tree-demo__empty {
+	width: 200px;
+	border: 1px solid var(--vc-color-light-deeper);
+}
+
+.tree-demo__result {
+	margin: 0;
+}
 </style>
 ```
 :::
 
 ### 懒加载
 
-`lazy` 与 `loadData(node)` 配合使用，回调返回子节点数组的 Promise。根数据由 `data` 提供；展开未加载节点时才请求子节点。已知叶节点可设置 `isLeaf: true`，加载后返回空数组也会成为叶节点。
+`lazy` 与 `loadData(node)` 配合使用，回调返回子节点数组的 Promise。根数据由 `data` 提供；展开未加载节点时才请求子节点。已知叶节点可设置 `isLeaf: true`，加载后返回空数组也会成为叶节点。显示复选框时，`checkDescendants` 让勾选未加载的父节点也触发加载，把子节点一并勾选。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 20 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
 	<div class="tree-demo">
-		<Tree :data="data" :load-data="loadData" lazy />
-		<p>加载次数：{{ count }}。展开“远程目录”查看子节点。</p>
+		<Tree :data="data" :load-data="loadData" lazy show-checkbox check-descendants />
+		<p class="tree-demo__result">加载次数：{{ count }}。展开或勾选“远程目录”加载子节点。</p>
 	</div>
 </template>
+
 <script setup>
 import { ref } from 'vue';
 import { Tree } from '@deot/vc';
 
 const count = ref(0);
 const data = [{ value: 'remote', label: '远程目录' }, { value: 'readme', label: '说明文件', isLeaf: true }];
+
 const loadData = async (node) => {
 	count.value++;
 	await new Promise(resolve => setTimeout(resolve, 500));
 	return [1, 2].map(index => ({ value: `${node.getter.value}-${index}`, label: `文件 ${index}`, isLeaf: true }));
 };
 </script>
+
 <style scoped>
-.tree-demo { display: grid; gap: 12px; }
-.tree-demo p { margin: 0; }
+.tree-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.tree-demo__result {
+	margin: 0;
+}
+</style>
+```
+:::
+
+### 节点操作与方法
+
+通过 ref 调用方法读写勾选、当前节点和数据。程序化勾选（`setChecked`、`setCheckedValues`、`setCheckedNodes`）直接修改树状态，不发出 `update:modelValue`，结果用 `getCheckedValues` 等读取。右键节点触发 `node-contextmenu`，注册监听时阻止原生菜单。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
+```vue
+<template>
+	<div class="tree-demo">
+		<div class="tree-demo__row">
+			<Button @click="handleAppend">追加到分组 A</Button>
+			<Button @click="handleInsert">在 B-1 前后插入</Button>
+			<Button @click="handleUpdate">替换分组 B 的子节点</Button>
+			<Button @click="handleRemove">移除当前节点</Button>
+		</div>
+		<div class="tree-demo__row">
+			<Button @click="handleSetChecked">勾选分组 A</Button>
+			<Button @click="handleSetValues">只勾选 B-1</Button>
+			<Button @click="handleSetNodes">按数据勾选 A-2</Button>
+			<Button @click="handleSetCurrent">当前设为分组 B</Button>
+			<Button @click="handleSetCurrentByValue">当前设为 A-1</Button>
+		</div>
+		<Tree
+			ref="treeRef"
+			:data="data"
+			show-checkbox
+			default-expand-all
+			highlight-current
+			@node-contextmenu="handleContextmenu"
+		/>
+		<Button @click="handleRead">读取状态</Button>
+		<p class="tree-demo__result">{{ status }}</p>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { Button, Tree } from '@deot/vc';
+
+const treeRef = ref();
+const status = ref('等待操作');
+let count = 0;
+const data = [
+	{ value: 'a', label: '分组 A', children: [{ value: 'a-1', label: '条目 A-1' }, { value: 'a-2', label: '条目 A-2' }] },
+	{ value: 'b', label: '分组 B', children: [{ value: 'b-1', label: '条目 B-1' }] }
+];
+
+const handleAppend = () => {
+	count++;
+	treeRef.value.append({ value: `new-${count}`, label: `新节点 ${count}` }, 'a');
+};
+
+const handleInsert = () => {
+	count++;
+	treeRef.value.insertBefore({ value: `before-${count}`, label: `前插 ${count}` }, 'b-1');
+	treeRef.value.insertAfter({ value: `after-${count}`, label: `后插 ${count}` }, 'b-1');
+};
+
+const handleUpdate = () => {
+	treeRef.value.updateKeyChildren('b', [{ value: 'b-1', label: '条目 B-1' }, { value: 'b-2', label: '条目 B-2' }]);
+};
+
+const handleRemove = () => {
+	const key = treeRef.value.getCurrentKey();
+	key !== null && treeRef.value.remove(key);
+};
+
+const handleSetChecked = () => {
+	treeRef.value.setChecked('a', true, true);
+};
+
+const handleSetValues = () => {
+	treeRef.value.setCheckedValues(['b-1']);
+};
+
+const handleSetNodes = () => {
+	treeRef.value.setCheckedNodes([data[0].children[1]]);
+};
+
+const handleSetCurrent = () => {
+	treeRef.value.setCurrentNode(data[1]);
+};
+
+const handleSetCurrentByValue = () => {
+	treeRef.value.setCurrentNodeByData('a-1');
+};
+
+const handleRead = () => {
+	const tree = treeRef.value;
+	const node = tree.getNode('a-1');
+	const path = tree.getNodePath('a-1').map(row => row.label).join(' / ');
+	status.value = [
+		`getNodeKey：${tree.getNodeKey(node)}，路径：${path}`,
+		`勾选：${tree.getCheckedValues().join(', ') || '无'}`,
+		`半选：${tree.getHalfCheckedValues().join(', ') || '无'}（${tree.getHalfCheckedNodes().length} 个节点）`,
+		`当前：${tree.getCurrentNode()?.label ?? '无'}`
+	].join('；');
+};
+
+const handleContextmenu = ({ data: row }) => {
+	status.value = `node-contextmenu：${row.label}`;
+};
+</script>
+
+<style scoped>
+.tree-demo {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 16px;
+}
+
+.tree-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.tree-demo__result {
+	margin: 0;
+	overflow-wrap: anywhere;
+}
 </style>
 ```
 :::
@@ -161,71 +474,154 @@ const loadData = async (node) => {
 
 拖拽基于鼠标与触摸事件实现，不使用浏览器原生拖拽，因此事件参数里的 `event` 为最近一次的 `MouseEvent` / `TouchEvent`（没有 `dataTransfer`）。从输入框、按钮、链接、复选框、展开图标上按下不会发起拖拽；自定义标签里的其他交互元素加上 class `vc-drag-ignore` 也不会。
 
-`allowDrag({ node, data })` 决定能否开始拖拽；`allowDrop({ node, data, targetNode, position, from, to })` 分别判断三个落点区域，被拒绝的区域让给相邻区域。`from`、`to` 为 `{ parent, index }`，根级 `parent` 为 `null`，`to.index` 按移除被拖节点后的下标计算。成功移动会先发出 `node-drop`，再发出 `node-dragend`。
+`allowDrag({ node, data })` 决定能否开始拖拽；`allowDrop({ node, data, targetNode, position, from, to })` 分别判断三个落点区域，被拒绝的区域让给相邻区域。`from`、`to` 为 `{ parent, index }`，根级 `parent` 为 `null`，`to.index` 按移除被拖节点后的下标计算。拖拽过程依次触发 `node-dragstart`、`node-dragenter` / `node-dragover` / `node-dragleave`；成功移动会先发出 `node-drop`，再发出 `node-dragend`。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 20 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
 	<div class="tree-demo">
 		<Checkbox v-model="isSameLevel">只允许同级排序</Checkbox>
-		<Tree :data="data" :allow-drag="allowDrag" :allow-drop="allowDrop" draggable default-expand-all @node-drop="handleDrop" />
-		<p>{{ result }}</p>
+		<Tree
+			:data="data"
+			:allow-drag="allowDrag"
+			:allow-drop="allowDrop"
+			draggable
+			default-expand-all
+			@node-dragstart="handleDragstart"
+			@node-dragenter="handleDragenter"
+			@node-dragover="handleDragover"
+			@node-dragleave="handleDragleave"
+			@node-drop="handleDrop"
+			@node-dragend="handleDragend"
+		/>
+		<p class="tree-demo__result">{{ result }}</p>
+		<p class="tree-demo__result">{{ trace }}</p>
 	</div>
 </template>
+
 <script setup>
 import { ref } from 'vue';
 import { Checkbox, Tree } from '@deot/vc';
 
 const isSameLevel = ref(false);
 const result = ref('拖动节点后查看落点');
+const trace = ref('');
 const data = [
 	{ value: 'group', label: '分组', children: [{ value: 'a', label: '条目 A' }, { value: 'b', label: '条目 B' }] },
 	{ value: 'c', label: '条目 C' },
 	{ value: 'locked', label: '固定节点（不可拖动）', isLocked: true }
 ];
+
 const allowDrag = ({ data: row }) => !row.isLocked;
 const allowDrop = ({ from, to }) => !isSameLevel.value || from.parent === to.parent;
+
+const handleDragstart = ({ data: row }) => {
+	trace.value = `node-dragstart：${row.label}`;
+};
+
+const handleDragenter = ({ targetNode }) => {
+	trace.value = `node-dragenter：${targetNode.getter.label}`;
+};
+
+const handleDragover = ({ targetNode }) => {
+	trace.value = `node-dragover：${targetNode.getter.label}`;
+};
+
+const handleDragleave = ({ targetNode }) => {
+	trace.value = `node-dragleave：${targetNode.getter.label}`;
+};
+
 const handleDrop = ({ data: row, targetNode, position, from, to }) => {
 	result.value = `${row.label} → ${targetNode.getter.label} (${position})，下标 ${from.index} → ${to.index}`;
 };
+
+const handleDragend = ({ dropped }) => {
+	trace.value = `node-dragend：${dropped ? '已移动' : '未移动'}`;
+};
 </script>
+
 <style scoped>
-.tree-demo { display: grid; gap: 12px; }
-.tree-demo p { margin: 0; overflow-wrap: anywhere; }
+.tree-demo {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 16px;
+}
+
+.tree-demo__result {
+	margin: 0;
+	overflow-wrap: anywhere;
+}
 </style>
 ```
 :::
 
 ### 大量数据
 
-`virtualized` 开启后只渲染滚动容器可视范围附近的节点（基于 [RecycleList](../recycle-list/README.md)），节点很多、展开很深时挂载、展开与滚动的耗时不随节点数增长。树沿用所在的滚动容器：最近的外层 Scroller 或可滚动的祖先（在 TreeSelect 里即浮层），没有时为页面，因此需要放在有固定高度的滚动容器里，或者让页面本身滚动。展开动画、键盘、勾选、筛选与拖拽的行为不变；拖到滚动容器边缘时自动滚动。
+`virtualized` 开启后只渲染滚动容器可视范围附近的节点（基于 [RecycleList](../recycle-list/README.md)），节点很多、展开很深时挂载、展开与滚动的耗时不随节点数增长。树沿用所在的滚动容器：最近的外层 Scroller 或可滚动的祖先（在 TreeSelect 里即浮层），没有时为页面，因此需要放在有固定高度的滚动容器里，或者让页面本身滚动。展开动画、键盘、勾选、筛选与拖拽的行为不变；拖到滚动容器边缘时自动滚动。`scrollToNode` 滚动到节点，尚未渲染的节点同样可用。
 
 :::playground
 <!--
 <config lang="json5">
-{ previewInset: 20 }
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
 </config>
 -->
 ```vue
 <template>
-	<Scroller height="320px" class="tree-demo">
-		<Tree :data="data" virtualized show-checkbox />
-	</Scroller>
+	<div class="tree-demo">
+		<div class="tree-demo__row">
+			<Button @click="handleScroll">滚动到条目 80-50</Button>
+		</div>
+		<Scroller height="320px" class="tree-demo__scroller">
+			<Tree ref="treeRef" :data="data" virtualized show-checkbox />
+		</Scroller>
+	</div>
 </template>
 
 <script setup>
-import { Scroller, Tree } from '@deot/vc';
+import { ref } from 'vue';
+import { Button, Scroller, Tree } from '@deot/vc';
 
+const treeRef = ref();
 const data = Array.from({ length: 100 }, (_, i) => ({
 	value: `${i + 1}`,
 	label: `分组 ${i + 1}`,
 	children: Array.from({ length: 100 }, (__, j) => ({ value: `${i + 1}-${j + 1}`, label: `条目 ${i + 1}-${j + 1}` }))
 }));
+
+const handleScroll = () => {
+	treeRef.value.scrollToNode('80-50', { align: 'center' });
+};
 </script>
 
 <style scoped>
-.tree-demo { max-width: 360px; border: 1px solid var(--vc-color-light-deeper); }
+.tree-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	max-width: 360px;
+}
+
+.tree-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.tree-demo__scroller {
+	border: 1px solid var(--vc-color-light-deeper);
+}
 </style>
 ```
 :::
@@ -237,7 +633,7 @@ const data = Array.from({ length: 100 }, (_, i) => ({
 
 `max` 与 Select 同义，`TreeSelect` 默认 `1`：单选时没有复选框，点节点（级联模式点项）即选中并关闭面板，再次点已选中的节点只关闭；选中的节点为主色，级联模式打开时展开到已选的节点。`checkStrategy` 为 `child` 时只有叶子可选，其余取值任意节点可选，单选时父子不联动。多选写 `:max="0"`（不限）或具体的上限，选满后未勾选的节点不可勾选。
 
-`cascader` 开启鼠标悬停展开的级联列，`expandDirection` 控制级联列的展开方向，取值与 [Cascader](../cascader/README.md#展开方向) 相同。`searchable` 开启搜索，取值与 [Select](../select/README.md#搜索方式与键盘) 相同：默认在输入框内直接输入（输入框跟在标签之后，输入为空时按 Backspace 移除最后一个标签），`searchable="popover"` 改为在面板顶部显示搜索栏。按节点的整条路径（各级文字用 ` / ` 连接）匹配，与 Cascader 一致：关键词可以分别落在不同层级（如 `浙江 杭州`），父节点命中时其子孙节点也一并列出；关键词的分隔规则见 [Select 搜索规则](../select/README.md#搜索规则)，全局键为 `TreeSelect.searchMatch`。树形模式保留层级，级联模式显示完整路径列表。关闭面板会清空搜索；多选时勾选或取消一个节点后也会清空，`:clear-search-on-select="false"` 时保留。树形模式打开面板时展开已选节点及其祖先，勾选不会展开节点；搜索展开命中节点的祖先，清空搜索词后恢复搜索前的展开状态。非独立勾选时，搜索结果中的父节点仍会联动所有子孙节点，包括隐藏节点。
+`cascader` 开启鼠标悬停展开的级联列，`expandDirection` 控制级联列的展开方向，取值与 [Cascader](../cascader/README.md#展开方向) 相同。`searchable` 开启搜索，取值与 [Select](../select/README.md#搜索方式与键盘) 相同：默认在输入框内直接输入（输入框跟在标签之后，输入为空时按 Backspace 移除最后一个标签），`searchable="popover"` 改为在面板顶部显示搜索栏。按节点的整条路径（各级文字用 ` / ` 连接）匹配，与 Cascader 一致：关键词可以分别落在不同层级（如 `浙江 杭州`），父节点命中时其子孙节点也一并列出；关键词的分隔规则由 `searchMatch` 设置，见 [Select 搜索规则](../select/README.md#搜索规则)，全局键为 `TreeSelect.searchMatch`。树形模式保留层级，级联模式显示完整路径列表。关闭面板会清空搜索；多选时勾选或取消一个节点后也会清空，`:clear-search-on-select="false"` 时保留。树形模式打开面板时展开已选节点及其祖先，勾选不会展开节点；搜索展开命中节点的祖先，清空搜索词后恢复搜索前的展开状态。非独立勾选时，搜索结果中的父节点仍会联动所有子孙节点，包括隐藏节点。
 
 多选标签默认只占一行；超出宽度的标签折叠为 `+N...`，悬停可查看并移除。`maxTags` 限制可见标签数，`maxTagLines` 控制行数，设为 `0` 表示不限制。`checkStrategy` 与 Tree 相同；联动时标签展示完整路径，只显示没有被其他已选节点包含的那一层：`all` / `child` 为最深的勾选节点，`parent` 为子孙全选的父节点。移除标签时连同它的祖先与子孙一起移出值。
 
@@ -252,14 +648,21 @@ const data = Array.from({ length: 100 }, (_, i) => ({
 背景色只表示当前高亮（键盘移动或鼠标悬停），是否勾选由复选框表示（单选时为主色文字）。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 20 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="tree-select-demo">
-		<div class="tree-select-demo__actions">
+	<div class="tree-demo">
+		<div class="tree-demo__row">
 			<Checkbox v-model="isCascader">级联列</Checkbox>
 			<Checkbox v-model="isDisabled">禁用</Checkbox>
-			<Select v-model="checkStrategy" :data="strategies" />
+			<Select v-model="checkStrategy" :data="strategies" class="tree-demo__select" />
 		</div>
 		<TreeSelect
 			v-model="values"
@@ -269,13 +672,18 @@ const data = Array.from({ length: 100 }, (_, i) => ({
 			:disabled="isDisabled"
 			:max="0"
 			:max-tags="2"
+			:max-tag-lines="2"
+			:clear-search-on-select="false"
+			:search-match="{ or: [' ', ',', '，'] }"
+			expand-direction="auto"
 			searchable
 			clearable
-			search-placeholder="搜索条目"
+			search-placeholder="搜索条目，空格表示任一命中"
 		/>
-		<p>节点值：{{ values.join(', ') || '无' }}</p>
+		<p class="tree-demo__result">节点值：{{ values.join(', ') || '无' }}</p>
 	</div>
 </template>
+
 <script setup>
 import { ref } from 'vue';
 import { Checkbox, Select, TreeSelect } from '@deot/vc';
@@ -290,10 +698,142 @@ const data = [
 	{ value: 'group-b', label: '分组 B', children: [{ value: 'item-b1', label: '条目 B' }, { value: 'item-b2', label: '条目 C', disabled: true }] }
 ];
 </script>
+
 <style scoped>
-.tree-select-demo { display: grid; gap: 12px; max-width: 400px; }
-.tree-select-demo__actions { display: flex; flex-wrap: wrap; gap: 8px; }
-.tree-select-demo p { margin: 0; overflow-wrap: anywhere; }
+.tree-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	max-width: 400px;
+}
+
+.tree-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+.tree-demo__select {
+	width: 160px;
+}
+
+.tree-demo__result {
+	margin: 0;
+	overflow-wrap: anywhere;
+}
+</style>
+```
+:::
+
+### 树选择的面板与值
+
+`trigger`、`placement`、`arrow` 设置面板的触发方式、位置与箭头，`autoWidth` 让面板按内容计算宽度，`portal` 为 `false` 时面板挂在组件根节点内；`tag` 设置触发器根元素，`id` 传给输入框。`formatter` 生成单选输入框的文字；非数组的值按 `separator` 拆分与连接，`numerable` 把字符串转为数字，`nullValue` 为清空后的值。
+
+点击清空按钮触发 `clear`，用户操作改变面板可见性时触发 `visible-change`，面板挂载触发 `ready`，关闭触发 `close`；通过 ref 调用 `toggle`、`close` 控制面板。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
+```vue
+<template>
+	<div class="tree-demo">
+		<TreeSelect
+			id="tree-select-demo-target"
+			v-model="single"
+			:data="data"
+			:formatter="labels => labels.map(label => label.split(' / ').pop()).join('')"
+			:null-value="null"
+			:auto-width="false"
+			trigger="hover"
+			placement="top-left"
+			tag="section"
+			arrow
+			clearable
+			@clear="handleClear"
+		/>
+		<div class="tree-demo__row">
+			<Button @click="handleToggle">切换面板</Button>
+			<Button @click="handleClose">关闭面板</Button>
+		</div>
+		<TreeSelect
+			ref="selectRef"
+			v-model="multiple"
+			:data="data"
+			:max="0"
+			:portal="false"
+			separator="|"
+			numerable
+			@visible-change="handleVisibleChange"
+			@ready="handleReady"
+			@close="handleCloseEvent"
+		/>
+		<p class="tree-demo__result">单选：{{ JSON.stringify(single) }}；多选：{{ JSON.stringify(multiple) }}；{{ status }}</p>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { Button, TreeSelect } from '@deot/vc';
+
+const selectRef = ref();
+const single = ref(11);
+const multiple = ref('11|21');
+const status = ref('等待操作');
+const data = [
+	{ value: 1, label: '分组一', children: [{ value: 11, label: '条目 1-1' }, { value: 12, label: '条目 1-2' }] },
+	{ value: 2, label: '分组二', children: [{ value: 21, label: '条目 2-1' }] }
+];
+
+const handleToggle = () => {
+	selectRef.value.toggle();
+};
+
+const handleClose = () => {
+	selectRef.value.close();
+};
+
+const handleClear = () => {
+	status.value = '触发 clear';
+};
+
+const handleVisibleChange = (visible) => {
+	status.value = `visible-change：${visible}`;
+};
+
+const handleReady = () => {
+	status.value = '触发 ready';
+};
+
+const handleCloseEvent = () => {
+	status.value = '触发 close';
+};
+</script>
+
+<style scoped>
+.tree-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	max-width: 400px;
+}
+
+.tree-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.tree-demo__result {
+	margin: 0;
+	overflow-wrap: anywhere;
+}
 </style>
 ```
 :::
@@ -303,10 +843,17 @@ const data = [
 TreeSelect 的 `loadData(keyword, instance)` 用于搜索，不是 Tree 的懒加载回调，未开启 `searchable` 时不会调用。组件以 250ms 防抖调用它，等待期间输入框后缀显示加载图标；调用方需更新 `data`，Promise 的返回值不会自动成为数据源。启用后关闭本地过滤，仅保留匹配高亮。打开下拉时，如果还没有数据，或当前数据是按某个关键词加载的，会立即以空关键词调用一次，用于加载默认数据；关闭下拉时只重置搜索词，不调用它；多选时勾选后清空搜索词，会立即以空关键词调用一次。搜索结果里没有已选节点时，标签沿用上次查到的路径与文字，继续勾选也不会丢掉它们。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 20 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="tree-select-demo">
+	<div class="tree-demo">
 		<TreeSelect
 			v-model="values"
 			:data="data"
@@ -317,9 +864,10 @@ TreeSelect 的 `loadData(keyword, instance)` 用于搜索，不是 Tree 的懒�
 			clearable
 			search-placeholder="输入条目 A 或 B"
 		/>
-		<p>节点值：{{ values.join(', ') || '无' }}</p>
+		<p class="tree-demo__result">节点值：{{ values.join(', ') || '无' }}</p>
 	</div>
 </template>
+
 <script setup>
 import { ref } from 'vue';
 import { TreeSelect } from '@deot/vc';
@@ -328,15 +876,25 @@ const source = [{ value: 'item-a', label: '条目 A' }, { value: 'item-b', label
 const data = ref(source);
 const values = ref([]);
 let requestId = 0;
+
 const loadData = async (keyword) => {
 	const id = ++requestId;
 	await new Promise(resolve => setTimeout(resolve, 400));
 	if (id === requestId) data.value = source.filter(row => row.label.includes(keyword));
 };
 </script>
+
 <style scoped>
-.tree-select-demo { display: grid; gap: 12px; max-width: 400px; }
-.tree-select-demo p { margin: 0; }
+.tree-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	max-width: 400px;
+}
+
+.tree-demo__result {
+	margin: 0;
+}
 </style>
 ```
 :::
@@ -351,13 +909,20 @@ TreeSelect 的 `plaintext` 只按 `value` 在 `data` 中查出已选项的文字
 - `MTreeSelect` 同样支持，输出 `<span class="vcm-tree-select-plaintext">`。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 20 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="tree-select-demo">
-		<p>单选：<TreeSelect model-value="a-2" :data="data" plaintext /></p>
-		<p>多选：<TreeSelect :model-value="['a-1', 'b-1']" :data="data" :max="0" plaintext /></p>
-		<p>空值：<TreeSelect :data="data" extra="-" plaintext /></p>
+	<div class="tree-demo">
+		<div>单选：<TreeSelect model-value="a-2" :data="data" plaintext /></div>
+		<div>多选：<TreeSelect :model-value="['a-1', 'b-1']" :data="data" :max="0" plaintext /></div>
+		<div>空值：<TreeSelect :data="data" extra="-" plaintext /></div>
 	</div>
 </template>
 
@@ -371,7 +936,247 @@ const data = [
 </script>
 
 <style scoped>
-.tree-select-demo p { margin: 0 0 12px; }
+.tree-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+</style>
+```
+:::
+
+## 移动端
+
+`MTree` 与 `Tree` 结构相同，根节点另有标记类 `.vcm-tree`（`.vc-tree.vcm-tree`），属性、事件和方法一致；展开动画、勾选联动、`max`、筛选、懒加载、虚拟化、拖拽与键盘两端通用。尺寸按 750 稿设计，写为 `calc(var(--vc-rem) * n)`，随 `--vc-rem` 缩放，底栏切换 `rem` 可查看不同屏宽下的效果。树选择见下方 [MTreeSelect](#mtreeselect)。
+
+### MTree
+
+下例开启 `checkOnClickNode`，点行即勾选；`indent` 为 750 稿长度。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	mobile: true,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
+</config>
+-->
+```vue
+<template>
+	<div class="m-tree-demo">
+		<MTree v-model="value" :data="data" :expanded-values="['1']" :indent="48" show-checkbox check-on-click-node />
+		<p class="m-tree-demo__result">{{ value.join(', ') || '无' }}</p>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { MTree } from '@deot/vc';
+
+const value = ref(['1-1']);
+const data = [
+	{
+		value: '1',
+		label: '分组 1',
+		children: [
+			{ value: '1-1', label: '条目 1-1' },
+			{ value: '1-2', label: '条目 1-2，名称较长的一项，超出屏幕宽度时在末尾显示省略号' }
+		]
+	},
+	{ value: '2', label: '分组 2', children: [{ value: '2-1', label: '条目 2-1' }] }
+];
+</script>
+
+<style scoped>
+.m-tree-demo {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--vc-rem) * 16);
+}
+
+.m-tree-demo__result {
+	margin: 0;
+	padding-inline: calc(var(--vc-rem) * 32);
+}
+</style>
+```
+:::
+
+尺寸如下（括号内为 375 宽下的 px）：
+
+| 项 | 值 |
+| --- | --- |
+| 行 | 高 88（44），字号 28（14），右侧留白 32（16） |
+| 展开图标 | 大小 24（12），左侧留白 32（16）、右侧 16（8），整块高 88（44）可点 |
+| 多选框 | `MCheckbox`，与文字间距 16（8），整行高可点 |
+| 缩进 | `indent` 为 750 稿长度，默认 32（每级 16） |
+| 加载图标 | `MSpin`，大小 24（12） |
+| 空状态 | 最小高度 240（120） |
+
+与桌面端的差异：
+
+| 项 | 桌面端 | 移动端 |
+| --- | --- | --- |
+| 节点文字 | 不换行，超出时横向溢出 | 单行显示，超出省略；`renderNodeLabel` 的内容不受影响 |
+| 悬停 / 按下 | 悬停时显示 `background-color-primary-light` | 没有悬停；按下时显示同一底色，替换系统的点击高亮 |
+| 虚拟化 | 内部为 `RecycleList` | 内部为 `MRecycleList`，使用原生滚动与系统滚动条 |
+| 拖拽 | 按住节点拖动 | 长按节点约 300ms 后拖动，期间不触发页面滚动与系统菜单 |
+| 单选的选中节点 | 主色文字 | 主色加粗，行尾打勾（同 MSelect 的已选项） |
+
+点行的行为与桌面端一致：默认展开 / 收起，勾选点多选框；需要点行勾选时开启 `checkOnClickNode`。
+
+两端的尺寸都写成局部变量 `--vc-tree-<键>`（见[局部](#局部)），移动端在 `.vcm-tree` 上覆盖，与样式的加载顺序无关。悬停样式只在可悬停的设备上生效（`@media (hover: hover)`）。
+
+### MTreeSelect
+
+`MTreeSelect` 是独立的移动端组件：点击触发区（默认为 `MListItem`，`label`、`labelWidth`、`arrow` 传给它）从底部弹出，弹层中依次为搜索框（`searchable`）、汇总栏与固定高度的 `MTree`。值的形状与转换、`max`、`checkStrategy` 与桌面端 `TreeSelect` 相同，选择、搜索与回填沿用桌面端的树形模式；没有级联列模式（逐级选择用 [MCascader](../cascader/README.md)）与标签折叠。
+
+- 单选（`max` 为 `1`，默认）：没有复选框，点节点即选中（展开点图标），选中的节点为主色加粗、行尾打勾；`confirm` 为 `false` 时点选即提交并关闭，否则由「确定」提交。`checkStrategy` 为 `child` 时只有叶子可选，点父节点仍是展开。
+- 多选：多选框 + 汇总栏「已选 N 项」（有上限时带上限，数量为回填的值的个数），选满后未勾选的节点不可勾选；总是需要「确定」，`confirm` 为 `false` 时按 `'top'`。顶部工具栏的文字由 `cancelText`、`okText` 设置；提交时触发 `ok`，点「取消」触发 `cancel`。
+- 清空（`clearable`）：`confirm` 为 `'bottom'` 时在底部「清空 / 确定」，其余在汇总栏右端（点击触发 `clear`）；不需要确定时清空即提交空值并关闭。不可清空时，一项都没选不能确定。
+- 弹层内的值在「确定」时提交，取消时丢弃；打开时已选节点及其祖先展开，第一个已选节点滚到列表中间（经 Tree 的 `scrollToNode`，`virtualized` 下同样可用）；搜索词变化后列表回到顶部。
+- `virtualized`：同 Tree，只渲染列表可视范围附近的节点（基于 MRecycleList），默认不开启。
+- 显示的文字同桌面端的标签：联动时为没有被其他已选节点包含的那一层的完整路径（各级以 ` / ` 连接），独立勾选时为节点自身的文字；`formatter` 可自定义，默认插槽替换整个触发区。
+- 远程搜索（`searchable` + `loadData`）：契约与时机同桌面端的[远程搜索](#远程搜索)，与 MSelect 相同——250ms 防抖、由调用方更新 `data`、加载期间搜索框右侧显示加载图标、打开时数据缺失或过期则按空关键词加载一次；只高亮不过滤，结果之外的已选值不受勾选影响，文字沿用上次查到的。弹层打开期间 `data` 的变化同步到弹层；`MTreeSelect.open` 时 `loadData` 的 Promise 解析为数组则直接作为结果。
+- 树的滚动区高度为局部变量 `--vc-tree-select-panel-height`（默认 750 稿 768）。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	mobile: true,
+	local: false,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
+</config>
+-->
+```vue
+<template>
+	<div class="m-tree-demo">
+		<MTreeSelect
+			v-model="single"
+			:data="data"
+			:formatter="labels => labels.join('、')"
+			label="单选"
+			label-width="200"
+			title="选择分类"
+			confirm="bottom"
+			@visible-change="handleVisibleChange"
+			@close="handleClose"
+		/>
+		<MTreeSelect
+			v-model="multiple"
+			:data="data"
+			:max="3"
+			:search-match="{ or: [' ', ',', '，'] }"
+			check-strategy="child"
+			label="多选（最多 3 项）"
+			label-width="200"
+			title="选择条目"
+			cancel-text="返回"
+			ok-text="完成"
+			searchable
+			clearable
+			@ok="handleOk"
+			@cancel="handleCancel"
+			@clear="handleClear"
+			@change="handleChange"
+		/>
+		<MTreeSelect v-model="custom" :data="data" :arrow="false" title="选择分类">
+			<template #default="{ label }">
+				<div class="m-tree-demo__trigger">{{ label.length ? label.join('、') : '自定义触发区，点击选择' }}</div>
+			</template>
+		</MTreeSelect>
+		<div class="m-tree-demo__actions">
+			<MButton type="primary" @click="handleOpen">MTreeSelect.open 直接调用</MButton>
+		</div>
+		<p class="m-tree-demo__result">single：{{ single }}；multiple：{{ multiple }}；open：{{ opened }}</p>
+		<p class="m-tree-demo__result">{{ status }}</p>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { MButton, MTreeSelect } from '@deot/vc';
+
+const single = ref('');
+const multiple = ref([]);
+const custom = ref('');
+const opened = ref('');
+const status = ref('等待操作');
+const data = Array.from({ length: 4 }, (_, i) => ({
+	value: `${i + 1}`,
+	label: `分类 ${i + 1}`,
+	children: Array.from({ length: 3 }, (__, j) => ({ value: `${i + 1}-${j + 1}`, label: `条目 ${i + 1}-${j + 1}` }))
+}));
+
+const handleVisibleChange = (visible) => {
+	status.value = `visible-change：${visible}`;
+};
+
+const handleClose = () => {
+	status.value = '触发 close';
+};
+
+const handleOk = (value, labels) => {
+	status.value = `ok：${labels.join('、')}`;
+};
+
+const handleCancel = () => {
+	status.value = '触发 cancel';
+};
+
+const handleClear = () => {
+	status.value = '触发 clear';
+};
+
+const handleChange = (value) => {
+	status.value = `change：${value.join(', ') || '空'}`;
+};
+
+const handleOpen = async () => {
+	try {
+		const result = await MTreeSelect.open({ modelValue: opened.value, data, title: '直接调用' });
+		opened.value = result.value;
+	} catch {
+		status.value = '已取消';
+	}
+};
+</script>
+
+<style scoped>
+.m-tree-demo {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--vc-rem) * 16);
+}
+
+.m-tree-demo__trigger {
+	padding: calc(var(--vc-rem) * 24) calc(var(--vc-rem) * 32);
+	color: var(--vc-color-primary);
+}
+
+.m-tree-demo__actions {
+	display: flex;
+	padding-inline: calc(var(--vc-rem) * 32);
+}
+
+.m-tree-demo__result {
+	margin: 0;
+	padding-inline: calc(var(--vc-rem) * 32);
+	overflow-wrap: anywhere;
+}
 </style>
 ```
 :::
@@ -395,7 +1200,8 @@ TreeSelect 使用 `portal: true` 时，选项变量需设置在浮层祖先（�
 | color-neutral-light | 级联列分隔线（tree-select） | 亮色：`#EDEFF1`；暗色：`#3B4354` |
 | color-primary | 拖拽落点及当前浏览的级联选项文字（tree / tree-select）；搜索命中的文字（select-highlight） | `#456CF6` |
 | color-primary-lighter | 当前节点高亮背景（tree，`highlightCurrent`） | `rgba(45, 140, 240, 0.2)` |
-| background-color-lightest | 树背景（tree） | 亮色：`#FFFFFF`；暗色：`#252B3A` |
+| background-color-lightest | 树背景及拖拽跟随行的背景（tree）；MTreeSelect 弹层面板背景（tree-select-panel） | 亮色：`#FFFFFF`；暗色：`#252B3A` |
+| box-shadow-floating | 拖拽跟随行的阴影（tree） | 亮色：`0 4px 12px rgb(0 0 0 / 12%)`；暗色：`0 4px 12px rgb(0 0 0 / 32%)` |
 | background-color-primary-light | 普通树节点悬停及键盘焦点背景（tree）；TreeSelect 非禁用树节点悬停、焦点背景，级联选项悬停及当前浏览背景（tree-select）；级联搜索结果的高亮背景（select-paths） | 亮色：`#E6F7FF`；暗色：`#273E5E` |
 
 ### 局部
@@ -413,7 +1219,7 @@ Tree 的尺寸写成局部变量 `--vc-tree-<键>`，可以在树或它的祖先
 | empty-height | 空状态的最小高度 | `60px` |
 | focus-background | 键盘聚焦行的底色（鼠标点按后不显示） | `background-color-primary-light` |
 
-TreeSelect 没有额外的局部 CSS 主题参数。
+TreeSelect 没有额外的局部 CSS 主题参数；MTreeSelect 树的滚动区高度为 `--vc-tree-select-panel-height`（默认 750 稿 768），见[移动端](#移动端)。
 
 ## API
 
@@ -548,7 +1354,7 @@ TreeSelect 使用固定的 `value` / `label` / `children` / `disabled` 数据字
 | autoWidth | 面板按内容计算宽度 | `boolean` | - | 未指定时跟随 `cascader` |
 | portal | 下拉挂到 body；`false` 挂在组件根节点内，可能被祖先 overflow 裁剪 | `boolean` | - | `true` |
 | portalClass | 面板附加类名 | `string \| object \| any[]` | - | - |
-| trigger | 面板触发方式，沿用 Popover | `string` | `click` / `hover` | `'click'` |
+| trigger | 面板触发方式，沿用 Popover | `string` | `hover` / `strictHover` / `click` / `focus` / `custom` | `'click'` |
 | placement | 面板位置，沿用 Popover | `string` | 见 Popover | `'bottom-left'` |
 | arrow | 显示面板箭头 | `boolean` | - | `false` |
 | tag | 触发器根元素 | `string` | - | `'div'` |
@@ -578,106 +1384,7 @@ TreeSelect 使用固定的 `value` / `label` / `children` / `disabled` 数据字
 
 TreeSelect 实例还暴露 `treeSelectId`、`isActive`、`multiple`、`current`、`currentValueGroups`、`searchRegex`。通常使用 `v-model` 和上面的方法即可。Tree 与 TreeSelect 都没有消费调用方插槽，标签定制使用 `renderNodeLabel`。
 
-### 移动端
-
-`MTree` 与 `Tree` 结构相同，根节点另有标记类 `.vcm-tree`（`.vc-tree.vcm-tree`），属性、事件和方法一致；展开动画、勾选联动、`max`、筛选、懒加载、虚拟化、拖拽与键盘两端通用。树选择见下方 [MTreeSelect](#mtreeselect)。
-
-:::playground
-<!-- <config lang="json5">{ viewport: 375, previewInset: 0 }</config> -->
-```vue
-<template>
-	<MTree v-model="value" :data="data" :expanded-values="['1']" show-checkbox />
-</template>
-<script setup>
-import { ref } from 'vue';
-import { MTree } from '@deot/vc';
-
-const value = ref(['1-1']);
-const data = [
-	{
-		value: '1',
-		label: '分组 1',
-		children: [
-			{ value: '1-1', label: '条目 1-1' },
-			{ value: '1-2', label: '条目 1-2，名称较长的一项，超出屏幕宽度时在末尾显示省略号' }
-		]
-	},
-	{ value: '2', label: '分组 2', children: [{ value: '2-1', label: '条目 2-1' }] }
-];
-</script>
-```
-:::
-
-尺寸按 750 稿设计，写为 `calc(var(--vc-rem) * n)`，随 `--vc-rem` 缩放（括号内为 375 宽下的 px）：
-
-| 项 | 值 |
-| --- | --- |
-| 行 | 高 88（44），字号 28（14），右侧留白 32（16） |
-| 展开图标 | 大小 24（12），左侧留白 32（16）、右侧 16（8），整块高 88（44）可点 |
-| 多选框 | `MCheckbox`，与文字间距 16（8），整行高可点 |
-| 缩进 | `indent` 为 750 稿长度，默认 32（每级 16） |
-| 加载图标 | `MSpin`，大小 24（12） |
-| 空状态 | 最小高度 240（120） |
-
-与桌面端的差异：
-
-| 项 | 桌面端 | 移动端 |
-| --- | --- | --- |
-| 节点文字 | 不换行，超出时横向溢出 | 单行显示，超出省略；`renderNodeLabel` 的内容不受影响 |
-| 悬停 / 按下 | 悬停时显示 `background-color-primary-light` | 没有悬停；按下时显示同一底色，替换系统的点击高亮 |
-| 虚拟化 | 内部为 `RecycleList` | 内部为 `MRecycleList`，使用原生滚动与系统滚动条 |
-| 拖拽 | 按住节点拖动 | 长按节点约 300ms 后拖动，期间不触发页面滚动与系统菜单 |
-| 单选的选中节点 | 主色文字 | 主色加粗，行尾打勾（同 MSelect 的已选项） |
-
-点行的行为与桌面端一致：默认展开 / 收起，勾选点多选框；需要点行勾选时开启 `checkOnClickNode`。
-
-两端的尺寸都写成局部变量 `--vc-tree-<键>`（见[局部](#局部)），移动端在 `.vcm-tree` 上覆盖，与样式的加载顺序无关。悬停样式只在可悬停的设备上生效（`@media (hover: hover)`）。
-
-### MTreeSelect
-
-`MTreeSelect` 是独立的移动端组件：点击触发区（默认为 `MListItem`）从底部弹出，弹层中依次为搜索框（`searchable`）、汇总栏与固定高度的 `MTree`。值的形状与转换、`max`、`checkStrategy` 与桌面端 `TreeSelect` 相同，选择、搜索与回填沿用桌面端的树形模式；没有级联列模式（逐级选择用 [MCascader](../cascader/README.md)）与标签折叠。
-
-:::playground
-<!-- <config lang="json5">{ viewport: 375, previewInset: 0 }</config> -->
-```vue
-<template>
-	<MTreeSelect v-model="single" :data="data" label="单选" title="选择分类" />
-	<MTreeSelect
-		v-model="multiple"
-		:data="data"
-		:max="3"
-		check-strategy="child"
-		label="多选（最多 3 项）"
-		title="选择条目"
-		searchable
-		clearable
-	/>
-</template>
-<script setup>
-import { ref } from 'vue';
-import { MTreeSelect } from '@deot/vc';
-
-const single = ref('');
-const multiple = ref([]);
-const data = Array.from({ length: 4 }, (_, i) => ({
-	value: `${i + 1}`,
-	label: `分类 ${i + 1}`,
-	children: Array.from({ length: 3 }, (__, j) => ({ value: `${i + 1}-${j + 1}`, label: `条目 ${i + 1}-${j + 1}` }))
-}));
-</script>
-```
-:::
-
-- 单选（`max` 为 `1`，默认）：没有复选框，点节点即选中（展开点图标），选中的节点为主色加粗、行尾打勾；`confirm` 为 `false` 时点选即提交并关闭，否则由「确定」提交。`checkStrategy` 为 `child` 时只有叶子可选，点父节点仍是展开。
-- 多选：多选框 + 汇总栏「已选 N 项」（有上限时带上限，数量为回填的值的个数），选满后未勾选的节点不可勾选；总是需要「确定」，`confirm` 为 `false` 时按 `'top'`。
-- 清空（`clearable`）：`confirm` 为 `'bottom'` 时在底部「清空 / 确定」，其余在汇总栏右端；不需要确定时清空即提交空值并关闭。不可清空时，一项都没选不能确定。
-- 弹层内的值在「确定」时提交，取消时丢弃；打开时已选节点及其祖先展开，第一个已选节点滚到列表中间（经 Tree 的 `scrollToNode`，`virtualized` 下同样可用）；搜索词变化后列表回到顶部。
-- `virtualized`：同 Tree，只渲染列表可视范围附近的节点（基于 MRecycleList），默认不开启。
-- 显示的文字同桌面端的标签：联动时为没有被其他已选节点包含的那一层的完整路径（各级以 ` / ` 连接），独立勾选时为节点自身的文字。
-- 远程搜索（`searchable` + `loadData`）：契约与时机同桌面端的[远程搜索](#远程搜索)，与 MSelect 相同——250ms 防抖、由调用方更新 `data`、加载期间搜索框右侧显示加载图标、打开时数据缺失或过期则按空关键词加载一次；只高亮不过滤，结果之外的已选值不受勾选影响，文字沿用上次查到的。弹层打开期间 `data` 的变化同步到弹层；`MTreeSelect.open` 时 `loadData` 的 Promise 解析为数组则直接作为结果。
-- 树的滚动区高度为局部变量 `--vc-tree-select-panel-height`（默认 750 稿 768）。
-
-#### MTreeSelect 属性
+### MTreeSelect 属性
 
 | 属性 | 说明 | 类型 | 可选值 | 默认值 |
 | --- | --- | --- | --- | --- |
@@ -699,7 +1406,7 @@ const data = Array.from({ length: 4 }, (_, i) => ({
 | cancelText | 顶部工具栏的取消文案 | `string` | - | 当前语言的 `vc.Picker.cancelText` |
 | okText | 确定按钮的文案 | `string` | - | 当前语言的 `vc.Picker.okText` |
 
-#### MTreeSelect 事件
+### MTreeSelect 事件
 
 | 事件名 | 说明 | 回调参数 | 参数说明 |
 | --- | --- | --- | --- |
@@ -711,7 +1418,7 @@ const data = Array.from({ length: 4 }, (_, i) => ({
 | visible-change | 弹层显示状态变化 | `(visible: boolean)` | - |
 | close | 弹层关闭动画完成 | - | - |
 
-#### MTreeSelect 插槽与方法
+### MTreeSelect 插槽与方法
 
 | 名称 | 说明 | 参数 / 返回值 |
 | --- | --- | --- |

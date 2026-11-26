@@ -10,12 +10,13 @@
 
 ### 基础用法
 
-`Carousel` 默认自动播放，桌面端指示器默认在悬停时切换；将 `autoplay` 设为 `false`、`trigger` 设为 `click` 后，仅在点击指示器时切换。
+`Carousel` 默认自动播放，`t` 设置切换间隔（毫秒）；`autoplay` 设为 `false` 时停止。实例方法 `previous`、`next` 在外部切换，激活项变化时触发 `change`。
 
 :::playground
 <!--
 <config lang="json5">
 {
+	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -23,38 +24,28 @@
 ```vue
 <template>
 	<div class="carousel-demo">
-		<div class="carousel-demo__header">
-			<div>
-				<strong>精选内容</strong>
-				<span>第 {{ activeIndex + 1 }} / {{ slides.length }} 张</span>
-			</div>
-			<div class="carousel-demo__actions">
-				<Button type="text" size="small" @click="handleToggleAutoplay">
-					{{ autoplay ? '暂停自动播放' : '开始自动播放' }}
-				</Button>
-				<Button size="small" @click="handlePrev">上一张</Button>
-				<Button type="primary" size="small" @click="handleNext">下一张</Button>
-			</div>
+		<div class="carousel-demo__row">
+			<Button type="text" size="small" @click="handleToggleAutoplay">
+				{{ isAutoplay ? '暂停自动播放' : '开始自动播放' }}
+			</Button>
+			<Button size="small" @click="handlePrevious">上一张</Button>
+			<Button type="primary" size="small" @click="handleNext">下一张</Button>
 		</div>
-
 		<Carousel
-			ref="carouselRef"
+			ref="carousel"
 			:height="184"
-			:autoplay="autoplay"
+			:t="4000"
+			:autoplay="isAutoplay"
 			@change="handleChange"
 		>
-			<CarouselItem
-				v-for="(slide, index) in slides"
-				:key="slide.title"
-				:label="slide.title"
-			>
-				<div class="slide" :class="`slide--${index + 1}`">
-					<span class="slide__eyebrow">{{ slide.eyebrow }}</span>
+			<CarouselItem v-for="(slide, index) in slides" :key="slide.title" :label="slide.title">
+				<div class="carousel-demo__slide" :class="`is-${index + 1}`">
 					<strong>{{ slide.title }}</strong>
 					<span>{{ slide.description }}</span>
 				</div>
 			</CarouselItem>
 		</Carousel>
+		<p class="carousel-demo__result">第 {{ activeIndex + 1 }} / {{ slides.length }} 张</p>
 	</div>
 </template>
 
@@ -62,85 +53,72 @@
 import { ref } from 'vue';
 import { Button, Carousel, CarouselItem } from '@deot/vc';
 
-const carouselRef = ref();
-const autoplay = ref(true);
+const carousel = ref();
+const isAutoplay = ref(true);
 const activeIndex = ref(0);
 const slides = [
-	{ eyebrow: 'DESIGN', title: '清晰的层次', description: '让内容在有限空间内保持秩序' },
-	{ eyebrow: 'MOTION', title: '自然的过渡', description: '用恰到好处的动效连接每一次切换' },
-	{ eyebrow: 'FOCUS', title: '聚焦重点', description: '把用户注意力留给真正重要的信息' },
-	{ eyebrow: 'BALANCE', title: '舒适的节奏', description: '自动播放与手动浏览由用户掌控' }
+	{ title: '第一项', description: '轮播内容一的说明文字' },
+	{ title: '第二项', description: '轮播内容二的说明文字' },
+	{ title: '第三项', description: '轮播内容三的说明文字' },
+	{ title: '第四项', description: '轮播内容四的说明文字' }
 ];
 
 const handleChange = (index) => {
 	activeIndex.value = index;
 };
+
 const handleToggleAutoplay = () => {
-	autoplay.value = !autoplay.value;
+	isAutoplay.value = !isAutoplay.value;
 };
-const handlePrev = () => carouselRef.value?.previous();
-const handleNext = () => carouselRef.value?.next();
+
+const handlePrevious = () => {
+	carousel.value.previous();
+};
+
+const handleNext = () => {
+	carousel.value.next();
+};
 </script>
 
 <style scoped>
 .carousel-demo {
-	color: #26334d;
-}
-
-.carousel-demo__header {
 	display: flex;
-	align-items: center;
-	justify-content: space-between;
+	flex-direction: column;
 	gap: 16px;
-	margin-bottom: 12px;
 }
 
-.carousel-demo__header div:first-child {
-	display: flex;
-	align-items: baseline;
-	gap: 10px;
-}
-
-.carousel-demo__header span {
-	color: #7c89a3;
-	font-size: 12px;
-}
-
-.carousel-demo__actions {
+.carousel-demo__row {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 6px;
+	align-items: center;
+	gap: 8px;
 }
 
-.slide {
+.carousel-demo__slide {
 	display: flex;
-	height: 100%;
 	flex-direction: column;
 	align-items: center;
 	justify-content: center;
-	color: #fff;
 	gap: 8px;
-	padding: 24px;
-	text-align: center;
+	height: 100%;
+	color: #fff;
 	background: linear-gradient(135deg, #536dfe, #8d9bff);
 }
 
-.slide--2 {
+.carousel-demo__slide.is-2 {
 	background: linear-gradient(135deg, #00897b, #48b9a9);
 }
 
-.slide--3 {
+.carousel-demo__slide.is-3 {
 	background: linear-gradient(135deg, #ef6c00, #f5a45b);
 }
 
-.slide--4 {
+.carousel-demo__slide.is-4 {
 	background: linear-gradient(135deg, #7b1fa2, #bd72d4);
 }
 
-.slide__eyebrow {
-	font-size: 11px;
-	letter-spacing: 0.16em;
-	opacity: 0.75;
+.carousel-demo__result {
+	margin: 0;
 }
 </style>
 ```
@@ -148,12 +126,13 @@ const handleNext = () => carouselRef.value?.next();
 
 ### 指示器与箭头
 
-`dots="outside"` 将指示器放到容器外，`stepper="always"` 让横向桌面轮播始终显示前后翻页按钮。两者都可以通过绑定布尔值 `false` 隐藏。
+`dots="outside"` 将指示器放到容器外，`stepper="always"` 让横向桌面轮播始终显示前后翻页按钮，两者都可以绑定布尔值 `false` 隐藏。`trigger` 设置桌面端指示器在悬停（`hover`）或点击（`click`）时切换；`initialIndex` 设置初始激活项；`setActiveItem` 按索引或 `name` 定位。
 
 :::playground
 <!--
 <config lang="json5">
 {
+	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -161,38 +140,32 @@ const handleNext = () => carouselRef.value?.next();
 ```vue
 <template>
 	<div class="carousel-demo">
-		<div class="carousel-demo__toolbar">
-			<strong>带标签的指示器</strong>
-			<div>
-				<Button size="small" @click="handleGoTo('design')">设计</Button>
-				<Button size="small" @click="handleGoTo('motion')">动效</Button>
-				<Button size="small" @click="handleGoTo('focus')">重点</Button>
-			</div>
+		<div class="carousel-demo__row">
+			<RadioGroup v-model="trigger">
+				<Radio value="hover">hover</Radio>
+				<Radio value="click">click</Radio>
+			</RadioGroup>
+			<Button size="small" @click="handleGoTo('first')">第一项</Button>
+			<Button size="small" @click="handleGoTo('second')">第二项</Button>
+			<Button size="small" @click="handleGoTo(2)">索引 2</Button>
 		</div>
 		<Carousel
-			ref="carouselRef"
+			ref="carousel"
 			:height="180"
 			:autoplay="false"
+			:initial-index="1"
+			:trigger="trigger"
 			dots="outside"
 			stepper="always"
 		>
-			<CarouselItem name="design" label="设计">
-				<div class="slide slide--1">
-					<strong>设计</strong>
-					<span>用标签让指示器更易理解</span>
-				</div>
+			<CarouselItem name="first" label="第一项">
+				<div class="carousel-demo__slide">第一项：指示器带标签</div>
 			</CarouselItem>
-			<CarouselItem name="motion" label="动效">
-				<div class="slide slide--2">
-					<strong>动效</strong>
-					<span>箭头始终可见，适合手动浏览</span>
-				</div>
+			<CarouselItem name="second" label="第二项">
+				<div class="carousel-demo__slide is-2">第二项：初始激活</div>
 			</CarouselItem>
-			<CarouselItem name="focus" label="重点">
-				<div class="slide slide--3">
-					<strong>重点</strong>
-					<span>也可以通过 name 精确定位</span>
-				</div>
+			<CarouselItem name="third" label="第三项">
+				<div class="carousel-demo__slide is-3">第三项：箭头始终可见</div>
 			</CarouselItem>
 		</Carousel>
 	</div>
@@ -200,48 +173,44 @@ const handleNext = () => carouselRef.value?.next();
 
 <script setup>
 import { ref } from 'vue';
-import { Button, Carousel, CarouselItem } from '@deot/vc';
+import { Button, Carousel, CarouselItem, Radio, RadioGroup } from '@deot/vc';
 
-const carouselRef = ref();
-const handleGoTo = name => carouselRef.value?.setActiveItem(name);
+const carousel = ref();
+const trigger = ref('hover');
+
+const handleGoTo = (target) => {
+	carousel.value.setActiveItem(target);
+};
 </script>
 
 <style scoped>
-.carousel-demo__toolbar {
+.carousel-demo {
 	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 12px;
-	margin-bottom: 12px;
+	flex-direction: column;
+	gap: 16px;
 }
 
-.carousel-demo__toolbar div {
+.carousel-demo__row {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 6px;
+	align-items: center;
+	gap: 8px;
 }
 
-.slide {
+.carousel-demo__slide {
 	display: flex;
-	height: 100%;
 	align-items: center;
 	justify-content: center;
-	flex-direction: column;
+	height: 100%;
 	color: #fff;
-	gap: 8px;
 	background: linear-gradient(135deg, #536dfe, #8d9bff);
 }
 
-.slide span {
-	font-size: 13px;
-	opacity: 0.8;
-}
-
-.slide--2 {
+.carousel-demo__slide.is-2 {
 	background: linear-gradient(135deg, #00897b, #48b9a9);
 }
 
-.slide--3 {
+.carousel-demo__slide.is-3 {
 	background: linear-gradient(135deg, #ef6c00, #f5a45b);
 }
 </style>
@@ -250,40 +219,30 @@ const handleGoTo = name => carouselRef.value?.setActiveItem(name);
 
 ### 垂直与卡片模式
 
-`vertical` 改为纵向轮播；`card` 展示当前项及相邻项。卡片模式只支持横向。
+`vertical` 改为纵向轮播；`card` 展示当前项及相邻项，只支持横向。卡片模式下 `CarouselItem` 的 `width` 设置卡片宽度，`scale` 设置非激活卡片的缩放比例。`loop` 为 `false` 时到首尾不再循环，`draggable` 为 `false` 时禁用鼠标拖拽与触摸滑动。
 
 :::playground
 <!--
 <config lang="json5">
 {
+	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
 -->
 ```vue
 <template>
-	<div class="carousel-layout">
-		<section>
-			<p>垂直轮播</p>
-			<Carousel vertical :height="180" :autoplay="false">
-				<CarouselItem v-for="item in 4" :key="item">
-					<div class="slide" :class="{ 'is-even': item % 2 === 0 }">
-						{{ item }}
-					</div>
-				</CarouselItem>
-			</Carousel>
-		</section>
-
-		<section>
-			<p>卡片轮播</p>
-			<Carousel card :height="180" :autoplay="false">
-				<CarouselItem v-for="item in 5" :key="item">
-					<div class="slide" :class="{ 'is-even': item % 2 === 0 }">
-						{{ item }}
-					</div>
-				</CarouselItem>
-			</Carousel>
-		</section>
+	<div class="carousel-demo">
+		<Carousel vertical :height="180" :autoplay="false" :loop="false" :draggable="false">
+			<CarouselItem v-for="item in 4" :key="item">
+				<div class="carousel-demo__slide" :class="{ 'is-even': item % 2 === 0 }">纵向 {{ item }}</div>
+			</CarouselItem>
+		</Carousel>
+		<Carousel card :height="180" :autoplay="false">
+			<CarouselItem v-for="item in 5" :key="item" width="60%" :scale="0.9">
+				<div class="carousel-demo__slide" :class="{ 'is-even': item % 2 === 0 }">卡片 {{ item }}</div>
+			</CarouselItem>
+		</Carousel>
 	</div>
 </template>
 
@@ -292,74 +251,23 @@ import { Carousel, CarouselItem } from '@deot/vc';
 </script>
 
 <style scoped>
-.carousel-layout {
+.carousel-demo {
 	display: grid;
-	grid-template-columns: repeat(2, minmax(0, 1fr));
-	gap: 24px;
+	grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+	gap: 16px;
 }
 
-.carousel-layout p {
-	margin: 0 0 8px;
-}
-
-.slide {
+.carousel-demo__slide {
 	display: flex;
-	height: 100%;
 	align-items: center;
 	justify-content: center;
-	color: #fff;
+	height: 100%;
 	font-size: 20px;
+	color: #fff;
 	background: #7c94c3;
 }
 
-.slide.is-even {
-	background: #a6b6d5;
-}
-</style>
-```
-:::
-
-### 移动端用法
-
-`MCarousel` 使用触摸滑动，默认隐藏指示点并显示“当前项 / 总数”计数器。传入 `dots="bottom"` 可以同时显示指示点。
-
-:::playground
-<!--
-<config lang="json5">
-{
-	viewport: 375,
-	viewportOptions: ['auto', 375],
-	previewInset: 16
-}
-</config>
--->
-```vue
-<template>
-	<MCarousel :height="360" :autoplay="false" dots="bottom">
-		<MCarouselItem v-for="item in 4" :key="item">
-			<div class="slide" :class="{ 'is-even': item % 2 === 0 }">
-				{{ item }}
-			</div>
-		</MCarouselItem>
-	</MCarousel>
-</template>
-
-<script setup>
-import { MCarousel, MCarouselItem } from '@deot/vc';
-</script>
-
-<style scoped>
-.slide {
-	display: flex;
-	height: 100%;
-	align-items: center;
-	justify-content: center;
-	color: #fff;
-	font-size: 20px;
-	background: #7c94c3;
-}
-
-.slide.is-even {
+.carousel-demo__slide.is-even {
 	background: #a6b6d5;
 }
 </style>
@@ -368,21 +276,143 @@ import { MCarousel, MCarouselItem } from '@deot/vc';
 
 ### 带间距的滑动
 
-非卡片模式下，为 `CarouselItem` 或 `MCarouselItem` 设置 `gap` 后可以露出相邻项；此时需要关闭 `loop`，且 `width` 应大于 `50%`。
+非卡片模式下，为 `Carousel` 设置默认 `gap`，或为 `CarouselItem` 单独设置 `gap` 后可以露出相邻项；此时需要关闭 `loop`，且 `width` 应大于 `50%`。
 
 :::playground
 <!--
 <config lang="json5">
 {
-	viewport: 375,
-	viewportOptions: ['auto', 375],
+	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
 -->
 ```vue
 <template>
+	<Carousel class="carousel-demo" :height="180" :autoplay="false" :loop="false" :gap="16" dots="outside">
+		<CarouselItem v-for="item in 4" :key="item" width="80%">
+			<div class="carousel-demo__slide" :class="{ 'is-even': item % 2 === 0 }">{{ item }}</div>
+		</CarouselItem>
+	</Carousel>
+</template>
+
+<script setup>
+import { Carousel, CarouselItem } from '@deot/vc';
+</script>
+
+<style scoped>
+.carousel-demo__slide {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 100%;
+	font-size: 20px;
+	color: #fff;
+	background: #7c94c3;
+}
+
+.carousel-demo__slide.is-even {
+	background: #a6b6d5;
+}
+</style>
+```
+:::
+
+## 移动端
+
+`MCarousel`、`MCarouselItem` 的属性、事件、插槽、方法与 `Carousel`、`CarouselItem` 相同。差异如下：
+
+- 使用触摸滑动，不渲染前后翻页按钮，指示点只响应点击，因此 `stepper` 和 `trigger` 不改变移动端渲染行为。
+- 默认隐藏指示点（`dots` 默认 `false`），并显示“当前项 / 总数”计数器（`indicator`，卡片模式下始终隐藏）；传入 `dots="bottom"` 可以同时显示指示点。
+- 数字形式的 `height`、`gap` 为 750 稿长度，随 `--vc-rem` 缩放；字符串原样作为 CSS 长度。
+
+下例依次展示带指示点与计数器的横向轮播、卡片模式与纵向轮播；底栏切换 `rem` 可查看不同屏宽下的效果。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	mobile: true,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
+</config>
+-->
+```vue
+<template>
+	<div class="m-carousel-demo">
+		<MCarousel :height="360" :autoplay="false" dots="bottom">
+			<MCarouselItem v-for="item in 4" :key="item">
+				<div class="m-carousel-demo__slide" :class="{ 'is-even': item % 2 === 0 }">{{ item }}</div>
+			</MCarouselItem>
+		</MCarousel>
+		<MCarousel :height="320" :t="4000" card>
+			<MCarouselItem v-for="item in 6" :key="item">
+				<div class="m-carousel-demo__slide" :class="{ 'is-even': item % 2 === 0 }">卡片 {{ item }}</div>
+			</MCarouselItem>
+		</MCarousel>
+		<MCarousel :height="320" :autoplay="false" :indicator="false" vertical dots="bottom">
+			<MCarouselItem v-for="item in 3" :key="item">
+				<div class="m-carousel-demo__slide" :class="{ 'is-even': item % 2 === 0 }">纵向 {{ item }}</div>
+			</MCarouselItem>
+		</MCarousel>
+	</div>
+</template>
+
+<script setup>
+import { MCarousel, MCarouselItem } from '@deot/vc';
+</script>
+
+<style scoped>
+.m-carousel-demo {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--vc-rem) * 32);
+}
+
+.m-carousel-demo__slide {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 100%;
+	font-size: calc(var(--vc-rem) * 40);
+	color: #fff;
+	background: #7c94c3;
+}
+
+.m-carousel-demo__slide.is-even {
+	background: #a6b6d5;
+}
+</style>
+```
+:::
+
+### 带间距的滑动
+
+`MCarouselItem` 的 `gap` 为 750 稿长度；`width` 可写成含 `--vc-rem` 的 CSS 长度，露出相邻项。与桌面端相同，需要关闭 `loop`。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	mobile: true,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
+</config>
+-->
+```vue
+<template>
 	<MCarousel
+		class="m-carousel-demo"
 		:height="360"
 		:autoplay="false"
 		:loop="false"
@@ -395,9 +425,7 @@ import { MCarousel, MCarouselItem } from '@deot/vc';
 			width="calc(100% - var(--vc-rem) * 144)"
 			:gap="24"
 		>
-			<div class="slide" :class="{ 'is-even': item % 2 === 0 }">
-				{{ item }}
-			</div>
+			<div class="m-carousel-demo__slide" :class="{ 'is-even': item % 2 === 0 }">{{ item }}</div>
 		</MCarouselItem>
 	</MCarousel>
 </template>
@@ -407,17 +435,17 @@ import { MCarousel, MCarouselItem } from '@deot/vc';
 </script>
 
 <style scoped>
-.slide {
+.m-carousel-demo__slide {
 	display: flex;
-	height: 100%;
 	align-items: center;
 	justify-content: center;
+	height: 100%;
+	font-size: calc(var(--vc-rem) * 40);
 	color: #fff;
-	font-size: 20px;
 	background: #7c94c3;
 }
 
-.slide.is-even {
+.m-carousel-demo__slide.is-even {
 	background: #a6b6d5;
 }
 </style>

@@ -10,70 +10,131 @@
 
 ### 基础用法
 
-使用 `v-model:current` 同步当前页。默认显示总条数，设置 `:show-count="false"` 可隐藏；页码较多时显示省略号，点击可前后跳转 5 页。总数为 0 时仍显示第 1 页。
+使用 `v-model:current` 同步当前页，`change` 与 `update:current` 一同触发。默认显示总条数，设置 `:show-count="false"` 可隐藏；页码较多时显示省略号，点击可前后跳转 5 页。总数为 0 时仍显示第 1 页。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="demo">
-		<Pagination v-model:current="current" class="pagination" :count="200" />
-		<p>当前第 {{ current }} 页，每页 10 条。</p>
+	<div class="pagination-demo">
+		<Pagination
+			v-model:current="current"
+			class="pagination-demo__pagination"
+			:count="200"
+			@change="handleChange"
+		/>
+		<Pagination
+			v-model:current="current"
+			class="pagination-demo__pagination"
+			:count="200"
+			:show-count="false"
+		/>
+		<p class="pagination-demo__result">当前第 {{ current }} 页，每页 10 条；change 触发 {{ changeCount }} 次。</p>
 	</div>
 </template>
+
 <script setup>
 import { ref } from 'vue';
 import { Pagination } from '@deot/vc';
 
 const current = ref(1);
+const changeCount = ref(0);
+
+const handleChange = () => {
+	changeCount.value++;
+};
 </script>
+
 <style scoped>
-.demo { overflow-x: auto; }
-.pagination { flex-wrap: wrap; row-gap: 12px; }
-.demo p { margin: 12px 0 0; }
+.pagination-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	overflow-x: auto;
+}
+
+.pagination-demo__pagination {
+	flex-wrap: wrap;
+	row-gap: 8px;
+}
+
+.pagination-demo__result {
+	margin: 0;
+}
 </style>
 ```
 :::
 
 ### 每页数量与快速跳转
 
-`showSizer` 显示条数选择器，`showElevator` 显示页码输入框，输入后按 Enter 跳转。输入超过总页数时取最后一页。
+`showSizer` 显示条数选择器，`pageSizeOptions` 设置可选条数，`placement` 设置选择器弹层方向，`portal` 设置弹层是否挂载到 body；`showElevator` 显示页码输入框，输入后按 Enter 跳转。输入超过总页数时取最后一页。
 
 选择每页条数会触发 `page-size-change`，组件内部回到第 1 页，但不会同时触发 `update:current` 或 `change`。使用受控页码时，应在处理函数中同步重置页码，并按需加载数据。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="demo">
+	<div class="pagination-demo">
 		<Pagination
 			v-model:current="current"
-			class="pagination"
+			class="pagination-demo__pagination"
 			:count="200"
 			:page-size="pageSize"
 			:page-size-options="[10, 20, 50]"
+			placement="top"
+			:portal="false"
 			show-sizer
 			show-elevator
 			@page-size-change="handlePageSizeChange"
 		/>
-		<p>当前第 {{ current }} 页，每页 {{ pageSize }} 条。</p>
+		<p class="pagination-demo__result">当前第 {{ current }} 页，每页 {{ pageSize }} 条。</p>
 	</div>
 </template>
+
 <script setup>
 import { ref } from 'vue';
 import { Pagination } from '@deot/vc';
 
 const current = ref(1);
 const pageSize = ref(10);
+
 const handlePageSizeChange = (value) => {
 	pageSize.value = value;
 	current.value = 1;
 };
 </script>
+
 <style scoped>
-.demo { overflow-x: auto; }
-.pagination { flex-wrap: wrap; row-gap: 12px; }
-.demo p { margin: 12px 0 0; }
+.pagination-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	overflow-x: auto;
+}
+
+.pagination-demo__pagination {
+	flex-wrap: wrap;
+	row-gap: 8px;
+}
+
+.pagination-demo__result {
+	margin: 0;
+}
 </style>
 ```
 :::
@@ -83,56 +144,187 @@ const handlePageSizeChange = (value) => {
 默认插槽替换总条数内容。通过组件 ref 调用 `previous()`、`next()` 或 `resetPage(page)`；`resetPage` 的参数需由调用方保证是有效页码。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="demo">
-		<Pagination ref="pagination" v-model:current="current" class="pagination" :count="100">
+	<div class="pagination-demo">
+		<Pagination ref="pagination" v-model:current="current" class="pagination-demo__pagination" :count="100">
 			共 100 条记录 · 第 {{ current }} 页
 		</Pagination>
-		<div class="actions">
-			<Button @click="handlePrev">上一页</Button>
+		<div class="pagination-demo__row">
+			<Button @click="handlePrevious">上一页</Button>
 			<Button @click="handleNext">下一页</Button>
 			<Button @click="handleJump">跳转到第 3 页</Button>
 		</div>
 	</div>
 </template>
+
 <script setup>
 import { ref } from 'vue';
 import { Pagination, Button } from '@deot/vc';
 
 const pagination = ref();
 const current = ref(1);
-const handlePrev = () => pagination.value.previous();
+
+const handlePrevious = () => pagination.value.previous();
 const handleNext = () => pagination.value.next();
 const handleJump = () => pagination.value.resetPage(3);
 </script>
+
 <style scoped>
-.demo { overflow-x: auto; }
-.pagination { flex-wrap: wrap; row-gap: 12px; }
-.actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.pagination-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	overflow-x: auto;
+}
+
+.pagination-demo__pagination {
+	flex-wrap: wrap;
+	row-gap: 8px;
+}
+
+.pagination-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
 </style>
 ```
 :::
 
 ## 移动端
 
-`MPagination` 与 `Pagination` 是两个独立组件。它只显示「上一页、当前页 / 总页数、下一页」三段，两侧等分剩余宽度，页码始终居中；翻页按钮使用 `MButton`（medium），颜色、按下态与禁用态沿用 `--vc-button-*`。尺寸按 750 稿设计，随 `--vc-rem` 缩放：上下内边距 22、左右 32，页码字号 36、行高 44，`justify="center"` 时翻页按钮距页码 48（375 宽下为一半的 px）。
+`MPagination` 与 `Pagination` 是两个独立组件。它只显示「上一页、当前页 / 总页数、下一页」三段，两侧等分剩余宽度，页码始终居中；翻页按钮使用 `MButton`（medium），颜色、按下态与禁用态沿用 `--vc-button-*`。尺寸按 750 稿设计，随 `--vc-rem` 缩放，底栏切换 `rem` 可查看不同屏宽下的效果。
 
-`type` 设置翻页区域：`default` 为按钮，`text` 为文字（无内边距，与内容边缘对齐），`simple` 只显示页码。`nextType="primary"` 时下一页为主色按钮或主色文字。`icon` 显示左右箭头；`previousText`、`nextText` 传空字符串时只显示图标，此时按钮为方形。
+`type` 设置翻页区域：`default` 为按钮，`text` 为文字（无内边距，与内容边缘对齐），`simple` 只显示页码。`nextType="primary"` 时下一页为主色按钮或主色文字。`icon` 显示左右箭头；`previousText`、`nextText` 传空字符串时只显示图标，此时按钮为方形，`justify="center"` 让翻页按钮紧挨页码。`hideOnSinglePage` 在只有一页时不渲染。`change` 与 `update:current` 一同触发，实例方法与 `Pagination` 相同。
 
+:::playground
+<!--
+<config lang="json5">
+{
+	mobile: true,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
+</config>
+-->
 ```vue
 <template>
-	<MPagination v-model:current="current" :count="60" next-type="primary" />
-	<MPagination v-model:current="current" :count="60" type="text" />
-	<MPagination
-		v-model:current="current"
-		:count="60"
-		icon
-		justify="center"
-		previous-text=""
-		next-text=""
-	/>
+	<div class="m-pagination-demo">
+		<MPagination ref="pagination" v-model:current="current" :count="60" @change="handleChange" />
+		<MPagination v-model:current="current" :count="60" next-type="primary" />
+		<MPagination v-model:current="current" :count="60" type="text" />
+		<MPagination v-model:current="current" :count="60" type="text" next-type="primary" />
+		<MPagination v-model:current="current" :count="60" icon />
+		<MPagination
+			v-model:current="current"
+			:count="60"
+			icon
+			justify="center"
+			previous-text=""
+			next-text=""
+		/>
+		<MPagination v-model:current="current" :count="60" type="simple" />
+		<MPagination :count="count" hide-on-single-page />
+		<div class="m-pagination-demo__row">
+			<MButton size="small" @click="handleToggleCount">数据总数：{{ count }}</MButton>
+			<MButton size="small" @click="handleReset">第 1 页</MButton>
+		</div>
+		<p class="m-pagination-demo__result">当前第 {{ current }} 页，change 触发 {{ changeCount }} 次</p>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { MPagination, MButton } from '@deot/vc';
+
+const current = ref(1);
+const count = ref(30);
+const changeCount = ref(0);
+const pagination = ref();
+
+const handleChange = () => {
+	changeCount.value++;
+};
+
+const handleToggleCount = () => {
+	count.value = count.value > 10 ? 8 : 30;
+};
+
+const handleReset = () => {
+	pagination.value?.resetPage(1);
+};
+</script>
+
+<style scoped>
+.m-pagination-demo {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--vc-rem) * 32);
+}
+
+.m-pagination-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: calc(var(--vc-rem) * 16);
+	padding-inline: calc(var(--vc-rem) * 32);
+}
+
+.m-pagination-demo__result {
+	margin: 0;
+	padding-inline: calc(var(--vc-rem) * 32);
+}
+</style>
+```
+:::
+
+### 自定义翻页区域
+
+`previous`、`next` 插槽替换整个翻页区域，参数中的 `previous()`、`next()` 用于翻页，`disabled` 表示已在首页或末页；默认插槽替换中间的页码，参数 `total` 为总页数。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	mobile: true,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
+</config>
+-->
+```vue
+<template>
+	<div class="m-pagination-demo">
+		<MPagination v-model:current="current" :count="60" :page-size="20">
+			<template #previous="{ current: page, disabled, previous }">
+				<span v-if="!disabled" class="m-pagination-demo__link" @click="previous">第 {{ page - 1 }} 节</span>
+			</template>
+			<template #default="{ current: page, total }">
+				<span class="m-pagination-demo__text">第 {{ page }} 节 · 共 {{ total }} 节</span>
+			</template>
+			<template #next="{ current: page, disabled, next }">
+				<span v-if="!disabled" class="m-pagination-demo__link" @click="next">第 {{ page + 1 }} 节</span>
+			</template>
+		</MPagination>
+	</div>
 </template>
 
 <script setup>
@@ -141,32 +333,21 @@ import { MPagination } from '@deot/vc';
 
 const current = ref(1);
 </script>
+
+<style scoped>
+.m-pagination-demo__link {
+	font-size: calc(var(--vc-rem) * 30);
+	color: var(--vc-color-primary);
+}
+
+.m-pagination-demo__text {
+	font-size: calc(var(--vc-rem) * 30);
+}
+</style>
 ```
+:::
 
-`previous`、`next` 插槽替换整个翻页区域，参数中的 `previous()`、`next()` 用于翻页；默认插槽替换中间的页码：
-
-```vue
-<template>
-	<MPagination v-model:current="current" :count="60" :page-size="20">
-		<template #previous="{ current: page, disabled, previous }">
-			<span v-if="!disabled" @click="previous">第 {{ page - 1 }} 章</span>
-		</template>
-		<template #default="{ current: page, total }">
-			第 {{ page }} 章 · 共 {{ total }} 章
-		</template>
-		<template #next="{ current: page, disabled, next }">
-			<span v-if="!disabled" @click="next">第 {{ page + 1 }} 章</span>
-		</template>
-	</MPagination>
-</template>
-
-<script setup>
-import { ref } from 'vue';
-import { MPagination } from '@deot/vc';
-
-const current = ref(1);
-</script>
-```
+尺寸按 750 稿（括号内为 375 宽下的 px）：上下内边距 22（11）、左右 32（16），页码字号 36（18）、行高 44（22），`justify="center"` 时翻页按钮距页码 48（24）。
 
 ## 主题与局部覆盖
 
@@ -180,6 +361,7 @@ const current = ref(1);
 | --- | --- | --- |
 | color-dark-extralight | 禁用页码及翻页图标 | 亮色：`#909399`；暗色：`#B9B9B9` |
 | color-dark-lighter | 移动端页码（`MPagination`） | 亮色：`#515151`；暗色：`#D9D9D9` |
+| color-primary | 移动端 `type="text"` 且 `nextType="primary"` 的下一页文字（`MPagination`） | `#456CF6` |
 | color-primary-light | 激活及悬停页码文字、边框 | `#4A96FF` |
 | background-color-primary-light | 激活及悬停页码背景 | 亮色：`#E6F7FF`；暗色：`#273E5E` |
 | foreground-color | 分页文字；移动端 `type="text"` 的翻页文字 | 亮色：`#080F20`；暗色：`#F8F8F8` |

@@ -2,13 +2,15 @@
 
 将 Vue 组件封装为可调用的服务，通过 `popup()` 传入数据、创建界面并接收操作结果；也提供声明式的 `PortalView`。
 
+移动端入口导出的 `MPortal` 与 `Portal` 是同一实现，移动端外观由包装组件决定。
+
 ### 何时使用
 
 - 从列表、详情或工具栏打开独立的编辑表单、选择器、详情面板，在确认后更新调用页面。
 - 封装需要重复使用的 Modal、Drawer 或通知服务，统一创建、结果回传与清理。
 - 使用 `PortalView` 保留原位置的占位内容，同时将另一部分内容传送到 `body`。
 
-`Portal` 是创建独立 Vue app 的工具类，不直接提供弹窗、遮罩或按钮。`PortalView` 是基于 Teleport 的组件，仍处于调用方的组件树中。`MPortal` 与 `Portal` 是同一个类，移动端外观由包装组件决定。
+`Portal` 是创建独立 Vue app 的工具类，不直接提供弹窗、遮罩或按钮。`PortalView` 是基于 Teleport 的组件，仍处于调用方的组件树中。
 
 ### 基础用法
 
@@ -16,7 +18,7 @@
 
 以下命令式案例都将 `new Portal(...)` 放在独立的服务文件中，调用页面导入服务后执行 `popup()`；UI 与表单逻辑放在 Wrapper 中。
 
-下面模拟列表中的编辑操作：Form 校验名称，确认后仅更新当前记录，取消时保持原数据。示例先展开预览区域再创建 Modal，并在 Portal 清理后恢复高度。
+下面模拟列表中的编辑操作：Form 校验名称，确认后仅更新当前记录，取消时保持原数据。`popup(propsData, options)` 的第一个参数只作为包装组件的 props。示例先展开预览区域再创建 Modal，并在 Portal 清理后恢复高度。
 
 :::playground
 <!--
@@ -31,19 +33,19 @@
 -->
 ```vue App.vue
 <template>
-	<div class="editor-demo">
+	<div class="portal-demo">
 		<Card title="条目资料">
-			<div class="record-row">
-				<div>
-					<strong>{{ record.name }}</strong>
-					<p class="description">编号 #{{ record.id }} · 点击编辑更新条目名称</p>
+			<div class="portal-demo__record">
+				<div class="portal-demo__info">
+					<strong class="portal-demo__name">{{ record.name }}</strong>
+					<p class="portal-demo__description">编号 #{{ record.id }} · 点击编辑更新条目名称</p>
 				</div>
 				<Button type="primary" :disabled="isActive" @click="handleEdit">
 					编辑记录
 				</Button>
 			</div>
 		</Card>
-		<p class="feedback" role="status">{{ result }}</p>
+		<p class="portal-demo__result" role="status">{{ result }}</p>
 	</div>
 </template>
 
@@ -76,30 +78,36 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.editor-demo {
-	display: grid;
+.portal-demo {
+	display: flex;
+	flex-direction: column;
 	gap: 16px;
-	align-content: start;
 }
 
-.record-row {
+.portal-demo__record {
 	display: flex;
-	gap: 16px;
+	flex-wrap: wrap;
 	align-items: center;
 	justify-content: space-between;
-	flex-wrap: wrap;
+	gap: 16px;
 }
 
-.record-row strong {
+.portal-demo__info {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.portal-demo__name {
 	font-size: 16px;
 }
 
-.description {
-	margin: 6px 0 0;
+.portal-demo__description {
+	margin: 0;
 	color: var(--vc-color-dark-extralight);
 }
 
-.feedback {
+.portal-demo__result {
 	padding: 12px 16px;
 	margin: 0;
 	color: var(--vc-color-dark-lighter);
@@ -127,21 +135,23 @@ export const RecordEditor = new Portal(EditorWrapper, {
 		:mask-closable="false"
 		:on-cancel="handleCancel"
 	>
-		<p class="description">保存后，条目名称会同步更新到调用页面。</p>
-		<Form ref="form" :model="formData" label-position="top" @submit.prevent="handleSave">
-			<FormItem prop="name" label="条目名称" label-for="record-name" required="请填写名称">
-				<Input
-					v-model="formData.name"
-					input-id="record-name"
-					aria-label="条目名称"
-					placeholder="请输入条目名称"
-					:allow-dispatch="false"
-					clearable
-				/>
-			</FormItem>
-		</Form>
+		<div class="editor-wrapper">
+			<p class="editor-wrapper__description">保存后，条目名称会同步更新到调用页面。</p>
+			<Form ref="form" :model="formData" label-position="top" @submit.prevent="handleSave">
+				<FormItem prop="name" label="条目名称" label-for="record-name" required="请填写名称">
+					<Input
+						v-model="formData.name"
+						input-id="record-name"
+						aria-label="条目名称"
+						placeholder="请输入条目名称"
+						:allow-dispatch="false"
+						clearable
+					/>
+				</FormItem>
+			</Form>
+		</div>
 		<template #footer>
-			<div class="actions">
+			<div class="editor-wrapper__actions">
 				<Button @click="handleCancel">取消编辑</Button>
 				<Button type="primary" @click="handleSave">保存记录</Button>
 			</div>
@@ -167,7 +177,7 @@ const handleSave = async () => {
 	} catch {
 		return;
 	}
-	// 真实业务可在保存成功后再发送结果；失败时保留表单供用户重试。
+	// 真实场景可在保存成功后再发送结果；失败时保留表单供用户重试。
 	isActive.value = false;
 	emit('portal-fulfilled', { ...props.record, name: formData.name });
 };
@@ -180,17 +190,23 @@ onMounted(() => (isActive.value = true));
 </script>
 
 <style scoped>
-.description {
-	margin: 0 0 20px;
+.editor-wrapper {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.editor-wrapper__description {
+	margin: 0;
 	line-height: 1.6;
 	color: var(--vc-color-dark-extralight);
 }
 
-.actions {
+.editor-wrapper__actions {
 	display: flex;
-	gap: 12px;
-	justify-content: flex-end;
 	flex-wrap: wrap;
+	justify-content: flex-end;
+	gap: 8px;
 }
 </style>
 ```
@@ -198,24 +214,28 @@ onMounted(() => (isActive.value = true));
 
 ### 创建前准备数据
 
-`onBeforeCreate(propsData)` 可以返回对象或 Promise。返回对象会作为额外 props 合并到包装组件，同名字段覆盖调用时的值；异步准备完成前不会渲染包装组件。
+`onBeforeCreate(propsData)` 可以返回对象或 Promise。返回对象会作为额外 props 合并到包装组件，同名字段覆盖调用时的值；异步准备完成前不会渲染包装组件。`onFulfilled`、`onRejected` 分别在结果兑现、拒绝时调用，随后 `popup()` 返回的句柄才兑现或拒绝，因此仍需 `.catch()` 处理拒绝。
 
 当前实现中，准备 Promise 拒绝时会调用 `onDestroyed(error)` 清理节点，但不会拒绝 `popup()` 的 Promise。下面分别显示加载、结果和准备失败状态，避免将失败提示只放在 `popup().catch()` 中。如果需要一条完整的 `try/catch` 请求链，可先在调用方 `await` 数据请求，再执行 `popup(data, options)`。
 
 :::playground
 <!--
 <config lang="json5">
-{ entry: 'App.vue', views: ['runtime', 'files'], previewInset: 16 }
+{
+	entry: 'App.vue',
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
 </config>
 -->
 ```vue App.vue
 <template>
-	<div class="detail-demo">
-		<div class="actions">
+	<div class="portal-demo">
+		<div class="portal-demo__row">
 			<Button type="primary" :disabled="isActive" @click="handleOpen(false)">加载详情</Button>
 			<Button :disabled="isActive" @click="handleOpen(true)">模拟加载失败</Button>
 		</div>
-		<p class="feedback" role="status">{{ status }}</p>
+		<p class="portal-demo__result" role="status">{{ status }}</p>
 		<div ref="target" />
 	</div>
 </template>
@@ -238,32 +258,33 @@ const handleOpen = (isFail) => {
 		onReady: () => (status.value = '详情已就绪')
 	}, {
 		element: target.value,
+		onFulfilled: value => (status.value = '已完成：' + value),
+		onRejected: () => (status.value = '已取消'),
 		onDestroyed: (error) => {
 			isActive.value = false;
 			if (error) status.value = error.message;
 		}
-	}).then(
-		value => (status.value = '已完成：' + value),
-		() => (status.value = '已取消')
-	);
+	}).catch(() => {});
 };
 
 onUnmounted(() => Detail.destroy());
 </script>
 
 <style scoped>
-.detail-demo {
-	display: grid;
+.portal-demo {
+	display: flex;
+	flex-direction: column;
 	gap: 16px;
 }
 
-.actions {
+.portal-demo__row {
 	display: flex;
-	gap: 12px;
 	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
 }
 
-.feedback {
+.portal-demo__result {
 	padding: 12px 16px;
 	margin: 0;
 	color: var(--vc-color-dark-lighter);
@@ -281,7 +302,7 @@ export const Detail = new Portal(DetailWrapper, {
 	name: 'portal-detail',
 	leaveDelay: 0,
 	onBeforeCreate: async ({ id, isFail }) => {
-		// 用本地数据模拟详情请求，业务中可替换为实际接口。
+		// 用本地数据模拟详情请求，实际使用时替换为数据请求。
 		await new Promise(resolve => setTimeout(resolve, 500));
 		if (isFail) throw new Error('模拟请求失败，请重试');
 		return { title: '记录 ' + id, description: '详情已加载完成，可以阅读后确认或取消。' };
@@ -292,10 +313,12 @@ export const Detail = new Portal(DetailWrapper, {
 ```vue DetailWrapper.vue
 <template>
 	<Card :title="title">
-		<p class="description">{{ description }}</p>
-		<div class="actions">
-			<Button type="primary" @click="handleConfirm">完成阅读</Button>
-			<Button @click="handleCancel">取消阅读</Button>
+		<div class="detail-wrapper">
+			<p class="detail-wrapper__description">{{ description }}</p>
+			<div class="detail-wrapper__actions">
+				<Button type="primary" @click="handleConfirm">完成阅读</Button>
+				<Button @click="handleCancel">取消阅读</Button>
+			</div>
 		</div>
 	</Card>
 </template>
@@ -314,16 +337,22 @@ onMounted(() => emit('ready'));
 </script>
 
 <style scoped>
-.description {
-	margin: 0 0 20px;
+.detail-wrapper {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.detail-wrapper__description {
+	margin: 0;
 	line-height: 1.7;
 	color: var(--vc-color-dark-lighter);
 }
 
-.actions {
+.detail-wrapper__actions {
 	display: flex;
-	gap: 12px;
 	flex-wrap: wrap;
+	gap: 8px;
 }
 </style>
 ```
@@ -333,30 +362,36 @@ onMounted(() => emit('ready'));
 
 默认相同 `name` 的再次调用会销毁旧实例。`multiple: true` 为每次调用生成独立标识，适合并列查看多个详情或显示多条任务通知。`element` 接受已存在的 DOM 元素或选择器；`insertion: 'first'` 将新节点插在目标的首个元素前。
 
-保存返回的 leaf，可以分别 `resolve(value)`、`reject(reason)` 或 `destroy()`。下例使用普通面板展示多实例，避免多个遮罩相互遮挡。`fragment: true` 保留挂载容器，支持包装组件的多根节点和条件渲染。
+保存返回的 leaf，可以分别 `resolve(value)`、`reject(reason)` 或 `destroy()`。下例使用普通面板展示多实例，避免多个遮罩相互遮挡。`fragment: true` 保留挂载容器，支持包装组件的多根节点和条件渲染，`tag` 设置这个容器的标签。`autoDestroy: false` 时，无参数的 `Portal.clear()` 不会清理本组；`Portal.clear()` 会清理页面上其他允许自动清理的 Portal 节点，示例中仅用于对比。
 
 :::playground
 <!--
 <config lang="json5">
-{ entry: 'App.vue', views: ['runtime', 'files'], previewInset: 16 }
+{
+	entry: 'App.vue',
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
 </config>
 -->
 ```vue App.vue
 <template>
-	<div class="panels-demo">
-		<div class="actions">
+	<div class="portal-demo">
+		<div class="portal-demo__row">
 			<Button type="primary" @click="handleAdd">添加详情</Button>
-			<Button :disabled="!activeCount" @click="handleCloseLatest">取消最新详情</Button>
+			<Button :disabled="!activeCount" @click="handleResolveLatest">确认最新详情</Button>
+			<Button :disabled="!activeCount" @click="handleRejectLatest">取消最新详情</Button>
+			<Button :disabled="!activeCount" @click="handleClearAuto">Portal.clear()</Button>
 			<Button :disabled="!activeCount" @click="handleClear">清理本组</Button>
 		</div>
-		<p class="feedback" role="status">当前 {{ activeCount }} 个；{{ status }}</p>
-		<div ref="target" class="panels" />
+		<p class="portal-demo__result" role="status">当前 {{ activeCount }} 个；{{ status }}</p>
+		<div ref="target" class="portal-demo__panels" />
 	</div>
 </template>
 
 <script setup>
 import { onUnmounted, ref } from 'vue';
-import { Button } from '@deot/vc';
+import { Button, Portal } from '@deot/vc';
 import { Panels } from './panels.js';
 
 const target = ref();
@@ -364,6 +399,8 @@ const activeCount = ref(0);
 const status = ref('尚未添加');
 const leaves = new Map();
 let sequence = 0;
+
+const getLatest = () => [...leaves.entries()].at(-1);
 
 const handleAdd = () => {
 	const id = ++sequence;
@@ -381,9 +418,17 @@ const handleAdd = () => {
 		reason => (status.value = '已取消详情 ' + reason)
 	);
 };
-const handleCloseLatest = () => {
-	const [id, leaf] = [...leaves.entries()].at(-1);
+const handleResolveLatest = () => {
+	const [id, leaf] = getLatest();
+	leaf.resolve(id);
+};
+const handleRejectLatest = () => {
+	const [id, leaf] = getLatest();
 	leaf.reject(id);
+};
+const handleClearAuto = () => {
+	Portal.clear();
+	status.value = '本组 autoDestroy 为 false，Portal.clear() 未清理';
 };
 const handleClear = () => {
 	Panels.destroy();
@@ -394,19 +439,21 @@ onUnmounted(() => Panels.destroy());
 </script>
 
 <style scoped>
-.panels-demo,
-.panels {
-	display: grid;
+.portal-demo,
+.portal-demo__panels {
+	display: flex;
+	flex-direction: column;
 	gap: 16px;
 }
 
-.actions {
+.portal-demo__row {
 	display: flex;
-	gap: 12px;
 	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
 }
 
-.feedback {
+.portal-demo__result {
 	padding: 12px 16px;
 	margin: 0;
 	color: var(--vc-color-dark-lighter);
@@ -424,7 +471,9 @@ export const Panels = new Portal(PanelWrapper, {
 	name: 'portal-panels',
 	multiple: true,
 	fragment: true,
+	tag: 'section',
 	insertion: 'first',
+	autoDestroy: false,
 	leaveDelay: 0
 });
 ```
@@ -432,10 +481,12 @@ export const Panels = new Portal(PanelWrapper, {
 ```vue PanelWrapper.vue
 <template>
 	<Card :title="'详情 ' + id">
-		<p v-if="isActive" class="description">每个面板都有自己的展开状态，可独立确认或取消。</p>
-		<div class="actions">
-			<Button size="small" @click="handleToggle">切换内容 {{ id }}</Button>
-			<Button type="primary" size="small" @click="handleConfirm">确认详情 {{ id }}</Button>
+		<div class="panel-wrapper">
+			<p v-if="isActive" class="panel-wrapper__description">每个面板都有自己的展开状态，可独立确认或取消。</p>
+			<div class="panel-wrapper__actions">
+				<Button size="small" @click="handleToggle">切换内容 {{ id }}</Button>
+				<Button type="primary" size="small" @click="handleConfirm">确认详情 {{ id }}</Button>
+			</div>
 		</div>
 	</Card>
 </template>
@@ -453,16 +504,22 @@ const handleConfirm = () => emit('portal-fulfilled', props.id);
 </script>
 
 <style scoped>
-.description {
-	margin: 0 0 16px;
+.panel-wrapper {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.panel-wrapper__description {
+	margin: 0;
 	line-height: 1.7;
 	color: var(--vc-color-dark-lighter);
 }
 
-.actions {
+.panel-wrapper__actions {
 	display: flex;
-	gap: 12px;
 	flex-wrap: wrap;
+	gap: 8px;
 }
 </style>
 ```
@@ -470,28 +527,32 @@ const handleConfirm = () => emit('portal-fulfilled', props.id);
 
 ### 活跃实例复用
 
-`alive: true` 在同名实例仍存在时更新 props，并在下一次 Vue 更新后调用包装组件暴露的 `update(options)`。它不会在关闭后永久缓存组件：点击未匹配 `aliveRules` 的外部区域、发送结果事件或主动销毁，都会清理实例。
+`alive: true` 在同名实例仍存在时更新 props，并在下一次 Vue 更新后调用包装组件暴露的 `aliveUpdateKey` 方法（默认 `update`，下例改为 `refresh`）。它不会在关闭后永久缓存组件：点击未匹配 `aliveRules` 的外部区域、发送结果事件或主动销毁，都会清理实例；外部清理前先将包装组件暴露的 `aliveVisibleKey` 字段置为 `false`。
 
-触发区域需匹配 `aliveRules`，否则再次点击触发按钮时可能先触发外部清理。下面保留输入的草稿，切换当前记录时通过计数观察复用；主动销毁或点击外部区域后重新打开，草稿和计数重置。
+触发区域需匹配 `aliveRules`（默认匹配 `vc-portal-alive` 类名），否则再次点击触发按钮时可能先触发外部清理。下面保留输入的草稿，切换当前记录时通过计数观察复用；主动销毁或点击外部区域后重新打开，草稿和计数重置。
 
 “打开活跃面板”返回等待销毁的 Promise，Button 在面板存在期间保持 loading，`onDestroyed` 触发后恢复。记录切换按钮只更新当前实例，不等待新的操作结果。复用后的主动销毁和外部清理都执行最后一次传入的 `onDestroyed`，因此每次复用都传入同一个销毁回调，确保都能结束打开按钮的等待。
 
 :::playground
 <!--
 <config lang="json5">
-{ entry: 'App.vue', views: ['runtime', 'files'], previewInset: 16 }
+{
+	entry: 'App.vue',
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
 </config>
 -->
 ```vue App.vue
 <template>
-	<div class="alive-demo">
-		<div class="vc-portal-alive actions">
+	<div class="portal-demo">
+		<div class="vc-portal-alive portal-demo__row">
 			<Button type="primary" :disabled="isActive" @click="handleOpen">打开活跃面板</Button>
 			<Button :disabled="!isActive" @click="handleUpdate('记录 A')">查看记录 A</Button>
 			<Button :disabled="!isActive" @click="handleUpdate('记录 B')">查看记录 B</Button>
 			<Button :disabled="!isActive" @click="handleDestroy">销毁活跃面板</Button>
 		</div>
-		<p class="outside-area">点击此处清理活跃面板，然后重新打开观察草稿。</p>
+		<p class="portal-demo__outside">点击此处清理活跃面板，然后重新打开观察草稿。</p>
 		<div ref="target" />
 	</div>
 </template>
@@ -522,18 +583,20 @@ onUnmounted(() => Preview.destroy());
 </script>
 
 <style scoped>
-.alive-demo {
-	display: grid;
+.portal-demo {
+	display: flex;
+	flex-direction: column;
 	gap: 16px;
 }
 
-.actions {
+.portal-demo__row {
 	display: flex;
-	gap: 12px;
 	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
 }
 
-.outside-area {
+.portal-demo__outside {
 	padding: 16px;
 	margin: 0;
 	color: var(--vc-color-dark-lighter);
@@ -552,7 +615,9 @@ import AliveWrapper from './AliveWrapper.vue';
 export const Preview = new Portal(AliveWrapper, {
 	name: 'portal-alive-preview',
 	alive: true,
+	aliveRules: { className: /(vc-portal-alive)/ },
 	aliveVisibleKey: 'isActive',
+	aliveUpdateKey: 'refresh',
 	fragment: true,
 	leaveDelay: 0
 });
@@ -561,10 +626,12 @@ export const Preview = new Portal(AliveWrapper, {
 ```vue AliveWrapper.vue
 <template>
 	<Card v-if="isActive" :title="title">
-		<p class="description">复用更新次数：{{ updates }}</p>
-		<div class="field">
-			<label for="preview-draft">本地草稿</label>
-			<Input v-model="draft" input-id="preview-draft" placeholder="输入内容，再切换记录" clearable />
+		<div class="alive-wrapper">
+			<p class="alive-wrapper__description">复用更新次数：{{ updates }}</p>
+			<div class="alive-wrapper__field">
+				<label for="preview-draft">本地草稿</label>
+				<Input v-model="draft" input-id="preview-draft" placeholder="输入内容，再切换记录" clearable />
+			</div>
 		</div>
 	</Card>
 </template>
@@ -580,7 +647,7 @@ const draft = ref('');
 
 defineExpose({
 	isActive,
-	update: () => {
+	refresh: () => {
 		isActive.value = true;
 		updates.value++;
 	}
@@ -588,13 +655,20 @@ defineExpose({
 </script>
 
 <style scoped>
-.description {
-	margin: 0 0 16px;
+.alive-wrapper {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.alive-wrapper__description {
+	margin: 0;
 	color: var(--vc-color-dark-lighter);
 }
 
-.field {
-	display: grid;
+.alive-wrapper__field {
+	display: flex;
+	flex-direction: column;
 	gap: 8px;
 	max-width: 420px;
 }
@@ -604,28 +678,34 @@ defineExpose({
 
 ### 注入应用依赖与插槽
 
-Portal 创建独立 app，不自动继承调用页面的 `provide`、插件或全局组件。通过 `install(app)` 显式注入所需依赖，通过 `uses` 注册插件，通过 `components` 注册组件。项目可在 `VcInstance.configure({ Portal: { install } })` 中统一配置；单次调用的 `install` 会覆盖全局配置，不会自动串联。
+Portal 创建独立 app，不自动继承调用页面的 `provide`、插件或全局组件。通过 `install(app)` 显式注入所需依赖，通过 `uses` 注册插件，通过 `components` 注册组件，通过 `globalProperties` 设置 `app.config.globalProperties`。项目可在 `VcInstance.configure({ Portal: { install } })` 中统一配置；单次调用的 `install` 会覆盖全局配置，不会自动串联。
 
-下面通过 `app.provide` 注入一个响应式值，并通过 `slots` 传入可响应调用方变化的内容。打开按钮等待面板销毁，面板内关闭和调用方主动销毁都会结束 loading。`portal-destroyed` 本身不兑现 `popup()` 的结果，因此这里通过 `onDestroyed` 兑现单独的生命周期 Promise。
+下面在服务文件里注册插件、全局组件与全局属性，调用时通过 `app.provide` 注入一个响应式值、通过 `slots` 传入可响应调用方变化的内容，并用显式的 `propsData` 传入标题。打开按钮等待面板销毁，面板内关闭和调用方主动销毁都会结束 loading。`portal-destroyed` 本身不兑现 `popup()` 的结果，因此这里通过 `onDestroyed` 兑现单独的生命周期 Promise。
 
 :::playground
 <!--
 <config lang="json5">
-{ entry: 'App.vue', views: ['runtime', 'files'], previewInset: 16 }
+{
+	entry: 'App.vue',
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
 </config>
 -->
 ```vue App.vue
 <template>
-	<div class="context-demo">
+	<div class="portal-demo">
 		<Card title="工作区设置">
-			<p class="description">修改工作区名称，观察面板中的注入值与插槽内容同步变化。</p>
-			<div class="controls">
-				<div class="field">
-					<label for="workspace-name">当前工作区</label>
-					<Input v-model="workspace" input-id="workspace-name" placeholder="请输入工作区名称" />
+			<div class="portal-demo__body">
+				<p class="portal-demo__description">修改工作区名称，观察面板中的注入值与插槽内容同步变化。</p>
+				<div class="portal-demo__controls">
+					<div class="portal-demo__field">
+						<label for="workspace-name">当前工作区</label>
+						<Input v-model="workspace" input-id="workspace-name" placeholder="请输入工作区名称" />
+					</div>
+					<Button type="primary" :disabled="isActive" @click="handleOpen">打开依赖面板</Button>
+					<Button :disabled="!isActive" @click="handleDestroy">销毁依赖面板</Button>
 				</div>
-				<Button type="primary" :disabled="isActive" @click="handleOpen">打开依赖面板</Button>
-				<Button :disabled="!isActive" @click="handleDestroy">销毁依赖面板</Button>
 			</div>
 		</Card>
 		<div ref="target" />
@@ -643,6 +723,7 @@ const isActive = ref(false);
 const handleOpen = () => new Promise((resolve) => {
 	isActive.value = true;
 	ContextPanel.popup({
+		propsData: { title: '依赖面板' },
 		element: target.value,
 		install: app => app.provide('workspace', workspace),
 		slots: { default: () => h('span', workspace.value) },
@@ -658,27 +739,30 @@ onUnmounted(() => ContextPanel.destroy());
 </script>
 
 <style scoped>
-.context-demo {
-	display: grid;
+.portal-demo,
+.portal-demo__body {
+	display: flex;
+	flex-direction: column;
 	gap: 16px;
 }
 
-.description {
-	margin: 0 0 16px;
+.portal-demo__description {
+	margin: 0;
 	line-height: 1.7;
 	color: var(--vc-color-dark-lighter);
 }
 
-.controls {
+.portal-demo__controls {
 	display: flex;
-	gap: 12px;
-	align-items: flex-end;
 	flex-wrap: wrap;
+	align-items: flex-end;
+	gap: 8px;
 }
 
-.field {
-	display: grid;
+.portal-demo__field {
+	display: flex;
 	flex: 1 1 240px;
+	flex-direction: column;
 	gap: 8px;
 	max-width: 420px;
 }
@@ -686,29 +770,56 @@ onUnmounted(() => ContextPanel.destroy());
 ```
 
 ```js context-panel.js
-import { Portal } from '@deot/vc';
+import { Portal, Tag } from '@deot/vc';
 import ContextWrapper from './ContextWrapper.vue';
+
+// 在独立 app 中注册的插件
+const LabelPlugin = {
+	install: app => app.provide('label', '来自 uses 注册的插件')
+};
 
 export const ContextPanel = new Portal(ContextWrapper, {
 	name: 'portal-context',
-	leaveDelay: 0
+	leaveDelay: 0,
+	uses: { LabelPlugin },
+	components: { PanelTag: Tag },
+	globalProperties: { $source: '来自 globalProperties' }
 });
 ```
 
 ```vue ContextWrapper.vue
 <template>
-	<Card title="依赖面板">
-		<dl class="values">
+	<Card :title="title">
+		<div class="context-wrapper">
+			<dl class="context-wrapper__values">
+				<div class="context-wrapper__item">
+					<dt class="context-wrapper__label">注入值</dt>
+					<dd class="context-wrapper__value">{{ workspace }}</dd>
+				</div>
+				<div class="context-wrapper__item">
+					<dt class="context-wrapper__label">调用方插槽</dt>
+					<dd class="context-wrapper__value"><slot /></dd>
+				</div>
+				<div class="context-wrapper__item">
+					<dt class="context-wrapper__label">插件</dt>
+					<dd class="context-wrapper__value">{{ label }}</dd>
+				</div>
+				<div class="context-wrapper__item">
+					<dt class="context-wrapper__label">全局属性</dt>
+					<dd class="context-wrapper__value">{{ $source }}</dd>
+				</div>
+				<div class="context-wrapper__item">
+					<dt class="context-wrapper__label">全局组件</dt>
+					<dd class="context-wrapper__value">
+						<!-- PanelTag 由 components 注册，无需导入 -->
+						<PanelTag>PanelTag</PanelTag>
+					</dd>
+				</div>
+			</dl>
 			<div>
-				<dt>注入值</dt>
-				<dd>{{ workspace }}</dd>
+				<Button @click="handleClose">关闭依赖面板</Button>
 			</div>
-			<div>
-				<dt>调用方插槽</dt>
-				<dd><slot /></dd>
-			</div>
-		</dl>
-		<Button @click="handleClose">关闭依赖面板</Button>
+		</div>
 	</Card>
 </template>
 
@@ -716,30 +827,38 @@ export const ContextPanel = new Portal(ContextWrapper, {
 import { inject } from 'vue';
 import { Button, Card } from '@deot/vc';
 
+defineProps({ title: String });
 const workspace = inject('workspace');
+const label = inject('label');
 const emit = defineEmits(['portal-destroyed']);
 const handleClose = () => emit('portal-destroyed');
 </script>
 
 <style scoped>
-.values {
-	display: grid;
-	gap: 12px;
-	margin: 0 0 20px;
-}
-
-.values > div {
+.context-wrapper,
+.context-wrapper__values {
 	display: flex;
+	flex-direction: column;
 	gap: 16px;
-	flex-wrap: wrap;
 }
 
-.values dt {
+.context-wrapper__values {
+	gap: 12px;
+	margin: 0;
+}
+
+.context-wrapper__item {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 16px;
+}
+
+.context-wrapper__label {
 	min-width: 84px;
 	color: var(--vc-color-dark-extralight);
 }
 
-.values dd {
+.context-wrapper__value {
 	margin: 0;
 	overflow-wrap: anywhere;
 }
@@ -749,32 +868,37 @@ const handleClose = () => emit('portal-destroyed');
 
 ### 声明式传送内容
 
-`PortalView` 的默认插槽仍留在原位置；只有 `content` 插槽被传送到 `body`。它不会创建独立 app，响应式状态与依赖注入仍来自原组件树。下面点击占位区域的按钮，在预览视口底部显示可交互的内容。
+`PortalView` 的默认插槽仍留在原位置，`tag` 设置这个包裹元素的标签；只有 `content` 插槽被传送到 `body`。它不会创建独立 app，响应式状态与依赖注入仍来自原组件树。下面点击占位区域的按钮，在预览视口底部显示可交互的内容。
 
 :::playground
 <!--
 <config lang="json5">
-{ previewInset: 16 }
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
 </config>
 -->
 ```vue
 <template>
-	<div class="view-demo">
+	<div class="portal-view-demo">
 		<PortalView tag="section">
 			<Card title="页面内容">
-				<p class="description">这里是默认插槽，保留在页面原位置。</p>
-				<div class="actions">
-					<Button type="primary" @click="handleToggle">切换底部工具栏</Button>
-					<span class="count">累计操作：{{ count }}</span>
+				<div class="portal-view-demo__body">
+					<p class="portal-view-demo__description">这里是默认插槽，保留在页面原位置。</p>
+					<div class="portal-view-demo__row">
+						<Button type="primary" @click="handleToggle">切换底部工具栏</Button>
+						<span class="portal-view-demo__count">累计操作：{{ count }}</span>
+					</div>
 				</div>
 			</Card>
 			<template #content>
-				<div v-if="isActive" class="portal-toolbar">
-					<div class="toolbar-copy">
+				<div v-if="isActive" class="portal-view-demo__toolbar">
+					<div class="portal-view-demo__copy">
 						<strong>快捷操作</strong>
-						<span>这里来自 content 插槽</span>
+						<span class="portal-view-demo__hint">这里来自 content 插槽</span>
 					</div>
-					<div class="actions">
+					<div class="portal-view-demo__row">
 						<Button type="primary" @click="handleExecute">执行一次</Button>
 						<Button @click="handleClose">收起工具栏</Button>
 					</div>
@@ -803,43 +927,50 @@ const handleClose = () => (isActive.value = false);
 </script>
 
 <style scoped>
-.description {
-	margin: 0 0 16px;
+.portal-view-demo__body {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.portal-view-demo__description {
+	margin: 0;
 	line-height: 1.7;
 	color: var(--vc-color-dark-lighter);
 }
 
-.actions {
+.portal-view-demo__row {
 	display: flex;
-	gap: 12px;
-	align-items: center;
 	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
 }
 
-.count {
+.portal-view-demo__count {
 	color: var(--vc-color-dark-extralight);
 }
 
-.toolbar-copy {
-	display: grid;
+.portal-view-demo__copy {
+	display: flex;
+	flex-direction: column;
 	gap: 4px;
 }
 
-.toolbar-copy span {
+.portal-view-demo__hint {
 	font-size: 12px;
 	color: var(--vc-color-dark-lighter);
 }
 
-.portal-toolbar {
+.portal-view-demo__toolbar {
 	position: fixed;
 	right: 16px;
 	bottom: 16px;
 	left: 16px;
 	display: flex;
-	gap: 16px;
+	flex-wrap: wrap;
 	align-items: center;
 	justify-content: space-between;
-	flex-wrap: wrap;
+	gap: 16px;
 	padding: 16px;
 	color: var(--vc-foreground-color);
 	background: var(--vc-background-color-lightest);
@@ -878,7 +1009,7 @@ const handleClose = () => (isActive.value = false);
 | alive | 同名活跃实例再次调用时复用并更新 props | `boolean` | - | `false` |
 | aliveRules | alive 模式下，点击路径匹配这些属性时不执行外部清理 | `{ className?: RegExp; id?: RegExp }` | - | `{ className: /(vc-portal-alive)/ }` |
 | aliveVisibleKey | 外部清理前操作的暴露字段：函数则传入 false，否则赋值 false | `string` | - | `'isVisible'` |
-| aliveUpdateKey | alive 复用后调用的暴露方法名，接收本次完整 options | `string` | - | `'update'` |
+| aliveUpdateKey | alive 复用后下一拍调用的暴露方法名，接收本次合并后的配置（不含 onFulfilled / onRejected） | `string` | - | `'update'` |
 | slots | 传给包装组件的插槽，通常使用插槽函数对象 | `VNodeNormalizedChildren` | - | - |
 | components | 在独立 app 中注册的组件 | `Record<string, Component>` | - | `{}` |
 | uses | 在独立 app 中注册的插件 | `Record<string, Plugin>` | - | `{}` |

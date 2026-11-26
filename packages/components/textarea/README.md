@@ -1,6 +1,8 @@
 ## 多行输入框（Textarea）
 
-用于输入多行文本，支持长度限制、计数和自适应高度；移动端使用 `MTextarea`。
+用于输入多行文本，支持长度限制、计数和自适应高度。
+
+移动端入口导出的 `MTextarea` 有独立的移动端实现，尺寸按 750 稿随 `--vc-rem` 缩放，见 [移动端](#移动端)。
 
 ### 何时使用
 
@@ -11,12 +13,19 @@
 使用 `v-model` 同步内容，`placeholder` 由调用方提供。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div style="display: grid; gap: 24px; max-width: 420px; padding-bottom: 20px">
+	<div class="textarea-demo">
 		<Textarea v-model="value" placeholder="请输入备注" />
-		<p>当前内容：{{ value || '尚未输入' }}</p>
+		<p class="textarea-demo__result">当前内容：{{ value || '尚未输入' }}</p>
 	</div>
 </template>
 
@@ -26,6 +35,20 @@ import { Textarea } from '@deot/vc';
 
 const value = ref('');
 </script>
+
+<style scoped>
+.textarea-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	width: 420px;
+	max-width: 100%;
+}
+
+.textarea-demo__result {
+	margin: 0;
+}
+</style>
 ```
 :::
 
@@ -34,10 +57,17 @@ const value = ref('');
 `disabled` 禁止交互；原生 `readonly` 属性保留聚焦和选择文本的能力。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div style="display: grid; gap: 24px; max-width: 420px; padding-bottom: 20px">
+	<div class="textarea-demo">
 		<Textarea model-value="已归档的备注，无法编辑" disabled />
 		<Textarea model-value="只读内容，可以选中复制" readonly />
 	</div>
@@ -46,18 +76,35 @@ const value = ref('');
 <script setup>
 import { Textarea } from '@deot/vc';
 </script>
+
+<style scoped>
+.textarea-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	width: 420px;
+	max-width: 100%;
+}
+</style>
 ```
 :::
 
 ### 只读文字
 
-`plaintext` 时只显示 v-model 的值，不渲染文本框：输出一个没有样式的 `<span class="vc-textarea-plaintext">`（移动端为 `vcm-textarea-plaintext`），不能交互。换行转为 `<br>`，不依赖样式；没有值时显示 `extra`，未传时为空。与原生 `readonly`（保留文本框外观）不同。
+`plaintext` 时只显示 `v-model` 的值，不渲染文本框：输出一个没有样式的 `<span class="vc-textarea-plaintext">`（移动端为 `vcm-textarea-plaintext`），不能交互。换行转为 `<br>`，不依赖样式；没有值时显示 `extra`，未传时为空。与原生 `readonly`（保留文本框外观）不同。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div style="display: grid; gap: 12px; max-width: 420px">
+	<div class="textarea-demo">
 		<Textarea :model-value="'第一行\n第二行'" plaintext />
 		<Textarea extra="-" plaintext />
 	</div>
@@ -66,6 +113,66 @@ import { Textarea } from '@deot/vc';
 <script setup>
 import { Textarea } from '@deot/vc';
 </script>
+
+<style scoped>
+.textarea-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+</style>
+```
+:::
+
+### 行数、换行与样式
+
+`rows` 设置默认可见行数（默认 `2`）；`wrap` 对应原生换行模式，`hard` 会把视觉折行写入提交值；`textareaStyle` 设置原生 textarea 的样式，`id` 设置原生 textarea 的 id。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
+```vue
+<template>
+	<div class="textarea-demo">
+		<Textarea v-model="value" :rows="4" placeholder="默认 4 行" />
+		<label class="textarea-demo__label" for="textarea-demo-hard">wrap="hard"，点击这段文字聚焦</label>
+		<Textarea
+			id="textarea-demo-hard"
+			v-model="hardValue"
+			wrap="hard"
+			:textarea-style="{ fontFamily: 'monospace' }"
+			placeholder="等宽字体"
+		/>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { Textarea } from '@deot/vc';
+
+const value = ref('');
+const hardValue = ref('');
+</script>
+
+<style scoped>
+.textarea-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	width: 420px;
+	max-width: 100%;
+}
+
+.textarea-demo__label {
+	cursor: pointer;
+}
+</style>
 ```
 :::
 
@@ -74,12 +181,24 @@ import { Textarea } from '@deot/vc';
 `autosize` 可指定 `minRows` 和 `maxRows`。当前实现中，连续输入时自动重算高度需要同时开启 `controllable` 并绑定 `v-model`；非完全受控模式下，输入同步可能跳过重新测量。容器宽度或可见性变化后，可调用实例的 `refresh()` 重新测量。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div style="display: grid; gap: 24px; max-width: 420px; padding-bottom: 20px">
+	<div class="textarea-demo">
 		<Textarea v-model="value" autosize controllable placeholder="输入多行内容，高度随内容增长" />
-		<Textarea v-model="limitedValue" controllable :autosize="{ minRows: 2, maxRows: 4 }" placeholder="最少 2 行，最多 4 行" />
+		<Textarea
+			v-model="limitedValue"
+			controllable
+			:autosize="{ minRows: 2, maxRows: 4 }"
+			placeholder="最少 2 行，最多 4 行"
+		/>
 	</div>
 </template>
 
@@ -90,20 +209,49 @@ import { Textarea } from '@deot/vc';
 const value = ref('');
 const limitedValue = ref('第一行\n第二行');
 </script>
+
+<style scoped>
+.textarea-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	width: 420px;
+	max-width: 100%;
+}
+</style>
 ```
 :::
 
 ### 长度限制与计数
 
-`maxlength` 限制输入长度，`indicator` 显示已输入长度，`inverted` 显示剩余长度；需同时设置 `maxlength`。计数默认在框外右下方，组件下方自动留出它的高度，不与后面的内容或表单的错误提示重叠；`inline` 放在框内右下角，文本区底部同样留出它的高度。值超过 `maxlength`（如外部直接赋值）时计数显示为错误色。
+`maxlength` 限制输入长度，`indicator` 显示已输入长度，`inverted` 显示剩余长度；需同时设置 `maxlength`。计数默认在框外右下方，组件下方自动留出它的高度，不与后面的内容或表单的错误提示重叠；`inline` 放在框内右下角，文本区底部同样留出它的高度。`indicateClass` 设置计数元素的 class。值超过 `maxlength`（如外部直接赋值）时计数显示为错误色。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div style="display: grid; gap: 24px; max-width: 420px; padding-bottom: 20px">
+	<div class="textarea-demo">
 		<Textarea v-model="value" :maxlength="100" indicator placeholder="显示已输入长度" />
-		<Textarea v-model="remainingValue" :maxlength="100" :indicator="{ inverted: true }" placeholder="显示剩余长度" />
+		<Textarea
+			v-model="remainingValue"
+			:maxlength="100"
+			:indicator="{ inverted: true }"
+			placeholder="显示剩余长度"
+		/>
+		<Textarea
+			v-model="inlineValue"
+			:maxlength="50"
+			:indicator="{ inline: true }"
+			indicate-class="textarea-demo__indicator"
+			placeholder="计数在框内"
+		/>
 	</div>
 </template>
 
@@ -111,9 +259,24 @@ const limitedValue = ref('第一行\n第二行');
 import { ref } from 'vue';
 import { Textarea } from '@deot/vc';
 
-const value = ref('示例备注');
+const value = ref('一段示例文字');
 const remainingValue = ref('');
+const inlineValue = ref('');
 </script>
+
+<style scoped>
+.textarea-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	width: 420px;
+	max-width: 100%;
+}
+
+.textarea-demo :deep(.textarea-demo__indicator) {
+	color: var(--vc-color-primary);
+}
+</style>
 ```
 :::
 
@@ -122,12 +285,25 @@ const remainingValue = ref('');
 `bytes` 模式将可打印 ASCII 字符（空格至 `~`）按半个长度、其他 UTF-16 代码单元按一个长度限制输入。这不是 UTF-8 字节长度。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div style="display: grid; gap: 24px; max-width: 420px; padding-bottom: 20px">
-		<Textarea v-model="value" :maxlength="10" bytes placeholder="最多 10 个汉字或 20 个英文字母" />
-		<p>尝试输入中文、英文或混合内容。</p>
+	<div class="textarea-demo">
+		<Textarea
+			v-model="value"
+			:maxlength="10"
+			bytes
+			indicator
+			placeholder="最多 10 个汉字或 20 个英文字母"
+		/>
+		<p class="textarea-demo__result">尝试输入中文、英文或混合内容。</p>
 	</div>
 </template>
 
@@ -137,12 +313,206 @@ import { Textarea } from '@deot/vc';
 
 const value = ref('');
 </script>
+
+<style scoped>
+.textarea-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	width: 420px;
+	max-width: 100%;
+}
+
+.textarea-demo__result {
+	margin: 0;
+}
+</style>
 ```
 :::
 
-### 移动端
+### 事件与方法
 
-`MTextarea` 共享输入、计数和自适应高度逻辑，采用无边框样式，禁用原生拖拽缩放。尺寸按 750 稿设计，写为 `calc(var(--vc-rem) * n)`，随 `--vc-rem` 缩放，与 `MInput` 一致（括号内为 375 宽下的 px）：
+`focus`、`blur`、`enter`、`paste` 及 `keydown`、`keypress`、`keyup` 透出原生交互；拖动右下角改变尺寸时发出 `resize`。通过组件 ref 调用 `focus`、`blur`、`click` 和 `refresh`。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
+```vue
+<template>
+	<div class="textarea-demo">
+		<Textarea
+			ref="textareaRef"
+			v-model="value"
+			controllable
+			autosize
+			placeholder="输入、粘贴、回车或拖动右下角"
+			@focus="handleFocus"
+			@blur="handleBlur"
+			@enter="handleEnter"
+			@paste="handlePaste"
+			@resize="handleResize"
+			@keydown="handleKey"
+			@keypress="handleKey"
+			@keyup="handleKey"
+		/>
+		<div class="textarea-demo__row">
+			<Button size="small" @click="handleCallFocus">focus()</Button>
+			<Button size="small" @click="handleCallBlur">blur()</Button>
+			<Button size="small" @click="handleCallClick">click()</Button>
+			<Button size="small" @click="handleCallRefresh">refresh()</Button>
+		</div>
+		<p class="textarea-demo__result">{{ log }}</p>
+		<p class="textarea-demo__result">按键事件 {{ keyCount }} 次，resize {{ resizeCount }} 次</p>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { Textarea, Button } from '@deot/vc';
+
+const textareaRef = ref();
+const value = ref('');
+const log = ref('等待操作');
+const keyCount = ref(0);
+const resizeCount = ref(0);
+
+const handleFocus = () => {
+	log.value = 'focus';
+};
+
+const handleBlur = () => {
+	log.value = 'blur';
+};
+
+const handleEnter = () => {
+	log.value = `enter：共 ${value.value.split('\n').length} 行`;
+};
+
+const handlePaste = (event, text) => {
+	log.value = `paste：${text}`;
+};
+
+const handleResize = () => {
+	resizeCount.value++;
+};
+
+const handleKey = () => {
+	keyCount.value++;
+};
+
+const handleCallFocus = () => {
+	textareaRef.value.focus();
+};
+
+const handleCallBlur = () => {
+	textareaRef.value.blur();
+};
+
+const handleCallClick = () => {
+	textareaRef.value.click();
+};
+
+const handleCallRefresh = () => {
+	textareaRef.value.refresh();
+	log.value = '已重新计算高度';
+};
+</script>
+
+<style scoped>
+.textarea-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	width: 420px;
+	max-width: 100%;
+}
+
+.textarea-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+.textarea-demo__result {
+	margin: 0;
+}
+</style>
+```
+:::
+
+## 移动端
+
+`MTextarea` 与 `Textarea` 共享输入、计数和自适应高度逻辑，根节点为 `.vcm-textarea`，采用无边框样式，禁用原生拖拽缩放；计数始终在框内。另有 `right` 让文字右对齐，颜色不变，与 `MInput` 的 `right` 一致。尺寸按 750 稿设计，写为 `calc(var(--vc-rem) * n)`，随 `--vc-rem` 缩放；底栏切换 `rem` 可查看不同屏宽下的效果。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	mobile: true,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
+</config>
+-->
+```vue
+<template>
+	<div class="m-textarea-demo">
+		<MTextarea v-model="text" placeholder="请输入内容" />
+		<MTextarea v-model="note" :maxlength="100" indicator placeholder="最多 100 字" />
+		<MTextarea v-model="limited" :maxlength="10" :indicator="{ inverted: true }" placeholder="显示剩余字数" />
+		<MTextarea v-model="exceeded" :maxlength="10" indicator />
+		<MTextarea
+			v-model="auto"
+			controllable
+			:autosize="{ minRows: 3, maxRows: 6 }"
+			placeholder="3 至 6 行，超过后滚动"
+		/>
+		<MTextarea v-model="remark" right :rows="1" placeholder="右对齐" />
+		<MTextarea model-value="不可编辑的内容" disabled />
+		<MForm :model="form">
+			<MFormItem label="说明" prop="note">
+				<MTextarea v-model="form.note" autosize :maxlength="50" indicator placeholder="表单中去掉内边距" />
+			</MFormItem>
+		</MForm>
+	</div>
+</template>
+
+<script setup>
+import { ref, reactive } from 'vue';
+import { MTextarea, MForm, MFormItem } from '@deot/vc';
+
+const text = ref('');
+const note = ref('');
+const limited = ref('');
+const exceeded = ref('这段内容由外部直接赋值，超过了上限');
+const auto = ref('');
+const remark = ref('');
+const form = reactive({ note: '' });
+</script>
+
+<style scoped>
+.m-textarea-demo {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--vc-rem) * 16);
+	background: var(--vc-background-color-light);
+}
+</style>
+```
+:::
+
+尺寸与 `MInput` 一致（括号内为 375 宽下的 px）：
 
 | 项 | 值 |
 | --- | --- |
@@ -152,27 +522,6 @@ const value = ref('');
 | 禁用 | 文字为 `color-dark-extralight`，同时设置 `-webkit-text-fill-color`，iOS 上颜色与设定一致 |
 | 计数（`indicator`） | 始终在框内右下角，排在文本区下方，与文字间距 16（8）；字号 28（14），行高 40（20），`color-dark-extralight`，超出时为 `color-error` |
 | 表单（`MForm`）中 | 去掉内边距，首行与标签对齐 |
-
-`right` 让文字右对齐，颜色不变，与 `MInput` 的 `right` 一致。
-
-:::playground
-<!-- <config lang="json5">{ previewInset: 16, viewport: 375, viewportOptions: ['auto', 375] }</config> -->
-```vue
-<template>
-	<div style="display: grid; gap: 24px; max-width: 420px; padding-bottom: 20px">
-		<MTextarea v-model="value" controllable :autosize="{ minRows: 3, maxRows: 6 }" placeholder="请输入反馈内容" />
-		<MTextarea model-value="已提交的反馈" disabled />
-	</div>
-</template>
-
-<script setup>
-import { ref } from 'vue';
-import { MTextarea } from '@deot/vc';
-
-const value = ref('');
-</script>
-```
-:::
 
 ## 主题与局部覆盖
 
@@ -229,7 +578,7 @@ const value = ref('');
 | --- | --- | --- | --- |
 | update:modelValue | 同步绑定值 | `(value: string, e: Event) => void` | 处理后的值和输入事件 |
 | input | 输入更新时触发，组合输入结束后同步 | `(value: string, e: Event) => void` | 处理后的值和输入事件 |
-| change | 输入同步和原生 change 都会触发 | `(value: string, e: Event) => void` 或 `(e: Event) => void` | 输入同步传两个参数；原生 change 仅传事件，可能再次触发 |
+| change | 与 input 同步触发，并非原生失焦 change | `(value: string, e: Event) => void` | 输入值及触发事件 |
 | focus | 聚焦 | `(e: FocusEvent) => void` | 原生事件 |
 | blur | 失焦 | `(e: FocusEvent) => void` | 原生事件 |
 | paste | 粘贴 | `(e: ClipboardEvent, text: string) => void` | 原生事件和剪贴板纯文本 |
@@ -245,7 +594,7 @@ const value = ref('');
 
 | 方法名 | 说明 | 参数 | 返回值 |
 | --- | --- | --- | --- |
-| focus | 聚焦原生 textarea | - | `void` |
+| focus | 聚焦原生 textarea | `(options?: FocusOptions)` | `void` |
 | blur | 使原生 textarea 失焦 | - | `void` |
 | click | 调用原生 click 后聚焦 | - | `void` |
 | refresh | 下一次 DOM 更新后重新计算高度，仅在 autosize 开启时有效 | - | `void` |

@@ -1,6 +1,6 @@
 ## 选择器（Select）
 
-从数据列表中单选或多选，支持分组、搜索和自定义选项。移动端使用独立的 `MSelect`，见[移动端选择](#移动端选择)。
+从数据列表中单选或多选，支持分组、搜索和自定义选项。移动端使用独立的 `MSelect`，见[移动端](#移动端)。
 
 ### 何时使用
 
@@ -8,19 +8,29 @@
 
 ### 基础用法
 
-通过 `data` 提供选项，`v-model` 绑定选项的 `value`，而不是 `label`。设置 `clearable` 后，鼠标悬停时显示清空按钮；`disabled` 禁用整个选择器，数据项的 `disabled` 禁用单个选项。
+通过 `data` 提供选项，`v-model` 绑定选项的 `value`，而不是 `label`。设置 `clearable` 后，鼠标悬停时显示清空按钮；`disabled` 禁用整个选择器，数据项的 `disabled` 禁用单个选项。用户选择或清空时触发 `change(value, labels)`，点击清空按钮另外先触发 `clear`。
 
 :::playground
 <!--
 <config lang="json5">
-{ previewInset: 20 }
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
 </config>
 -->
 ```vue
 <template>
 	<div class="select-demo">
-		<Select v-model="selectedValue" :data="options" clearable placeholder="选择条目" />
-		<p>当前值：{{ selectedValue ?? '未选择' }}</p>
+		<Select
+			v-model="selectedValue"
+			:data="options"
+			clearable
+			placeholder="选择条目"
+			@change="handleChange"
+			@clear="handleClear"
+		/>
+		<p class="select-demo__result">当前值：{{ selectedValue ?? '未选择' }}；{{ status }}</p>
 		<Select model-value="option-b" :data="options" disabled />
 	</div>
 </template>
@@ -30,16 +40,33 @@ import { ref } from 'vue';
 import { Select } from '@deot/vc';
 
 const selectedValue = ref('option-a');
+const status = ref('等待操作');
 const options = [
 	{ value: 'option-a', label: '选项 A' },
 	{ value: 'option-b', label: '选项 B' },
 	{ value: 'option-c', label: '选项 C', disabled: true }
 ];
+
+const handleChange = (value, labels) => {
+	status.value = `change：${labels.join('、') || '空'}`;
+};
+
+const handleClear = () => {
+	status.value = '触发 clear';
+};
 </script>
 
 <style scoped>
-.select-demo { width: min(100%, 320px); }
-.select-demo p { margin: 12px 0; }
+.select-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	width: min(100%, 320px);
+}
+
+.select-demo__result {
+	margin: 0;
+}
 </style>
 ```
 :::
@@ -54,10 +81,15 @@ const options = [
 
 开启 `searchable` 后，按选项文字进行不区分大小写的匹配，命中的部分高亮；默认空格分隔的关键词需同时命中，逗号（`,` 或 `，`）分隔的各组任一命中即可（如 `a b,c`：同时含 a 和 b，或含 c），可用 `searchMatch` 调整，见[搜索规则](#搜索规则)。输入非空关键词时，可全选或取消选择当前匹配且未禁用的选项，其他已选项保留。全选按列表顺序补到 `max` 为止，选满后按钮变为「取消全选」；全选逐项触发值更新事件。
 
+下例第一个限制最多显示 2 个标签，第二个 `maxTagLines` 为 `2`，标签最多占两行。
+
 :::playground
 <!--
 <config lang="json5">
-{ previewInset: 20 }
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
 </config>
 -->
 ```vue
@@ -72,7 +104,8 @@ const options = [
 			clearable
 			search-placeholder="输入 Example，试试全选"
 		/>
-		<p>已选：{{ selectedValues.length ? selectedValues.join('、') : '无' }}</p>
+		<Select v-model="lineValues" :data="options" :max="0" :max-tag-lines="2" clearable />
+		<p class="select-demo__result">已选：{{ selectedValues.length ? selectedValues.join('、') : '无' }}</p>
 	</div>
 </template>
 
@@ -81,17 +114,29 @@ import { ref } from 'vue';
 import { Select } from '@deot/vc';
 
 const selectedValues = ref([]);
+const lineValues = ref(['option-a', 'option-b', 'option-d', 'option-e', 'option-f']);
 const options = [
 	{ value: 'option-a', label: 'Example A' },
 	{ value: 'option-b', label: 'Example B' },
 	{ value: 'option-c', label: 'Example C', disabled: true },
-	{ value: 'option-d', label: 'Option D' }
+	{ value: 'option-d', label: 'Option D' },
+	{ value: 'option-e', label: 'Option E' },
+	{ value: 'option-f', label: 'Option F' }
 ];
 </script>
 
 <style scoped>
-.select-demo { width: min(100%, 360px); }
-.select-demo p { margin: 12px 0 0; overflow-wrap: anywhere; }
+.select-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	width: min(100%, 360px);
+}
+
+.select-demo__result {
+	margin: 0;
+	overflow-wrap: anywhere;
+}
 </style>
 ```
 :::
@@ -103,7 +148,7 @@ const options = [
 - `searchable`（或 `searchable="inline"`）：点击后直接在输入框里输入。单选时已选文字以占位文字的形式保留，输入后显示搜索词；多选时输入框跟在标签之后，下拉打开期间为它留出位置，放不下的标签折叠进 `+N...`，输入为空时按 Backspace 移除最后一个已选值。
 - `searchable="popover"`：输入框保持只读，搜索栏显示在下拉顶部，打开后自动聚焦。触发器较窄、不希望输入框占用标签位置时使用。
 
-两种方式下，关闭下拉都会清空搜索词；多选时选中或取消一项（含全选）后也会清空，便于接着搜下一项，需要在同一批结果里连续选择时设置 `:clear-search-on-select="false"`。下拉关闭但输入框聚焦时，直接输入也会打开下拉。
+两种方式下，关闭下拉都会清空搜索词；多选时选中或取消一项（含全选）后也会清空，便于接着搜下一项，需要在同一批结果里连续选择时设置 `:clear-search-on-select="false"`（下例第二个）。下拉关闭但输入框聚焦时，直接输入也会打开下拉。
 
 | 按键 | 行为 |
 | --- | --- |
@@ -118,15 +163,26 @@ const options = [
 :::playground
 <!--
 <config lang="json5">
-{ previewInset: 20 }
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
 </config>
 -->
 ```vue
 <template>
 	<div class="select-demo">
 		<Select v-model="inlineValue" :data="options" searchable clearable placeholder="点击后直接输入" />
-		<Select v-model="popoverValues" :data="options" :max="99" searchable="popover" clearable search-placeholder="在下拉里搜索" />
-		<p>inline：{{ inlineValue || '未选择' }}；popover：{{ popoverValues.join('、') || '无' }}</p>
+		<Select
+			v-model="popoverValues"
+			:data="options"
+			:max="99"
+			:clear-search-on-select="false"
+			searchable="popover"
+			clearable
+			search-placeholder="在下拉里搜索"
+		/>
+		<p class="select-demo__result">inline：{{ inlineValue || '未选择' }}；popover：{{ popoverValues.join('、') || '无' }}</p>
 	</div>
 </template>
 
@@ -145,8 +201,17 @@ const options = [
 </script>
 
 <style scoped>
-.select-demo { display: grid; gap: 12px; width: min(100%, 360px); }
-.select-demo p { margin: 0; overflow-wrap: anywhere; }
+.select-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	width: min(100%, 360px);
+}
+
+.select-demo__result {
+	margin: 0;
+	overflow-wrap: anywhere;
+}
 </style>
 ```
 :::
@@ -160,6 +225,7 @@ const options = [
 - 整个对象替换默认值，不按键合并：`{ or: [' ', ',', '，'] }` 让空格也表示任一命中；`{}` 不拆分，整句作为一个关键词。
 - 未传时读取全局 `VcInstance.options.Select.searchMatch`（MSelect、MSelectView 读同一个键），见[全局配置](../vc/README.md)。
 - 远程搜索（`loadData`）收到的是原始输入，按什么规则匹配由服务端决定，组件只按规则高亮。
+- 数据项设置 `filterable: false` 时不参与本地过滤，任何关键词下都显示（下例的「其他」）。
 
 | 写法 | `A B` | `A,B` / `A，B` | `A#B` |
 | --- | --- | --- | --- |
@@ -171,15 +237,25 @@ const options = [
 :::playground
 <!--
 <config lang="json5">
-{ previewInset: 20 }
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
 </config>
 -->
 ```vue
 <template>
 	<div class="select-demo">
 		<Select v-model="andValues" :data="options" :max="99" searchable placeholder="默认：输入 A B 无结果，A,B 有" />
-		<Select v-model="orValues" :data="options" :max="99" searchable :search-match="{ or: [' ', ',', '，'] }" placeholder="空格也是任一命中：输入 A B" />
-		<p>默认：{{ andValues.join('、') || '无' }}；空格任一命中：{{ orValues.join('、') || '无' }}</p>
+		<Select
+			v-model="orValues"
+			:data="options"
+			:max="99"
+			:search-match="{ or: [' ', ',', '，'] }"
+			searchable
+			placeholder="空格也是任一命中：输入 A B"
+		/>
+		<p class="select-demo__result">默认：{{ andValues.join('、') || '无' }}；空格任一命中：{{ orValues.join('、') || '无' }}</p>
 	</div>
 </template>
 
@@ -192,32 +268,49 @@ const orValues = ref([]);
 const options = [
 	{ value: 'option-a', label: '选项 A' },
 	{ value: 'option-b', label: '选项 B' },
-	{ value: 'option-c', label: '选项 C' }
+	{ value: 'option-c', label: '选项 C' },
+	{ value: 'other', label: '其他', filterable: false }
 ];
 </script>
 
 <style scoped>
-.select-demo { display: grid; gap: 12px; width: min(100%, 360px); }
-.select-demo p { margin: 0; overflow-wrap: anywhere; }
+.select-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	width: min(100%, 360px);
+}
+
+.select-demo__result {
+	margin: 0;
+	overflow-wrap: anywhere;
+}
 </style>
 ```
 :::
 
-### 字符串多选
+### 值的形状
 
-以数组初始化时返回数组；以字符串初始化多选时，使用 `separator` 连接选中值。数字选项搭配字符串模型或字符串数组时，开启 `numerable`，同样按 `separator` 拆分与连接。
+以数组初始化时返回数组；以字符串初始化多选时，使用 `separator` 连接选中值。数字选项搭配字符串模型或字符串数组时，开启 `numerable`，同样按 `separator` 拆分与连接。`nullValue` 指定非数组值清空后返回的值，例如清空单选时返回 `''` 而不是 `undefined`。
 
 :::playground
 <!--
 <config lang="json5">
-{ previewInset: 20 }
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
 </config>
 -->
 ```vue
 <template>
 	<div class="select-demo">
-		<Select v-model="selectedValues" :data="options" :max="2" separator=";" clearable />
-		<p>字符串值：{{ JSON.stringify(selectedValues) }}</p>
+		<Select v-model="textValues" :data="options" :max="2" separator=";" clearable />
+		<Select v-model="numberValues" :data="numberOptions" :max="0" numerable clearable />
+		<Select v-model="singleValue" :data="options" null-value="" clearable />
+		<p class="select-demo__result">
+			separator：{{ JSON.stringify(textValues) }}；numerable：{{ JSON.stringify(numberValues) }}；nullValue：{{ JSON.stringify(singleValue) }}
+		</p>
 	</div>
 </template>
 
@@ -225,29 +318,48 @@ const options = [
 import { ref } from 'vue';
 import { Select } from '@deot/vc';
 
-const selectedValues = ref('option-a;option-b');
+const textValues = ref('option-a;option-b');
+const numberValues = ref('1,3');
+const singleValue = ref('option-c');
 const options = [
 	{ value: 'option-a', label: '选项 A' },
 	{ value: 'option-b', label: '选项 B' },
 	{ value: 'option-c', label: '选项 C' }
 ];
+const numberOptions = [
+	{ value: 1, label: '条目一' },
+	{ value: 2, label: '条目二' },
+	{ value: 3, label: '条目三' }
+];
 </script>
 
 <style scoped>
-.select-demo { width: min(100%, 360px); }
-.select-demo p { margin: 12px 0 0; overflow-wrap: anywhere; }
+.select-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	width: min(100%, 360px);
+}
+
+.select-demo__result {
+	margin: 0;
+	overflow-wrap: anywhere;
+}
 </style>
 ```
 :::
 
 ### 分组与自定义文字
 
-`children` 提供一层分组选项。`label` 插槽定制下拉列表中的选项文字和分组标题，`store.group` 标识分组。输入框与已选标签仍使用数据中的 `label`。
+`children` 提供一层分组选项。`label` 插槽定制下拉列表中的选项文字和分组标题，`store.group` 标识分组；也可用 `renderLabel` 渲染函数（下例第二个）。输入框与已选标签仍使用数据中的 `label`。
 
 :::playground
 <!--
 <config lang="json5">
-{ previewInset: 20 }
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
 </config>
 -->
 ```vue
@@ -259,15 +371,17 @@ const options = [
 				<span v-else>{{ row.label }} · {{ row.description }}</span>
 			</template>
 		</Select>
-		<p>当前值：{{ selectedValue || '未选择' }}</p>
+		<Select v-model="renderValue" :data="groups" :render-label="renderLabel" label="渲染函数" />
+		<p class="select-demo__result">当前值：{{ selectedValue || '未选择' }}；{{ renderValue || '未选择' }}</p>
 	</div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { h, ref } from 'vue';
 import { Select } from '@deot/vc';
 
 const selectedValue = ref('');
+const renderValue = ref('');
 const groups = [
 	{
 		value: 'group-a', label: '分组 A',
@@ -281,11 +395,245 @@ const groups = [
 		children: [{ value: 'option-c', label: '选项 C', description: '描述 C' }]
 	}
 ];
+
+const renderLabel = ({ row, store }) => {
+	return store.group ? h('strong', row.label) : h('span', `${row.label}（${row.description}）`);
+};
 </script>
 
 <style scoped>
-.select-demo { width: min(100%, 320px); }
-.select-demo p { margin: 12px 0 0; }
+.select-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	width: min(100%, 320px);
+}
+
+.select-demo__result {
+	margin: 0;
+}
+</style>
+```
+:::
+
+### 自定义选项与前置内容
+
+`prepend` 插槽替换输入框前的 `label`。`option` 插槽（或 `renderOption`）自定义整个选项，需要自行绑定 `store.click` 完成选择，`store.checked` 表示是否选中；`optionGroup` 插槽（或 `renderOptionGroup`）自定义分组标题。自定义整个选项时不参与方向键高亮。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
+```vue
+<template>
+	<div class="select-demo">
+		<Select v-model="slotValue" :data="groups">
+			<template #prepend>
+				<span class="select-demo__prepend">插槽</span>
+			</template>
+			<template #option="{ row, store }">
+				<div class="select-demo__option" :class="{ 'is-checked': store.checked }" @click="store.click">
+					<span>{{ row.label }}</span>
+					<span class="select-demo__mark">{{ store.checked ? '已选' : '' }}</span>
+				</div>
+			</template>
+			<template #optionGroup="{ row }">
+				<div class="select-demo__group">— {{ row.label }} —</div>
+			</template>
+		</Select>
+		<Select
+			v-model="renderValue"
+			:data="groups"
+			:render-option="renderOption"
+			:render-option-group="renderOptionGroup"
+			label="渲染函数"
+		/>
+		<p class="select-demo__result">插槽：{{ slotValue || '未选择' }}；渲染函数：{{ renderValue || '未选择' }}</p>
+	</div>
+</template>
+
+<script setup>
+import { h, ref } from 'vue';
+import { Select } from '@deot/vc';
+
+const slotValue = ref('');
+const renderValue = ref('option-b');
+const groups = [
+	{
+		value: 'group-a', label: '分组 A',
+		children: [
+			{ value: 'option-a', label: '选项 A' },
+			{ value: 'option-b', label: '选项 B' }
+		]
+	},
+	{
+		value: 'group-b', label: '分组 B',
+		children: [{ value: 'option-c', label: '选项 C' }]
+	}
+];
+
+const renderOption = ({ row, store }) => {
+	return h(
+		'div',
+		{ class: ['select-demo__option', { 'is-checked': store.checked }], onClick: store.click },
+		[h('span', row.label), h('span', { class: 'select-demo__mark' }, store.checked ? '✓' : '')]
+	);
+};
+
+const renderOptionGroup = ({ row }) => h('div', { class: 'select-demo__group' }, row.label);
+</script>
+
+<style scoped>
+.select-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	width: min(100%, 320px);
+}
+
+.select-demo__prepend {
+	color: var(--vc-color-primary);
+}
+
+.select-demo__option {
+	display: flex;
+	justify-content: space-between;
+	gap: 8px;
+	padding: 6px 12px;
+	cursor: pointer;
+}
+
+.select-demo__option.is-checked {
+	color: var(--vc-color-primary);
+}
+
+.select-demo__group {
+	padding: 6px 12px;
+	font-size: 12px;
+	color: var(--vc-color-dark-extralight);
+}
+
+.select-demo__result {
+	margin: 0;
+}
+</style>
+```
+:::
+
+### 弹层与方法
+
+`trigger` 设置弹层的触发方式，`placement` 设置方向，`arrow` 显示箭头，`autoWidth` 让弹层按内容宽度展开（默认与触发器同宽）。`portal` 为 `false` 时弹层挂在组件根节点内；`tag` 设置触发容器的标签，`id` 传给内部输入框的根节点。
+
+通过 ref 调用 `add`、`remove`、`toggle`、`close` 操作选中值与弹层：`add` 不去重、`remove` 要求值已选中，调用前自行判断。`visible-change` 只在用户操作改变弹层可见状态时触发，`ready` 在弹层创建完成时触发，`close` 在弹层关闭时触发。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
+```vue
+<template>
+	<div class="select-demo">
+		<Select
+			v-model="hoverValue"
+			:data="options"
+			trigger="hover"
+			placement="top-left"
+			arrow
+			auto-width
+			placeholder="悬停打开，弹层在上方"
+		/>
+		<div class="select-demo__row">
+			<Button @click="handleToggle">切换弹层</Button>
+			<Button @click="handleClose">关闭弹层</Button>
+			<Button @click="handleAdd">添加选项 C</Button>
+			<Button @click="handleRemove">移除选项 A</Button>
+		</div>
+		<Select
+			id="select-demo-target"
+			ref="selectRef"
+			v-model="values"
+			:data="options"
+			:max="0"
+			:portal="false"
+			tag="section"
+			@visible-change="handleVisibleChange"
+			@ready="handleReady"
+			@close="handleCloseEvent"
+		/>
+		<p class="select-demo__result">已选：{{ values.join('、') || '无' }}；{{ status }}</p>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { Button, Select } from '@deot/vc';
+
+const selectRef = ref();
+const hoverValue = ref('');
+const values = ref(['option-a']);
+const status = ref('等待操作');
+const options = [
+	{ value: 'option-a', label: '选项 A' },
+	{ value: 'option-b', label: '选项 B' },
+	{ value: 'option-c', label: '选项 C，文字较长时弹层按内容展开' }
+];
+
+const handleToggle = () => {
+	selectRef.value.toggle();
+};
+
+const handleClose = () => {
+	selectRef.value.close();
+};
+
+const handleAdd = () => {
+	!values.value.includes('option-c') && selectRef.value.add('option-c');
+};
+
+const handleRemove = () => {
+	values.value.includes('option-a') && selectRef.value.remove('option-a');
+};
+
+const handleVisibleChange = (visible) => {
+	status.value = `visible-change：${visible}`;
+};
+
+const handleReady = () => {
+	status.value = '触发 ready';
+};
+
+const handleCloseEvent = () => {
+	status.value = '触发 close';
+};
+</script>
+
+<style scoped>
+.select-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	width: min(100%, 360px);
+}
+
+.select-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.select-demo__result {
+	margin: 0;
+}
 </style>
 ```
 :::
@@ -299,7 +647,10 @@ const groups = [
 :::playground
 <!--
 <config lang="json5">
-{ previewInset: 20 }
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
 </config>
 -->
 ```vue
@@ -312,7 +663,7 @@ const groups = [
 			searchable
 			search-placeholder="输入条目名称"
 		/>
-		<p>当前值：{{ selectedValue || '未选择' }}</p>
+		<p class="select-demo__result">当前值：{{ selectedValue || '未选择' }}</p>
 	</div>
 </template>
 
@@ -334,8 +685,16 @@ const loadOptions = async (query) => {
 </script>
 
 <style scoped>
-.select-demo { width: min(100%, 320px); }
-.select-demo p { margin: 12px 0 0; }
+.select-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	width: min(100%, 320px);
+}
+
+.select-demo__result {
+	margin: 0;
+}
 </style>
 ```
 :::
@@ -349,14 +708,17 @@ const loadOptions = async (query) => {
 :::playground
 <!--
 <config lang="json5">
-{ previewInset: 20 }
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
 </config>
 -->
 ```vue
 <template>
 	<div class="select-demo">
 		<Select v-model="selectedValue" :data="options" virtualized searchable clearable />
-		<p>当前值：{{ selectedValue }}</p>
+		<p class="select-demo__result">当前值：{{ selectedValue }}</p>
 	</div>
 </template>
 
@@ -369,8 +731,16 @@ const selectedValue = ref(5000);
 </script>
 
 <style scoped>
-.select-demo { width: min(100%, 320px); }
-.select-demo p { margin: 12px 0 0; }
+.select-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	width: min(100%, 320px);
+}
+
+.select-demo__result {
+	margin: 0;
+}
 </style>
 ```
 :::
@@ -391,16 +761,19 @@ const selectedValue = ref(5000);
 :::playground
 <!--
 <config lang="json5">
-{ previewInset: 20 }
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
 </config>
 -->
 ```vue
 <template>
 	<div class="select-demo">
-		<p>单选：<Select :model-value="2" :data="options" plaintext /></p>
-		<p>多选：<Select :model-value="[1, 3]" :data="options" :max="0" plaintext /></p>
-		<p>formatter：<Select model-value="1,2" :data="options" :max="0" :formatter="labels => labels.join(' / ')" plaintext /></p>
-		<p>空值：<Select :data="options" extra="-" plaintext /></p>
+		<div>单选：<Select :model-value="2" :data="options" plaintext /></div>
+		<div>多选：<Select :model-value="[1, 3]" :data="options" :max="0" plaintext /></div>
+		<div>formatter：<Select model-value="1,2" :data="options" :max="0" :formatter="labels => labels.join(' / ')" plaintext /></div>
+		<div>空值：<Select :data="options" extra="-" plaintext /></div>
 	</div>
 </template>
 
@@ -415,63 +788,113 @@ const options = [
 </script>
 
 <style scoped>
-.select-demo p { margin: 0 0 12px; }
+.select-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
 </style>
 ```
 :::
 
+## 移动端
+
+`MSelect` 是独立的移动端组件，`MSelectView` 是它弹层里的列表，也可以直接放在页面中。`v-model` 的形状与转换规则、`data`、搜索规则与桌面端相同；尺寸按 750 稿设计，写为 `calc(var(--vc-rem) * n)`，随 `--vc-rem` 缩放，底栏切换 `rem` 可查看不同屏宽下的效果。
+
 ### 移动端选择
 
-`MSelect` 是独立的移动端组件：默认渲染 MListItem，点击后从底部弹出列表，选中项为主色并打勾。`v-model` 的形状与转换规则与桌面端相同（`max`、`separator`、`numerable`），`data` 中带 `children` 的项显示为分组，分组标题滚动时吸顶，下一个分组的标题到达时把它顶出。
+`MSelect` 默认渲染 MListItem（`label`、`labelWidth`、`arrow` 传给它），点击后从底部弹出列表，选中项为主色并打勾。`data` 中带 `children` 的项显示为分组，分组标题滚动时吸顶，下一个分组的标题到达时把它顶出。
 
 - 单选默认点一项即提交并关闭，标题栏右侧有关闭按钮；点已选中的项直接关闭。
-- `confirm`：由「确定」提交。`true` 或 `'top'` 为顶部的「取消 / 确定」工具栏；`'bottom'` 为底部的大按钮，标题栏保留关闭按钮。
+- `confirm`：由「确定」提交。`true` 或 `'top'` 为顶部的「取消 / 确定」工具栏，文案由 `cancelText`、`okText` 设置；`'bottom'` 为底部的大按钮，标题栏保留关闭按钮。提交时触发 `ok`，点「取消」触发 `cancel`，关闭动画结束后触发 `close`。
 - 多选（`max` 不为 `1`）总是由「确定」提交，`confirm` 为 `false` 时按 `'top'`。列表上方显示「已选 N/max」，选满后其余选项置灰；`max` 为 `0` 时不限数量。
-- `clearable`：有已选项时，列表上方显示「清空」；`confirm` 为 `'bottom'` 时改为底部的「清空」按钮。不需要确认时清空即提交并关闭，否则只清空弹层内的值，由「确定」提交。没开 `clearable` 时，一项都没选不能确定。
+- `clearable`：有已选项时，列表上方显示「清空」（触发 `clear`）；`confirm` 为 `'bottom'` 时改为底部的「清空」按钮。不需要确认时清空即提交并关闭，否则只清空弹层内的值，由「确定」提交。没开 `clearable` 时，一项都没选不能确定。
 - `searchable`：列表上方显示搜索框，规则同桌面端，没有命中项的分组连同标题一起隐藏。
 - 远程搜索（`searchable` + `loadData`）：契约与时机同桌面端的[远程搜索](#远程搜索)——搜索词经 250ms 防抖调用 `loadData(keyword, instance)`，由调用方更新 `data`，加载期间搜索框右侧显示加载图标；打开时还没有数据、或数据是按某个关键词加载的，立即按空关键词加载一次。弹层打开期间 `data` 的变化同步到弹层。`MSelect.open` 没有触发区同步 `data`，`loadData` 的 Promise 解析为数组时直接作为这次的结果。结果里没有已选项时，文字沿用上次查到的。
-- 选项的 `description` 显示在文字下方；`renderLabel` 或 `#label` 插槽自定义选项文字，如加上标签。
+- 选项的 `description` 显示在文字下方；`renderLabel` 或 `#label` 插槽自定义选项文字，如加上标签。默认插槽替换整个触发区，参数为 `{ label, value }`。
 - 打开时第一个已选项滚到列表中间；搜索词变化后列表回到顶部。
 - `virtualized`：只渲染列表可视范围附近的选项（基于 [MRecycleList](../recycle-list/README.md)），选项上千时打开与搜索不再随数量变慢；分组吸顶、定位到已选项等行为不变。默认不开启。
 
 :::playground
-<!-- <config lang="json5">{ viewport: 375, previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	mobile: true,
+	local: false,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
+</config>
+-->
 ```vue
 <template>
-	<div style="display: grid; gap: 12px; max-width: 420px">
+	<div class="m-select-demo">
 		<MSelect
 			v-model="single"
 			:data="data"
 			label="单选"
+			label-width="160"
 			title="选择条目"
 			clearable
-			@visible-change="visible => handleVisibleChange('single', visible)"
+			@visible-change="handleVisibleChange"
+		/>
+		<MSelect
+			v-model="confirmed"
+			:data="data"
+			label="顶部确定"
+			label-width="160"
+			title="选择条目"
+			cancel-text="返回"
+			ok-text="完成"
+			:arrow="false"
+			confirm
+			@ok="handleOk"
+			@cancel="handleCancel"
 		/>
 		<MSelect
 			v-model="multiple"
 			:data="data"
 			:max="3"
 			label="最多 3 项"
+			label-width="160"
 			title="选择条目"
 			searchable
 			clearable
-			@visible-change="visible => handleVisibleChange('multiple', visible)"
+			@change="handleChange"
 		/>
 		<MSelect
 			v-model="bottom"
 			:data="grouped"
 			:max="0"
 			label="底部按钮"
+			label-width="160"
 			title="选择条目"
 			confirm="bottom"
 			clearable
-			@visible-change="visible => handleVisibleChange('bottom', visible)"
-		/>
-		<p>single：{{ single }}；multiple：{{ multiple }}；bottom：{{ bottom }}</p>
+			@clear="handleClear"
+			@close="handleClose"
+		>
+			<template #label="{ label, selected }">
+				<span class="m-select-demo__tag" :class="{ 'is-selected': selected }">标签</span>
+				{{ label }}
+			</template>
+		</MSelect>
+		<MSelect v-model="custom" :data="data" title="选择条目">
+			<template #default="{ label }">
+				<div class="m-select-demo__trigger">{{ label.length ? label.join(' / ') : '自定义触发区，点击选择' }}</div>
+			</template>
+		</MSelect>
+		<p class="m-select-demo__result">single：{{ single }}；confirmed：{{ confirmed }}；multiple：{{ multiple }}；bottom：{{ bottom }}</p>
+		<p class="m-select-demo__result">{{ status }}</p>
 	</div>
 </template>
+
 <script setup>
-import { ref, inject } from 'vue';
+import { ref } from 'vue';
 import { MSelect } from '@deot/vc';
 
 const data = [
@@ -486,61 +909,165 @@ const grouped = [
 	{ value: 'b', label: '分组 B', children: [{ value: 'b-1', label: '条目 B-1' }, { value: 'b-2', label: '条目 B-2' }] }
 ];
 const single = ref();
+const confirmed = ref();
 const multiple = ref([]);
 const bottom = ref([]);
+const custom = ref();
+const status = ref('等待操作');
 
-const playground = inject('docs:playground');
-const visibleStates = {};
-const handlePreview = playground.run(560);
-const handleVisibleChange = (key, visible) => {
-	visibleStates[key] = visible;
-	return handlePreview(Object.values(visibleStates).some(Boolean));
+const handleVisibleChange = (visible) => {
+	status.value = `visible-change：${visible}`;
+};
+
+const handleOk = (value, labels) => {
+	status.value = `ok：${labels.join('、')}`;
+};
+
+const handleCancel = () => {
+	status.value = '触发 cancel';
+};
+
+const handleChange = (value, labels) => {
+	status.value = `change：${labels.join('、') || '空'}`;
+};
+
+const handleClear = () => {
+	status.value = '触发 clear';
+};
+
+const handleClose = () => {
+	status.value = '触发 close';
 };
 </script>
+
+<style scoped>
+.m-select-demo {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--vc-rem) * 16);
+}
+
+.m-select-demo__tag {
+	padding: 0 calc(var(--vc-rem) * 8);
+	border: 1px solid currentcolor;
+	border-radius: calc(var(--vc-rem) * 4);
+	font-size: calc(var(--vc-rem) * 20);
+}
+
+.m-select-demo__tag.is-selected {
+	color: var(--vc-color-primary);
+}
+
+.m-select-demo__trigger {
+	padding: calc(var(--vc-rem) * 24) calc(var(--vc-rem) * 32);
+	color: var(--vc-color-primary);
+}
+
+.m-select-demo__result {
+	margin: 0;
+	padding-inline: calc(var(--vc-rem) * 32);
+	overflow-wrap: anywhere;
+}
+</style>
 ```
 :::
 
 ### 移动端内嵌视图与直接调用
 
-`MSelectView` 是弹层里的内容，也可以直接放在页面中：每次点选都更新 `v-model` 并触发 `select`。
+`MSelectView` 是弹层里的内容，也可以直接放在页面中：每次点选都更新 `v-model` 并触发 `select`，点「清空」触发 `clear`。`numerable`、`nullValue`、`renderLabel` 与桌面端同义。
 
 `MSelect.open(options)` 直接打开弹层，通过 `onOk(value, labels)` 接收结果；返回的 Portal 实例可以 `await`：确定后（关闭动画结束时）得到 `onOk` 的参数组成的对象 `{ value, labels }`，取消、点遮罩等没有确定就关闭时拒绝（只用回调时不会产生未处理的拒绝）；也可调用 `destroy()`。
 
 :::playground
-<!-- <config lang="json5">{ viewport: 375, previewInset: 0 }</config> -->
+<!--
+<config lang="json5">
+{
+	mobile: true,
+	local: false,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
+</config>
+-->
 ```vue
 <template>
-	<div>
-		<MSelectView v-model="value" :data="data" :max="2" @select="handleSelect" />
-		<p style="padding: 0 16px">{{ value }} {{ selected }}</p>
-		<p style="padding: 0 16px; color: var(--vc-color-primary)" @click="handleOpen">MSelect.open 直接调用：{{ opened }}</p>
+	<div class="m-select-demo">
+		<MSelectView
+			v-model="value"
+			:data="data"
+			:max="2"
+			:render-label="renderLabel"
+			numerable
+			clearable
+			@select="handleSelect"
+			@clear="handleClear"
+		/>
+		<p class="m-select-demo__result">{{ JSON.stringify(value) }} {{ selected }}</p>
+		<div class="m-select-demo__actions">
+			<MButton type="primary" @click="handleOpen">MSelect.open 直接调用</MButton>
+		</div>
+		<p class="m-select-demo__result">open：{{ JSON.stringify(opened) }}</p>
 	</div>
 </template>
+
 <script setup>
-import { ref } from 'vue';
-import { MSelect, MSelectView } from '@deot/vc';
+import { h, ref } from 'vue';
+import { MButton, MSelect, MSelectView } from '@deot/vc';
 
 const data = Array.from({ length: 6 }, (_, i) => ({ value: i + 1, label: `条目 ${i + 1}` }));
-const value = ref([]);
+const value = ref('1');
 const selected = ref('');
-const opened = ref();
+const opened = ref('');
+
+const renderLabel = ({ label, index }) => h('span', `${index + 1}. ${label}`);
 
 const handleSelect = ({ value: v, selected: isSelected }) => {
 	selected.value = `${v} ${isSelected ? '选中' : '取消'}`;
 };
 
-const handleOpen = () => {
-	MSelect.open({
-		value: opened.value,
-		data,
-		title: '直接调用',
-		searchable: true,
-		onOk: (v) => {
-			opened.value = v;
-		}
-	});
+const handleClear = () => {
+	selected.value = '已清空';
+};
+
+const handleOpen = async () => {
+	try {
+		const result = await MSelect.open({
+			value: opened.value,
+			data,
+			title: '直接调用',
+			searchable: true,
+			clearable: true,
+			nullValue: ''
+		});
+		opened.value = result.value;
+	} catch {
+		selected.value = '已取消';
+	}
 };
 </script>
+
+<style scoped>
+.m-select-demo {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--vc-rem) * 32);
+}
+
+.m-select-demo__actions {
+	display: flex;
+	padding-inline: calc(var(--vc-rem) * 32);
+}
+
+.m-select-demo__result {
+	margin: 0;
+	padding-inline: calc(var(--vc-rem) * 32);
+	overflow-wrap: anywhere;
+}
+</style>
 ```
 :::
 
@@ -739,6 +1266,14 @@ const handleOpen = () => {
 | --- | --- | --- |
 | label | 自定义选项文字 | `{ label, row, index, selected }` |
 
+### MSelectView 方法
+
+| 方法名 | 说明 | 参数 | 返回值 |
+| --- | --- | --- | --- |
+| clear | 清空，同点击「清空」 | - | `void` |
+| scrollIntoSelected | 把第一个已选项滚到列表中间 | - | `void` |
+| getLabels | 当前选中项的文字，与选中值一一对应 | - | `string[]` |
+
 ### MSelectView 主题
 
 列表高度可通过 `--vc-select-view-height` 覆盖（默认 768，750 稿）。颜色使用以下组件变量，并回退到同名全局变量：
@@ -746,7 +1281,8 @@ const handleOpen = () => {
 | 变量 | 用途 |
 | --- | --- |
 | `--vc-select-view-color-dark-lighter` | 选项文字 |
-| `--vc-select-view-color-dark-extralight` | 分组标题、已选数量、「清空」、说明文字、无结果提示 |
+| `--vc-select-view-color-dark-extralight` | 分组标题、说明文字、无结果提示 |
+| `--vc-select-summary-color-dark-extralight` | 多选汇总栏的已选数量与「清空」 |
 | `--vc-select-view-color-primary` | 选中项与搜索命中的文字 |
 | `--vc-select-view-foreground-color-inactive` | 禁用及选满后不可选的选项 |
 | `--vc-select-view-background-color-light` | 选项按下时的背景 |

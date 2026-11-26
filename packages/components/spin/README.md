@@ -9,15 +9,23 @@
 
 ### 基础用法
 
-`size` 控制默认图标的尺寸，单位为 px（`MSpin` 中为 750 稿长度）。图标与 Icon 一样像文字排版：与文字混排时，中心落在父级字体字符框的中心。
+`size` 控制默认图标的尺寸，单位为 px（`MSpin` 中为 750 稿长度），字符串为 CSS 长度。图标与 Icon 一样像文字排版：与文字混排时，中心落在父级字体字符框的中心。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div style="display: flex; align-items: center; gap: 24px">
+	<div class="spin-demo">
 		<Spin :size="size" />
-		<InputNumber v-model="size" :min="16" :max="56" :step="4" style="width: 96px" />
+		<InputNumber v-model="size" class="spin-demo__input" :min="16" :max="56" :step="4" />
+		<Spin size="2em" />
 		<span>文字 <Spin :size="16" /> 混排</span>
 	</div>
 </template>
@@ -28,6 +36,19 @@ import { InputNumber, Spin } from '@deot/vc';
 
 const size = ref(28);
 </script>
+
+<style scoped>
+.spin-demo {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 16px;
+}
+
+.spin-demo__input {
+	width: 96px;
+}
+</style>
 ```
 :::
 
@@ -36,10 +57,17 @@ const size = ref(28);
 `tip` 或 `tip` 插槽显示在图标下方，颜色与转动弧相同。`loading` 为 `false` 时不显示。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div style="display: flex; align-items: center; gap: 48px">
+	<div class="spin-demo">
 		<Spin tip="加载中，请稍候" />
 		<Spin>
 			<template #tip>
@@ -54,9 +82,21 @@ import { onBeforeUnmount, ref } from 'vue';
 import { Spin } from '@deot/vc';
 
 const percent = ref(0);
-const timer = setInterval(() => (percent.value = (percent.value + 7) % 100), 300);
+const timer = setInterval(() => {
+	percent.value = (percent.value + 7) % 100;
+}, 300);
+
 onBeforeUnmount(() => clearInterval(timer));
 </script>
+
+<style scoped>
+.spin-demo {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 48px;
+}
+</style>
 ```
 :::
 
@@ -65,21 +105,28 @@ onBeforeUnmount(() => clearInterval(timer));
 有默认插槽时，`Spin` 包住其中的内容：`loading` 为 `true` 时在内容上居中显示加载图标，默认带蒙层：内容变淡、其上的图标层模糊内容（`backdrop-filter`），内容不可操作，外层带 `aria-busy`。蒙层不铺底色，变淡后透出的是实际背景，亮色、暗色或任意底色下都协调。`mask` 为 `false` 时只显示图标，内容仍可操作。内容始终保留，切换加载状态不会重新渲染。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div style="display: grid; gap: 16px">
-		<div style="display: flex; align-items: center; gap: 16px">
-			<Switch v-model="loading" />
+	<div class="spin-demo">
+		<div class="spin-demo__row">
+			<Switch v-model="isLoading" />
 			<span>加载中</span>
-			<Switch v-model="mask" />
+			<Switch v-model="isMask" />
 			<span>蒙层</span>
 		</div>
-		<Spin :loading="loading" :mask="mask" tip="加载中">
-			<div style="padding: 24px; border: 1px solid var(--vc-border-color); border-radius: 8px">
-				<h4 style="margin: 0 0 8px">区域标题</h4>
-				<p style="margin: 0 0 12px">这里是被包裹的内容，加载时上面会显示加载图标。</p>
-				<Button size="small">区域内的按钮</Button>
+		<Spin :loading="isLoading" :mask="isMask" tip="加载中">
+			<div class="spin-demo__card">
+				<h4>区域标题</h4>
+				<p>这里是被包裹的内容，加载时上面会显示加载图标。</p>
+				<Button size="small" @click="handleClick">点击次数：{{ count }}</Button>
 			</div>
 		</Spin>
 	</div>
@@ -89,9 +136,43 @@ onBeforeUnmount(() => clearInterval(timer));
 import { ref } from 'vue';
 import { Button, Spin, Switch } from '@deot/vc';
 
-const loading = ref(true);
-const mask = ref(true);
+const isLoading = ref(true);
+const isMask = ref(true);
+const count = ref(0);
+
+const handleClick = () => {
+	count.value++;
+};
 </script>
+
+<style scoped>
+.spin-demo {
+	display: grid;
+	gap: 16px;
+}
+
+.spin-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+.spin-demo__card {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 8px;
+	padding: 24px;
+	border: 1px solid var(--vc-border-color);
+	border-radius: 8px;
+}
+
+.spin-demo__card h4,
+.spin-demo__card p {
+	margin: 0;
+}
+</style>
 ```
 :::
 
@@ -100,16 +181,23 @@ const mask = ref(true);
 `delay`（毫秒）：`loading` 持续超过 `delay` 才显示图标，请求很快时不会闪一下；`loading` 变为 `false` 时立即隐藏。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div style="display: grid; gap: 16px">
-		<div style="display: flex; gap: 8px">
-			<Button @click="load(150)">快请求（150ms）</Button>
-			<Button @click="load(1500)">慢请求（1500ms）</Button>
+	<div class="spin-demo">
+		<div class="spin-demo__row">
+			<Button @click="handleLoad(150)">快请求（150ms）</Button>
+			<Button @click="handleLoad(1500)">慢请求（1500ms）</Button>
 		</div>
-		<Spin :loading="loading" :delay="300">
-			<div style="padding: 24px; border: 1px solid var(--vc-border-color); border-radius: 8px">
+		<Spin :loading="isLoading" :delay="300">
+			<div class="spin-demo__card">
 				第 {{ count }} 次结果
 			</div>
 		</Spin>
@@ -120,16 +208,40 @@ const mask = ref(true);
 import { ref } from 'vue';
 import { Button, Spin } from '@deot/vc';
 
-const loading = ref(false);
+const isLoading = ref(false);
 const count = ref(1);
-const load = (duration) => {
-	loading.value = true;
+
+const handleLoad = (duration) => {
+	isLoading.value = true;
 	setTimeout(() => {
 		count.value++;
-		loading.value = false;
+		isLoading.value = false;
 	}, duration);
 };
 </script>
+
+<style scoped>
+.spin-demo {
+	display: grid;
+	gap: 16px;
+}
+
+.spin-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.spin-demo__card {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 8px;
+	padding: 24px;
+	border: 1px solid var(--vc-border-color);
+	border-radius: 8px;
+}
+</style>
 ```
 :::
 
@@ -138,18 +250,25 @@ const load = (duration) => {
 `color` 设置转动弧的颜色，`trackColor` 设置轨道的颜色；也可以在祖先上设置局部变量 `--vc-spin-color`、`--vc-spin-track-color`、`--vc-spin-stroke-width`。`loading` 插槽替换默认图标，插槽容器的字号为 `size`，其中的 SVG 仍会旋转。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div style="display: grid; gap: 16px">
-		<div style="display: flex; align-items: center; gap: 12px">
+	<div class="spin-demo">
+		<div class="spin-demo__row">
 			<Spin :color="color" :track-color="trackColor" />
 			<label>转动弧</label>
 			<ColorPicker v-model="color" />
 			<label>轨道</label>
 			<ColorPicker v-model="trackColor" />
 		</div>
-		<div style="display: flex; align-items: center; gap: 24px; --vc-spin-stroke-width: 4">
+		<div class="spin-demo__row spin-demo__stroke">
 			<Spin />
 			<span>局部变量：线宽 4</span>
 		</div>
@@ -170,21 +289,115 @@ import { ColorPicker, Spin } from '@deot/vc';
 const color = ref('#e6a23c');
 const trackColor = ref('#64758b');
 </script>
+
+<style scoped>
+.spin-demo {
+	display: grid;
+	justify-items: start;
+	gap: 16px;
+}
+
+.spin-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+.spin-demo__stroke {
+	--vc-spin-stroke-width: 4;
+}
+</style>
 ```
 :::
 
 ## 移动端
 
-`MSpin` 的属性、插槽、结构与 `Spin` 相同，根节点另有标记类 `.vcm-spin`（`.vc-spin.vcm-spin`）；数字 `size` 为 750 稿长度（默认 `56`，即 375 宽下 28px），提示文字为 28 / 44（375 宽下 14px / 22px），与图标间距 16（8px），均随 `--vc-rem` 缩放。
+`MSpin` 的属性、插槽、结构与 `Spin` 相同，根节点另有标记类 `.vcm-spin`（`.vc-spin.vcm-spin`）；数字 `size` 为 750 稿长度（默认 `56`，即 375 宽下 28px），提示文字为 28 / 44（375 宽下 14px / 22px），与图标间距 16（8px），均随 `--vc-rem` 缩放。底栏切换 `rem` 可查看不同屏宽下的效果。
 
+:::playground
+<!--
+<config lang="json5">
+{
+	mobile: true,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
+</config>
+-->
 ```vue
 <template>
-	<MSpin tip="加载中" />
+	<div class="m-spin-demo">
+		<div class="m-spin-demo__row">
+			<MSpin :size="32" />
+			<MSpin />
+			<MSpin :size="88" />
+			<MSpin tip="加载中" />
+		</div>
+		<div class="m-spin-demo__row">
+			<MSwitch v-model="isLoading" />
+			<span>加载中</span>
+			<MSwitch v-model="isMask" />
+			<span>蒙层</span>
+		</div>
+		<MSpin :loading="isLoading" :mask="isMask" tip="加载中">
+			<div class="m-spin-demo__card">
+				<p>这里是被包裹的内容，加载时上面会显示加载图标。</p>
+				<MButton size="small" @click="handleClick">点击次数：{{ count }}</MButton>
+			</div>
+		</MSpin>
+	</div>
 </template>
+
 <script setup>
-import { MSpin } from '@deot/vc';
+import { ref } from 'vue';
+import { MButton, MSpin, MSwitch } from '@deot/vc';
+
+const isLoading = ref(true);
+const isMask = ref(true);
+const count = ref(0);
+
+const handleClick = () => {
+	count.value++;
+};
 </script>
+
+<style scoped>
+.m-spin-demo {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--vc-rem) * 32);
+	padding-inline: calc(var(--vc-rem) * 32);
+	font-size: calc(var(--vc-rem) * 28);
+}
+
+.m-spin-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: calc(var(--vc-rem) * 16);
+}
+
+.m-spin-demo__card {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: calc(var(--vc-rem) * 16);
+	padding: calc(var(--vc-rem) * 32);
+	border: 1px solid var(--vc-border-color);
+	border-radius: calc(var(--vc-rem) * 16);
+}
+
+.m-spin-demo__card p {
+	margin: 0;
+}
+</style>
 ```
+:::
 
 ## 主题与局部覆盖
 
@@ -199,7 +412,7 @@ import { MSpin } from '@deot/vc';
 
 ### 局部
 
-写成局部变量 `--vc-spin-<键>`，可设在 `.vc-spin` 或其祖先上；`color`、`trackColor` 属性即写入前两项。
+写成局部变量 `--vc-spin-<键>`，可设在 `.vc-spin` 或其祖先上（`mask-opacity`、`mask-blur` 作用于包裹容器 `.vc-spin-wrapper`，需设在它或其祖先上）；`color`、`trackColor` 属性即写入前两项。
 
 | 参数 | 使用位置 | 默认值 |
 | --- | --- | --- |

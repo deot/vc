@@ -2,29 +2,40 @@
 
 在触发元素附近展示确认信息，提供确定与取消操作。
 
+移动端入口导出的 `MPopconfirm` 与 `Popconfirm` 是同一实现。
+
 ### 何时使用
 
 操作需要再次确认、又不需要使用居中 Modal 时，例如删除一条记录或撤销任务。
 
 ### 基础用法
 
-默认点击打开，点击确定、取消或浮层外部关闭。`ok` 和 `cancel` 接收鼠标事件；点击外部只改变显隐，不触发 `cancel`。
+默认点击打开，点击确定、取消或浮层外部关闭。`ok` 和 `cancel` 接收鼠标事件；点击外部只改变显隐，不触发 `cancel`。浮层节点挂载完成时触发 `ready`，关闭动画完成时触发 `close`。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16, expandable: true }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16,
+	expandable: true
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="basic-demo">
+	<div class="popconfirm-demo">
 		<Popconfirm
 			title="确定删除这条记录？"
-			@visible-change="visible => visible && handleVisibleChange(true)"
-			@close="handleVisibleChange(false)"
+			@visible-change="handleVisibleChange"
+			@ready="handleReady"
+			@close="handleClose"
 			@ok="handleOk"
 			@cancel="handleCancel"
 		>
 			<Button type="error">删除记录</Button>
 		</Popconfirm>
-		<p>{{ result }}</p>
+		<p class="popconfirm-demo__result">{{ result }}</p>
 	</div>
 </template>
 
@@ -33,25 +44,37 @@ import { ref, inject } from 'vue';
 import { Popconfirm, Button } from '@deot/vc';
 
 const playground = inject('docs:playground');
-const handleVisibleChange = playground.run(320);
-
+const preview = playground.run(320);
 const result = ref('等待操作');
+
+const handleVisibleChange = visible => visible && preview(true);
+
+const handleReady = () => {
+	result.value = '浮层已挂载（ready）';
+};
+
+const handleClose = () => {
+	preview(false);
+};
+
 const handleOk = () => {
 	result.value = '已确认删除';
 };
+
 const handleCancel = () => {
 	result.value = '已取消删除';
 };
 </script>
 
 <style scoped>
-.basic-demo {
-	display: grid;
-	justify-items: center;
+.popconfirm-demo {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
 	gap: 16px;
 }
 
-.basic-demo p {
+.popconfirm-demo__result {
 	margin: 0;
 }
 </style>
@@ -60,13 +83,21 @@ const handleCancel = () => {
 
 ### 自定义内容、图标与按钮
 
-`title`、`content` 和 `icon` 插槽可以替换对应内容；同名插槽优先于属性。弹层放不下时标题与按钮固定，内容在其间滚动。`type` 支持 `warning`、`info`、`success`、`error`。按钮文案由当前 locale 提供，`okText` 和 `cancelText` 可显式覆盖，空字符串会保留为无文案按钮。
+`title`、`content` 和 `icon` 插槽可以替换对应内容；同名插槽优先于属性。弹层放不下时标题与按钮固定，内容在其间滚动。`type` 支持 `warning`、`info`、`success`、`error`；`width` 设置弹层宽度，`okType`、`cancelType` 设置按钮类型。按钮文案由当前 locale 提供，`okText` 和 `cancelText` 可显式覆盖，空字符串会保留为无文案按钮。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16, expandable: true }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16,
+	expandable: true
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="custom-demo">
+	<div class="popconfirm-demo">
 		<Popconfirm
 			v-for="type in types"
 			:key="type"
@@ -88,9 +119,13 @@ const handleCancel = () => {
 			@close="handleVisibleChange('custom', false)"
 		>
 			<Button type="primary">自定义确认框</Button>
-			<template #title><strong>归档已完成的条目？</strong></template>
+			<template #title>
+				<strong>归档已完成的条目？</strong>
+			</template>
 			<template #content>归档后仍可在历史记录中查看。</template>
-			<template #icon><Icon type="info" /></template>
+			<template #icon>
+				<Icon type="info" />
+			</template>
 		</Popconfirm>
 	</div>
 </template>
@@ -111,12 +146,12 @@ const types = ['warning', 'info', 'success', 'error'];
 </script>
 
 <style scoped>
-.custom-demo {
+.popconfirm-demo {
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
 	justify-content: center;
-	gap: 16px;
+	gap: 8px;
 }
 </style>
 ```
@@ -124,24 +159,34 @@ const types = ['warning', 'info', 'success', 'error'];
 
 ### 弹出位置
 
-`placement` 支持 12 种位置，默认 `top`。浮层沿用 Popover 的定位与空间适配；展开预览可以更清楚地观察方向。
+`placement` 支持 12 种位置，默认 `top`。浮层沿用 Popover 的定位与空间适配；展开预览可以更清楚地观察方向。按钮网格上下留出 80px，给上下方向的浮层留出空间。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16, expandable: true }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16,
+	expandable: true
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="placement-demo">
-		<Popconfirm
-			v-for="placement in placements"
-			:key="placement"
-			:class="`placement-demo__${placement}`"
-			:placement="placement"
-			title="确定执行这项操作？"
-			@visible-change="visible => visible && handleVisibleChange(placement, true)"
-			@close="handleVisibleChange(placement, false)"
-		>
-			<Button>{{ placement }}</Button>
-		</Popconfirm>
+	<div class="popconfirm-demo">
+		<div class="popconfirm-demo__grid">
+			<Popconfirm
+				v-for="placement in placements"
+				:key="placement"
+				:class="`popconfirm-demo__${placement}`"
+				:placement="placement"
+				title="确定执行这项操作？"
+				@visible-change="visible => visible && handleVisibleChange(placement, true)"
+				@close="handleVisibleChange(placement, false)"
+			>
+				<Button>{{ placement }}</Button>
+			</Popconfirm>
+		</div>
 	</div>
 </template>
 
@@ -167,7 +212,12 @@ const placements = [
 </script>
 
 <style scoped>
-.placement-demo {
+.popconfirm-demo {
+	display: flex;
+	justify-content: center;
+}
+
+.popconfirm-demo__grid {
 	display: grid;
 	grid-template-areas:
 		"top-left top top-right"
@@ -177,33 +227,31 @@ const placements = [
 		"bottom-left bottom bottom-right";
 	grid-template-columns: repeat(3, 120px);
 	gap: 16px;
-	width: fit-content;
-	margin: 0 auto;
-	padding: 80px 0;
+	padding-block: 80px;
 }
 
-.placement-demo :deep(.vc-button) { width: 120px; }
-.placement-demo__top-left { grid-area: top-left; }
-.placement-demo__top { grid-area: top; }
-.placement-demo__top-right { grid-area: top-right; }
-.placement-demo__left-top { grid-area: left-top; }
-.placement-demo__left { grid-area: left; }
-.placement-demo__left-bottom { grid-area: left-bottom; }
-.placement-demo__right-top { grid-area: right-top; }
-.placement-demo__right { grid-area: right; }
-.placement-demo__right-bottom { grid-area: right-bottom; }
-.placement-demo__bottom-left { grid-area: bottom-left; }
-.placement-demo__bottom { grid-area: bottom; }
-.placement-demo__bottom-right { grid-area: bottom-right; }
+.popconfirm-demo__grid :deep(.vc-button) { width: 120px; }
+.popconfirm-demo__top-left { grid-area: top-left; }
+.popconfirm-demo__top { grid-area: top; }
+.popconfirm-demo__top-right { grid-area: top-right; }
+.popconfirm-demo__left-top { grid-area: left-top; }
+.popconfirm-demo__left { grid-area: left; }
+.popconfirm-demo__left-bottom { grid-area: left-bottom; }
+.popconfirm-demo__right-top { grid-area: right-top; }
+.popconfirm-demo__right { grid-area: right; }
+.popconfirm-demo__right-bottom { grid-area: right-bottom; }
+.popconfirm-demo__bottom-left { grid-area: bottom-left; }
+.popconfirm-demo__bottom { grid-area: bottom; }
+.popconfirm-demo__bottom-right { grid-area: bottom-right; }
 
 @media (width <= 440px) {
-	.placement-demo {
+	.popconfirm-demo__grid {
 		grid-template-columns: repeat(2, 120px);
 		grid-template-areas: none;
-		padding: 64px 0;
+		padding-block: 64px;
 	}
 
-	.placement-demo > :deep(.vc-popconfirm) { grid-area: auto; }
+	.popconfirm-demo__grid > :deep(.vc-popconfirm) { grid-area: auto; }
 }
 </style>
 ```
@@ -214,21 +262,29 @@ const placements = [
 通过 `v-model` 和 `trigger="custom"` 自行控制显隐。`outsideClickable` 等未声明的属性会传给内部 Popover；设置为 `false` 后，点击外部保持打开。外部直接修改 `modelValue` 不触发 `visible-change`。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16, expandable: true }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16,
+	expandable: true
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="controlled-demo">
+	<div class="popconfirm-demo">
 		<Popconfirm
 			v-model="isVisible"
 			trigger="custom"
 			:outside-clickable="false"
 			title="确认提交？"
 			placement="bottom"
-			@close="isPreviewVisible = false"
+			@close="handleClose"
 		>
 			<Button @click="handleToggle">{{ isVisible ? '收起' : '打开' }}确认框</Button>
 		</Popconfirm>
-		<p>当前状态：{{ isVisible ? '打开' : '关闭' }}</p>
+		<p class="popconfirm-demo__result">当前状态：{{ isVisible ? '打开' : '关闭' }}</p>
 	</div>
 </template>
 
@@ -248,30 +304,44 @@ const handleToggle = () => {
 	if (isVisible.value) isVisible.value = false;
 	else handleOpen();
 };
+
+const handleClose = () => {
+	isPreviewVisible.value = false;
+};
 </script>
 
 <style scoped>
-.controlled-demo {
-	display: grid;
-	justify-items: center;
-	align-content: start;
+.popconfirm-demo {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
 	gap: 16px;
 }
 
-.controlled-demo p { margin: 0; }
+.popconfirm-demo__result {
+	margin: 0;
+}
 </style>
 ```
 :::
 
 ### 异步确认
 
-`ok`、`cancel` 返回 Promise 时，对应按钮在等待期间显示 loading，Promise resolve 后关闭；reject 时保持打开，调用方需处理错误。同步回调返回假值（包括 `false`）或 `true` 都会关闭，其他真值保持打开。回调只有事件参数，没有第二个 `callback` 参数。
+`ok`、`cancel` 返回 Promise 时，对应按钮在等待期间显示 loading，Promise resolve 后关闭；reject 时保持打开（组件内部接住，不会产生未处理的 Promise 拒绝）。同步回调返回假值（包括 `false`）或 `true` 都会关闭，其他真值保持打开。回调只有事件参数，没有第二个 `callback` 参数。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16, expandable: true }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16,
+	expandable: true
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="async-demo">
+	<div class="popconfirm-demo">
 		<Popconfirm
 			title="提交并等待完成？"
 			@visible-change="visible => visible && handleVisibleChange(true)"
@@ -280,7 +350,7 @@ const handleToggle = () => {
 		>
 			<Button type="primary">异步提交</Button>
 		</Popconfirm>
-		<p>{{ result }}</p>
+		<p class="popconfirm-demo__result">{{ result }}</p>
 	</div>
 </template>
 
@@ -304,13 +374,16 @@ const handleOk = () => {
 </script>
 
 <style scoped>
-.async-demo {
-	display: grid;
-	justify-items: center;
+.popconfirm-demo {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
 	gap: 16px;
 }
 
-.async-demo p { margin: 0; }
+.popconfirm-demo__result {
+	margin: 0;
+}
 </style>
 ```
 :::
@@ -380,7 +453,7 @@ const handleOk = () => {
 
 ### 移动端
 
-`MPopconfirm` 是 `Popconfirm` 的别名，使用相同实现、locale 和样式。触屏场景建议使用 `click` 或 `custom`。
+`MPopconfirm` 与 `Popconfirm` 使用相同的 locale 和样式，触屏上没有悬停，建议使用 `click` 或 `custom` 触发。
 
 ### 注意事项
 

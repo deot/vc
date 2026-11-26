@@ -1,6 +1,6 @@
 ## 颜色选择器（ColorPicker）
 
-选择颜色：色板、色相条、透明度条、预设色和色值输入，支持 hex（含 8 位）、rgb、hsl、hsv 输出。移动端使用独立的 `MColorPicker`，见[移动端选色](#移动端选色)。
+选择颜色：色板、色相条、透明度条、预设色和色值输入，支持 hex（含 8 位）、rgb、hsl、hsv 输出。移动端使用独立的 `MColorPicker`，见[移动端](#移动端)。
 
 ### 何时使用
 
@@ -8,50 +8,63 @@
 
 ### 基础用法
 
-选色即提交：拖动色板、色相条，点预设色或在输入框里输入（失焦或回车后解析），都会立即写入 `v-model`。悬停触发器时出现清除图标，点击后提交 `nullValue`（默认 `''`）。
+选色即提交：拖动色板、色相条，点预设色或在输入框里输入（失焦或回车后解析），都会立即写入 `v-model` 并触发 `change`。`clearable`（默认开启）时悬停触发器出现清除图标，点击后提交 `nullValue`（默认 `''`），并在 `change` 之后触发 `clear`。
 
 :::playground
 <!--
 <config lang="json5">
-{ previewInset: 20 }
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
 </config>
 -->
 ```vue
 <template>
-	<div class="color-demo">
-		<ColorPicker
-			v-model="color"
-			@change="handleChange"
-			@clear="lastChange = '已清空'"
-			@visible-change="handleVisibleChange"
-			@close="handlePreview(false)"
-		/>
-		<p>当前：{{ color || '未选择' }}</p>
-		<p>最近一次 change：{{ lastChange }}</p>
+	<div class="color-picker-demo">
+		<div class="color-picker-demo__row">
+			<ColorPicker v-model="color" @change="handleChange" @clear="handleClear" />
+			<ColorPicker v-model="nullableColor" :null-value="null" />
+			<ColorPicker v-model="fixedColor" :clearable="false" />
+		</div>
+		<p class="color-picker-demo__result">当前：{{ color || '未选择' }}；最近一次 change：{{ lastChange }}</p>
+		<p class="color-picker-demo__result">nullValue 为 null：{{ JSON.stringify(nullableColor) }}；不可清除：{{ fixedColor }}</p>
 	</div>
 </template>
 
 <script setup>
-import { inject, ref } from 'vue';
+import { ref } from 'vue';
 import { ColorPicker } from '@deot/vc';
 
-const playground = inject('docs:playground');
-const handlePreview = playground.run(420);
 const color = ref('#1DB88C');
+const nullableColor = ref('#456CF6');
+const fixedColor = ref('#FF4500');
 const lastChange = ref('-');
-const handleChange = (value) => { lastChange.value = value || '已清空'; };
-const handleVisibleChange = (isVisible) => {
-	if (isVisible) handlePreview(true);
+
+const handleChange = (value) => {
+	lastChange.value = value || '已清空';
+};
+
+const handleClear = () => {
+	lastChange.value = '触发 clear';
 };
 </script>
 
 <style scoped>
-.color-demo {
-	display: grid;
-	gap: 12px;
-	justify-items: start;
+.color-picker-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
 }
-.color-demo p {
+
+.color-picker-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+.color-picker-demo__result {
 	margin: 0;
 	overflow-wrap: anywhere;
 }
@@ -59,57 +72,70 @@ const handleVisibleChange = (isVisible) => {
 ```
 :::
 
-示例通过 `inject('docs:playground')` 在浮层打开时临时扩展预览高度，并在 `close`（离场动画结束）后恢复。
-
 ### 确认后提交
 
-`confirm` 为 `true` 时浮层底部显示「确定」：选色只是预览（触发器跟随，并触发 `color-change`），点「确定」才提交；点外部关闭则放弃修改，触发器在开始收起时就回到已提交的颜色。
+`confirm` 为 `true` 时浮层底部显示「确定」：选色只是预览（触发器跟随，并触发 `color-change`），点「确定」才提交；点外部关闭则放弃修改，触发器在开始收起时就回到已提交的颜色。浮层开始展开或收起时触发 `visible-change`，入场完成触发 `ready`，离场完成触发 `close`。
 
 :::playground
 <!--
 <config lang="json5">
-{ previewInset: 20 }
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
 </config>
 -->
 ```vue
 <template>
-	<div class="color-demo">
+	<div class="color-picker-demo">
 		<ColorPicker
 			v-model="color"
 			confirm
-			@color-change="previewColor = $event"
+			@color-change="handleColorChange"
 			@visible-change="handleVisibleChange"
+			@ready="handleReady"
 			@close="handleClose"
 		/>
-		<p>已提交：{{ color || '未选择' }}</p>
-		<p>预览：{{ previewColor }}</p>
+		<p class="color-picker-demo__result">已提交：{{ color || '未选择' }}；预览：{{ previewColor }}</p>
+		<p class="color-picker-demo__result">{{ status }}</p>
 	</div>
 </template>
 
 <script setup>
-import { inject, ref } from 'vue';
+import { ref } from 'vue';
 import { ColorPicker } from '@deot/vc';
 
-const playground = inject('docs:playground');
-const handlePreview = playground.run(460);
 const color = ref('#456CF6');
 const previewColor = ref(color.value);
-const handleVisibleChange = (isVisible) => {
-	if (isVisible) handlePreview(true);
+const status = ref('等待操作');
+
+const handleColorChange = (value) => {
+	previewColor.value = value;
 };
+
+const handleVisibleChange = (isVisible) => {
+	status.value = `visible-change：${isVisible}`;
+};
+
+const handleReady = () => {
+	status.value = '触发 ready';
+};
+
 const handleClose = () => {
 	previewColor.value = color.value;
-	handlePreview(false);
+	status.value = '触发 close';
 };
 </script>
 
 <style scoped>
-.color-demo {
-	display: grid;
-	gap: 12px;
-	justify-items: start;
+.color-picker-demo {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 16px;
 }
-.color-demo p {
+
+.color-picker-demo__result {
 	margin: 0;
 	overflow-wrap: anywhere;
 }
@@ -126,59 +152,56 @@ const handleClose = () => {
 :::playground
 <!--
 <config lang="json5">
-{ previewInset: 20 }
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
 </config>
 -->
 ```vue
 <template>
-	<div class="color-demo">
-		<div class="controls">
-			<label><input v-model="isAlpha" type="checkbox">启用透明度</label>
-			<label>
-				输出格式
-				<select v-model="format">
-					<option v-for="item in formats" :key="item" :value="item">{{ item }}</option>
-				</select>
-			</label>
+	<div class="color-picker-demo">
+		<div class="color-picker-demo__row">
+			<Checkbox v-model="isAlpha">启用透明度</Checkbox>
+			<Select v-model="format" :data="formats" label="输出格式" class="color-picker-demo__select" />
 		</div>
-		<ColorPicker
-			v-model="color"
-			:alpha="isAlpha"
-			:format="format"
-			@visible-change="isVisible => isVisible && handlePreview(true)"
-			@close="handlePreview(false)"
-		/>
-		<p>当前：{{ color || '未选择' }}</p>
+		<ColorPicker v-model="color" :alpha="isAlpha" :format="format" />
+		<p class="color-picker-demo__result">当前：{{ color || '未选择' }}</p>
 	</div>
 </template>
 
 <script setup>
-import { inject, ref } from 'vue';
-import { ColorPicker } from '@deot/vc';
+import { ref } from 'vue';
+import { Checkbox, ColorPicker, Select } from '@deot/vc';
 
-const playground = inject('docs:playground');
-const handlePreview = playground.run(440);
 const color = ref('#13CE66CC');
 const isAlpha = ref(true);
 const format = ref('hex');
-const formats = ['hex', 'rgb', 'hsl', 'hsv'];
+const formats = ['hex', 'rgb', 'hsl', 'hsv'].map(value => ({ value, label: value }));
 </script>
 
 <style scoped>
-.color-demo {
-	display: grid;
-	gap: 12px;
-	justify-items: start;
+.color-picker-demo {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 16px;
 }
-.color-demo p {
-	margin: 0;
-	overflow-wrap: anywhere;
-}
-.color-demo .controls {
+
+.color-picker-demo__row {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 16px;
 	align-items: center;
+	gap: 8px;
+}
+
+.color-picker-demo__select {
+	width: 200px;
+}
+
+.color-picker-demo__result {
+	margin: 0;
+	overflow-wrap: anywhere;
 }
 </style>
 ```
@@ -191,70 +214,51 @@ const formats = ['hex', 'rgb', 'hsl', 'hsv'];
 :::playground
 <!--
 <config lang="json5">
-{ previewInset: 20 }
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
 </config>
 -->
 ```vue
 <template>
-	<div class="color-demo">
-		<div class="controls">
-			<div>
-				<p>内置色</p>
-				<ColorPicker
-					v-model="builtinColor"
-					colors
-					@visible-change="isVisible => isVisible && handleVisibleChange('builtin', true)"
-					@close="handleVisibleChange('builtin', false)"
-				/>
-			</div>
-			<div>
-				<p>只选预设色</p>
-				<ColorPicker
-					v-model="presetColor"
-					:colors="colors"
-					:panel="false"
-					:hue="false"
-					:editable="false"
-					@visible-change="isVisible => isVisible && handleVisibleChange('preset', true)"
-					@close="handleVisibleChange('preset', false)"
-				/>
-			</div>
+	<div class="color-picker-demo">
+		<div class="color-picker-demo__row">
+			<span>内置色</span>
+			<ColorPicker v-model="builtinColor" colors />
+			<span>只选预设色</span>
+			<ColorPicker v-model="presetColor" :colors="colors" :panel="false" :hue="false" :editable="false" />
 		</div>
-		<p>内置：{{ builtinColor || '未选择' }}；预设：{{ presetColor || '未选择' }}</p>
+		<p class="color-picker-demo__result">内置：{{ builtinColor || '未选择' }}；预设：{{ presetColor || '未选择' }}</p>
 	</div>
 </template>
 
 <script setup>
-import { inject, ref } from 'vue';
+import { ref } from 'vue';
 import { ColorPicker } from '@deot/vc';
 
-const playground = inject('docs:playground');
-const handlePreview = playground.run(440);
 const builtinColor = ref('#5495F6');
 const presetColor = ref('#FF4500');
 const colors = ['#FF4500', '#FFD700', '#1DB88C', '#456CF6', ...ColorPicker.colors.slice(0, 2)];
-const visibleStates = {};
-const handleVisibleChange = (key, isVisible) => {
-	visibleStates[key] = isVisible;
-	return handlePreview(Object.values(visibleStates).some(Boolean));
-};
 </script>
 
 <style scoped>
-.color-demo {
-	display: grid;
-	gap: 12px;
-	justify-items: start;
+.color-picker-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
 }
-.color-demo p {
-	margin: 0;
-	overflow-wrap: anywhere;
-}
-.color-demo .controls {
+
+.color-picker-demo__row {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 16px;
 	align-items: center;
+	gap: 8px;
+}
+
+.color-picker-demo__result {
+	margin: 0;
+	overflow-wrap: anywhere;
 }
 </style>
 ```
@@ -262,45 +266,49 @@ const handleVisibleChange = (key, isVisible) => {
 
 ### 自定义触发器
 
-默认插槽替换内置触发器，参数为 `{ value, color }`：`value` 是 `v-model` 原值，`color` 可直接用于 CSS（hsv 等 CSS 不支持的格式已转换；未选择时为空字符串）。
+默认插槽替换内置触发器，参数为 `{ value, color }`：`value` 是 `v-model` 原值，`color` 可直接用于 CSS（hsv 等 CSS 不支持的格式已转换；未选择时为空字符串）。`trigger` 设置浮层的触发方式，`arrow` 显示浮层箭头；`placement` 等其他属性透传给 Popover。
 
 :::playground
 <!--
 <config lang="json5">
-{ previewInset: 20 }
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
 </config>
 -->
 ```vue
 <template>
-	<div class="color-demo">
-		<ColorPicker
-			v-model="color"
-			alpha
-			format="hsv"
-			@visible-change="isVisible => isVisible && handlePreview(true)"
-			@close="handlePreview(false)"
-		>
+	<div class="color-picker-demo">
+		<ColorPicker v-model="color" alpha format="hsv">
 			<template #default="{ value, color: css }">
 				<Button>
-					<span class="dot" :style="{ background: css || 'transparent' }" />
+					<span class="color-picker-demo__dot" :style="{ background: css || 'transparent' }" />
 					{{ value || '选择颜色' }}
 				</Button>
 			</template>
 		</ColorPicker>
+		<ColorPicker v-model="hoverColor" trigger="hover" placement="right" arrow />
 	</div>
 </template>
 
 <script setup>
-import { inject, ref } from 'vue';
+import { ref } from 'vue';
 import { Button, ColorPicker } from '@deot/vc';
 
-const playground = inject('docs:playground');
-const handlePreview = playground.run(420);
 const color = ref('hsva(210, 80%, 90%, 0.8)');
+const hoverColor = ref('#1DB88C');
 </script>
 
 <style scoped>
-.color-demo .dot {
+.color-picker-demo {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+.color-picker-demo__dot {
 	display: inline-block;
 	width: 12px;
 	height: 12px;
@@ -319,54 +327,44 @@ const color = ref('hsva(210, 80%, 90%, 0.8)');
 :::playground
 <!--
 <config lang="json5">
-{ previewInset: 20 }
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
 </config>
 -->
 ```vue
 <template>
-	<div class="color-demo">
-		<label><input v-model="isDisabled" type="checkbox">禁用</label>
-		<div class="controls">
-			<ColorPicker
-				v-for="size in sizes"
-				:key="size"
-				v-model="color"
-				:size="size"
-				:disabled="isDisabled"
-				@visible-change="isVisible => isVisible && handleVisibleChange(size, true)"
-				@close="handleVisibleChange(size, false)"
-			/>
+	<div class="color-picker-demo">
+		<Checkbox v-model="isDisabled">禁用</Checkbox>
+		<div class="color-picker-demo__row">
+			<ColorPicker v-for="size in sizes" :key="size" v-model="color" :size="size" :disabled="isDisabled" />
 		</div>
 	</div>
 </template>
 
 <script setup>
-import { inject, ref } from 'vue';
-import { ColorPicker } from '@deot/vc';
+import { ref } from 'vue';
+import { Checkbox, ColorPicker } from '@deot/vc';
 
-const playground = inject('docs:playground');
-const handlePreview = playground.run(420);
 const color = ref('#456CF6');
 const isDisabled = ref(false);
 const sizes = ['mini', 'small', 'medium', 'large'];
-const visibleStates = {};
-const handleVisibleChange = (key, isVisible) => {
-	visibleStates[key] = isVisible;
-	return handlePreview(Object.values(visibleStates).some(Boolean));
-};
 </script>
 
 <style scoped>
-.color-demo {
-	display: grid;
-	gap: 12px;
-	justify-items: start;
+.color-picker-demo {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 16px;
 }
-.color-demo .controls {
+
+.color-picker-demo__row {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 16px;
 	align-items: center;
+	gap: 8px;
 }
 </style>
 ```
@@ -381,14 +379,17 @@ const handleVisibleChange = (key, isVisible) => {
 :::playground
 <!--
 <config lang="json5">
-{ previewInset: 20 }
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
 </config>
 -->
 ```vue
 <template>
-	<div class="color-demo">
-		<p>颜色：<ColorPicker model-value="#5495F6" plaintext /></p>
-		<p>空值：<ColorPicker extra="-" plaintext /></p>
+	<div class="color-picker-demo">
+		<div>颜色：<ColorPicker model-value="#5495F6" plaintext /></div>
+		<div>空值：<ColorPicker extra="-" plaintext /></div>
 	</div>
 </template>
 
@@ -397,7 +398,11 @@ import { ColorPicker } from '@deot/vc';
 </script>
 
 <style scoped>
-.color-demo p { margin: 0 0 12px; }
+.color-picker-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
 </style>
 ```
 :::
@@ -409,17 +414,19 @@ import { ColorPicker } from '@deot/vc';
 :::playground
 <!--
 <config lang="json5">
-{ previewInset: 20 }
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
 </config>
 -->
 ```vue
 <template>
-	<div class="color-demo">
-		<div class="picker-view">
+	<div class="color-picker-demo">
+		<div class="color-picker-demo__view">
 			<ColorPicker.View v-model="color" alpha colors @change="handleChange" />
 		</div>
-		<p>当前：{{ color }}</p>
-		<p>RGB 通道：{{ channels }}</p>
+		<p class="color-picker-demo__result">当前：{{ color }}；RGB 通道：{{ channels }}</p>
 	</div>
 </template>
 
@@ -429,6 +436,7 @@ import { ColorPicker } from '@deot/vc';
 
 const color = ref('rgba(19, 206, 102, 0.8)');
 const channels = ref('操作面板后显示');
+
 const handleChange = (value, currentColor) => {
 	const { r, g, b } = currentColor.toRgb();
 	channels.value = `${r}, ${g}, ${b}`;
@@ -436,69 +444,95 @@ const handleChange = (value, currentColor) => {
 </script>
 
 <style scoped>
-.color-demo {
-	display: grid;
-	gap: 12px;
-	justify-items: start;
+.color-picker-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
 }
-.color-demo p {
-	margin: 0;
-	overflow-wrap: anywhere;
-}
-.picker-view {
+
+.color-picker-demo__view {
 	width: 240px;
 	max-width: 100%;
+}
+
+.color-picker-demo__result {
+	margin: 0;
+	overflow-wrap: anywhere;
 }
 </style>
 ```
 :::
 
-### 移动端选色
+### 色值工具
 
-`MColorPicker` 是独立的移动端组件：默认渲染 MListItem（色块 + 色值，未选择时为「请选择」），点击后从底部弹出选色视图。`v-model`、`format`、`alpha`、`hue`、`panel`、`colors`、`nullValue`、`clearable`、`editable` 与桌面端同名同义；`confirm` 含义相同，但默认为 `true`（拖动选色需要确认）。尺寸为 750 稿，随 `--vc-rem` 缩放。
-
-- 选色视图与桌面端浮层的区别：顶部是一行取值——色块、色值（`editable` 时可输入，失焦或回车时解析）、「清空」（`clearable` 且有值时）；色板、色相 / 透明度条与预设色加大，滑块为圆形，预设色一行 8 个铺满。
-- 默认由「确定」提交，取消或点蒙层关闭放弃修改。`true` 或 `'top'` 为顶部的「取消 / 确定」工具栏；`'bottom'` 为底部的大按钮，此时「清空」也移到底部，与「确定」平分宽度。没有选色就确定时提交默认色（同桌面端），清空过则提交 `nullValue`。
-- `confirm` 为 `false`：拖动色板、色条或输入色值即提交，弹层保持打开，标题栏右侧有关闭按钮；点预设色提交并关闭（点的就是当前颜色时直接关闭）；清空即提交 `nullValue`，弹层保持打开，可以接着选。
-- 未选择时色板停在默认红色（或清空前的颜色），预设色不标记选中；点选与色板相同的颜色也会提交。
-- `MColorPicker.View`（即 `MColorPickerView`）是内嵌的选色视图；`MColorPicker.open(options)` 直接打开弹层，通过 `onOk(value)` / `onChange(value)` 接收结果。
+`ColorPicker.Color` 解析和转换色值，方法见 [Color 工具](#color-工具)。下例输入任意写法，用 `Color.parse` 解析后 `setOptions` 切换输出格式，`get` / `set` 读写通道，`toCss` 得到可用于 CSS 的色值，`compare` 判断与 `setColor` 设置的基准色是否近似。
 
 :::playground
-<!-- <config lang="json5">{ viewport: 375, previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div style="display: grid; gap: 12px; max-width: 420px">
-		<MColorPicker v-model="basic" label="确定后提交" title="选择颜色" />
-		<MColorPicker v-model="instant" label="选色即提交" title="选择颜色" :confirm="false" colors />
-		<MColorPicker v-model="alpha" label="透明度" title="选择颜色" alpha />
-		<MColorPicker v-model="bottom" label="底部按钮" title="选择颜色" confirm="bottom" colors />
-		<MColorPicker.View v-model="view" colors />
-		<p style="padding: 0 16px; color: var(--vc-color-primary)" @click="handleOpen">MColorPicker.open 直接调用：{{ opened || '-' }}</p>
-		<p>basic：{{ basic }}；instant：{{ instant }}；alpha：{{ alpha }}；bottom：{{ bottom }}；view：{{ view }}</p>
+	<div class="color-picker-demo">
+		<Input v-model="text" placeholder="输入色值，如 hsv(120, 50%, 50%)" class="color-picker-demo__input" />
+		<div class="color-picker-demo__row">
+			<Button @click="handleLighten">明度 +10</Button>
+		</div>
+		<p class="color-picker-demo__result">{{ result }}</p>
 	</div>
 </template>
+
 <script setup>
-import { ref } from 'vue';
-import { MColorPicker } from '@deot/vc';
+import { computed, ref } from 'vue';
+import { Button, ColorPicker, Input } from '@deot/vc';
 
-const basic = ref('');
-const instant = ref('#456CF6');
-const alpha = ref('rgba(19, 206, 102, 0.8)');
-const bottom = ref('#456CF6');
-const view = ref('#1DB88C');
-const opened = ref('');
+const { Color } = ColorPicker;
+const text = ref('hsv(120, 50%, 50%)');
+const base = new Color({});
+base.setColor('#408040');
 
-const handleOpen = () => {
-	MColorPicker.open({
-		value: opened.value,
-		title: '直接调用',
-		colors: true,
-		onOk: (v) => {
-			opened.value = v;
-		}
-	});
+const result = computed(() => {
+	const color = Color.parse(text.value);
+	if (!color) return '无法解析';
+	color.setOptions({ alpha: true, format: 'rgb' });
+	return `输出：${color.states.output}；CSS：${color.toCss()}；色相：${Math.round(color.get('hue'))}；与 #408040 近似：${color.compare(base)}`;
+});
+
+const handleLighten = () => {
+	const color = Color.parse(text.value, { format: 'hsv' });
+	if (!color) return;
+	color.set('value', Math.min(100, color.get('value') + 10));
+	text.value = color.states.output;
 };
 </script>
+
+<style scoped>
+.color-picker-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.color-picker-demo__input {
+	width: min(100%, 320px);
+}
+
+.color-picker-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.color-picker-demo__result {
+	margin: 0;
+	overflow-wrap: anywhere;
+}
+</style>
 ```
 :::
 
@@ -508,6 +542,210 @@ const handleOpen = () => {
 - 色板 `role="slider"`，`aria-valuetext` 为当前色值：`←` `→` 调饱和度，`↑` `↓` 调明度，按住 `Shift` 一次 10。
 - 色相条、透明度条就是 [Slider](../slider/README.md)：方向键、`PageUp` / `PageDown`、`Home` / `End` 与 Slider 相同；鼠标按住轨道任意位置即可拖动。
 - 预设色是按钮（`aria-pressed` 标记选中），`Tab` 聚焦，`Enter` / 空格选中。
+
+## 移动端
+
+`MColorPicker` 是独立的移动端组件：默认渲染 MListItem（色块 + 色值，未选择时为「请选择」；`label`、`labelWidth`、`arrow` 传给它），点击后从底部弹出选色视图。`v-model`、`format`、`alpha`、`hue`、`panel`、`colors`、`nullValue`、`clearable`、`editable` 与桌面端同名同义；`confirm` 含义相同，但默认为 `true`（拖动选色需要确认）。尺寸按 750 稿设计，写为 `calc(var(--vc-rem) * n)`，随 `--vc-rem` 缩放，底栏切换 `rem` 可查看不同屏宽下的效果。
+
+### 移动端选色
+
+- 选色视图与桌面端浮层的区别：顶部是一行取值——色块、色值（`editable` 时可输入，失焦或回车时解析）、「清空」（`clearable` 且有值时）；色板、色相 / 透明度条与预设色加大，滑块为圆形，预设色一行 8 个铺满。
+- 默认由「确定」提交（触发 `ok`），取消或点蒙层关闭放弃修改（触发 `cancel`）。`true` 或 `'top'` 为顶部的「取消 / 确定」工具栏，文字由 `cancelText`、`okText` 设置；`'bottom'` 为底部的大按钮，此时「清空」也移到底部，与「确定」平分宽度。没有选色就确定时提交默认色（同桌面端），清空过则提交 `nullValue`。
+- `confirm` 为 `false`：拖动色板、色条或输入色值即提交，弹层保持打开，标题栏右侧有关闭按钮；点预设色提交并关闭（点的就是当前颜色时直接关闭）；清空即提交 `nullValue`，弹层保持打开，可以接着选。
+- 未选择时色板停在默认红色（或清空前的颜色），预设色不标记选中；点选与色板相同的颜色也会提交。
+- `formatter` 生成色块旁的文字；默认插槽替换整个触发区，参数同桌面端。
+- `MColorPicker.open(options)` 直接打开弹层，通过 `onOk(value)` / `onChange(value)` 接收结果。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	mobile: true,
+	local: false,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
+</config>
+-->
+```vue
+<template>
+	<div class="m-color-picker-demo">
+		<MColorPicker
+			v-model="basic"
+			label="确定后提交"
+			label-width="200"
+			title="选择颜色"
+			cancel-text="返回"
+			ok-text="完成"
+			@ok="handleOk"
+			@cancel="handleCancel"
+		/>
+		<MColorPicker
+			v-model="instant"
+			:confirm="false"
+			:formatter="value => (value ? value.toLowerCase() : '')"
+			label="选色即提交"
+			label-width="200"
+			title="选择颜色"
+			colors
+		/>
+		<MColorPicker v-model="alpha" label="透明度" label-width="200" title="选择颜色" alpha />
+		<MColorPicker v-model="bottom" :arrow="false" label="底部按钮" label-width="200" title="选择颜色" confirm="bottom" colors />
+		<MColorPicker v-model="custom" title="选择颜色">
+			<template #default="{ value, color }">
+				<div class="m-color-picker-demo__trigger">
+					<span class="m-color-picker-demo__dot" :style="{ background: color || 'transparent' }" />
+					{{ value || '自定义触发区' }}
+				</div>
+			</template>
+		</MColorPicker>
+		<div class="m-color-picker-demo__actions">
+			<MButton type="primary" @click="handleOpen">MColorPicker.open 直接调用</MButton>
+		</div>
+		<p class="m-color-picker-demo__result">basic：{{ basic }}；instant：{{ instant }}；alpha：{{ alpha }}</p>
+		<p class="m-color-picker-demo__result">bottom：{{ bottom }}；open：{{ opened || '-' }}</p>
+		<p class="m-color-picker-demo__result">{{ status }}</p>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { MButton, MColorPicker } from '@deot/vc';
+
+const basic = ref('');
+const instant = ref('#456CF6');
+const alpha = ref('rgba(19, 206, 102, 0.8)');
+const bottom = ref('#456CF6');
+const custom = ref('#FF4500');
+const opened = ref('');
+const status = ref('等待操作');
+
+const handleOk = (value) => {
+	status.value = `ok：${value}`;
+};
+
+const handleCancel = () => {
+	status.value = '触发 cancel';
+};
+
+const handleOpen = async () => {
+	try {
+		const result = await MColorPicker.open({ value: opened.value, title: '直接调用', colors: true });
+		opened.value = result.value;
+	} catch {
+		status.value = '已取消';
+	}
+};
+</script>
+
+<style scoped>
+.m-color-picker-demo {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--vc-rem) * 16);
+}
+
+.m-color-picker-demo__trigger {
+	display: flex;
+	align-items: center;
+	gap: calc(var(--vc-rem) * 16);
+	padding: calc(var(--vc-rem) * 24) calc(var(--vc-rem) * 32);
+}
+
+.m-color-picker-demo__dot {
+	width: calc(var(--vc-rem) * 32);
+	height: calc(var(--vc-rem) * 32);
+	border-radius: 50%;
+}
+
+.m-color-picker-demo__actions {
+	display: flex;
+	padding-inline: calc(var(--vc-rem) * 32);
+}
+
+.m-color-picker-demo__result {
+	margin: 0;
+	padding-inline: calc(var(--vc-rem) * 32);
+	overflow-wrap: anywhere;
+}
+</style>
+```
+:::
+
+### 移动端内嵌视图
+
+`MColorPicker.View`（即 `MColorPickerView`）是内嵌的选色视图：每次操作都更新 `v-model` 并触发 `change`，点「清空」触发 `clear`；通过 ref 调用 `clear()` 与点击「清空」相同。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	mobile: true,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
+</config>
+-->
+```vue
+<template>
+	<div class="m-color-picker-demo">
+		<MColorPicker.View ref="viewRef" v-model="value" colors clearable @change="handleChange" @clear="handleClear" />
+		<div class="m-color-picker-demo__actions">
+			<MButton @click="handleReset">调用 clear()</MButton>
+		</div>
+		<p class="m-color-picker-demo__result">{{ value || '未选择' }}；{{ status }}</p>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { MButton, MColorPicker } from '@deot/vc';
+
+const viewRef = ref();
+const value = ref('#1DB88C');
+const status = ref('等待操作');
+
+const handleChange = (nextValue) => {
+	status.value = `change：${nextValue || '空'}`;
+};
+
+const handleClear = () => {
+	status.value = '触发 clear';
+};
+
+const handleReset = () => {
+	viewRef.value.clear();
+};
+</script>
+
+<style scoped>
+.m-color-picker-demo {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--vc-rem) * 32);
+}
+
+.m-color-picker-demo__actions {
+	display: flex;
+	padding-inline: calc(var(--vc-rem) * 32);
+}
+
+.m-color-picker-demo__result {
+	margin: 0;
+	padding-inline: calc(var(--vc-rem) * 32);
+	overflow-wrap: anywhere;
+}
+</style>
+```
+:::
 
 ## 主题与局部覆盖
 
@@ -670,7 +908,7 @@ Color.parse('not a color'); // null
 | extra | 未选择时显示的文字 | `string` | - | 当前语言的 `vc.ColorPicker.placeholder`；`plaintext` 时为 `''` |
 | formatter | 生成色块旁的文字 | `(value: string) => any` | - | 原样显示 |
 | disabled | 禁用，不打开弹层 | `boolean` | - | `false` |
-| title | 弹层标题 | `string \| Function` | - | `''` |
+| title | 弹层标题。字符串按文本渲染，也可传渲染函数或 `{ type, value }`（需要 HTML 时传 `{ type: 'html', value }`），见 [Customer](../customer/README.md) | `string \| number \| Function \| { type: string; value: any }` | - | `''` |
 | confirm | 由「确定」提交；`false` 时拖动或输入即提交、弹层保持打开，点预设色提交并关闭 | `boolean \| 'top' \| 'bottom'` | - | `true` |
 | cancelText / okText | 「取消」「确定」文字 | `string` | - | 当前语言的 `vc.Picker.*` |
 

@@ -8,19 +8,32 @@
 
 ### 基础用法
 
-通过 `v-model` 控制显示。默认从底部弹出，点击遮罩可关闭；关闭事件在离场动画结束后触发。
+通过 `v-model` 控制显示。默认从底部弹出，点击遮罩可关闭；`visible-change` 在打开时传 `true`，`close` 与 `visible-change(false)` 在离场动画结束后触发。
 
 :::playground
-<!-- <config lang="json5">{ viewport: 375, previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	mobile: true,
+	local: false,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
+</config>
+-->
 ```vue
 <template>
-	<div>
-		<MButton @click="handleOpen">打开操作面板</MButton>
-		<p>{{ message }}</p>
-		<MPopup v-model="isVisible" @close="handleClosed">
-			<div class="panel">
-				<h3>操作面板</h3>
-				<p>点击遮罩或下方按钮关闭。</p>
+	<div class="m-popup-demo">
+		<MButton type="primary" @click="handleOpen">打开操作面板</MButton>
+		<p class="m-popup-demo__result">{{ result }}</p>
+		<MPopup v-model="isVisible" @close="handleClosed" @visible-change="handleVisibleChange">
+			<div class="m-popup-demo__panel">
+				<strong>操作面板</strong>
+				<p class="m-popup-demo__line">点击遮罩或下方按钮关闭。</p>
 				<MButton @click="handleClose">完成</MButton>
 			</div>
 		</MPopup>
@@ -28,28 +41,68 @@
 </template>
 
 <script setup>
-import { ref, inject } from 'vue';
-import { MPopup, MButton } from '@deot/vc';
+import { inject, ref } from 'vue';
+import { MButton, MPopup } from '@deot/vc';
 
 const playground = inject('docs:playground');
 
 const isVisible = ref(false);
 const isPreviewVisible = ref(false);
-const message = ref('等待打开');
+const result = ref('等待打开');
+
 const handleOpen = playground.run(500, { visible: isPreviewVisible }, () => {
 	isPreviewVisible.value = true;
 	isVisible.value = true;
-	message.value = '面板已打开';
 });
-const handleClose = () => { isVisible.value = false; };
+
+const handleClose = () => {
+	isVisible.value = false;
+};
+
+const handleVisibleChange = (visible) => {
+	result.value = `visible-change：${visible}`;
+};
+
 const handleClosed = () => {
 	isPreviewVisible.value = false;
-	message.value = '离场动画已结束';
+	result.value += '，close：离场动画已结束';
 };
 </script>
 
 <style scoped>
-.panel { padding: 24px; }
+.m-popup-demo {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: calc(var(--vc-rem) * 32);
+	padding-inline: calc(var(--vc-rem) * 32);
+}
+
+.m-popup-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: calc(var(--vc-rem) * 16);
+}
+
+.m-popup-demo__result {
+	margin: 0;
+	font-size: calc(var(--vc-rem) * 28);
+	color: var(--vc-color-dark-extralight);
+}
+
+.m-popup-demo__panel {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: calc(var(--vc-rem) * 16);
+	padding: calc(var(--vc-rem) * 48) calc(var(--vc-rem) * 32);
+}
+
+.m-popup-demo__line {
+	margin: 0;
+	line-height: 2;
+}
 </style>
 ```
 :::
@@ -60,21 +113,38 @@ const handleClosed = () => {
 
 面板靠屏幕内侧的两个角为 24（375 宽下 12px）的圆角，`center` 四角都圆；底部弹出时让出 `safe-area-inset-bottom`，顶部弹出时让出 `safe-area-inset-top`。
 
-`theme="light"` 使用随全局亮暗主题变化的默认面板；`dark` 保留白字半透明深色外观；`none` 不设置面板前景和背景。`wrapperClass`、`wrapperStyle` 作用于内容容器。
+`theme="light"` 使用随全局亮暗主题变化的默认面板；`dark` 保留白字半透明深色外观；`none` 不设置面板前景和背景。`wrapperClass`、`wrapperStyle` 作用于内容容器。下方按钮切换 `theme`。
 
 :::playground
-<!-- <config lang="json5">{ viewport: 375, previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	mobile: true,
+	local: false,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
+</config>
+-->
 ```vue
 <template>
-	<div>
-		<label>面板外观：
-			<select v-model="theme">
-				<option value="light">light</option>
-				<option value="dark">dark</option>
-				<option value="none">none</option>
-			</select>
-		</label>
-		<div class="actions">
+	<div class="m-popup-demo">
+		<div class="m-popup-demo__row">
+			<MButton
+				v-for="item in themes"
+				:key="item"
+				size="small"
+				:type="theme === item ? 'primary' : 'default'"
+				@click="theme = item"
+			>
+				{{ item }}
+			</MButton>
+		</div>
+		<div class="m-popup-demo__row">
 			<MButton v-for="item in panels" :key="item.placement" @click="handleOpen(item)">
 				{{ item.label }}
 			</MButton>
@@ -84,13 +154,13 @@ const handleClosed = () => {
 			:key="item.placement"
 			v-model="item.isVisible"
 			:placement="item.placement"
-			@close="handleClosed"
 			:theme="theme"
-			wrapper-class="demo-panel"
+			wrapper-class="m-popup-demo__wrapper"
+			@close="handleClosed"
 		>
-			<div class="content">
-				<h3>{{ item.label }}面板</h3>
-				<p>当前外观：{{ theme }}</p>
+			<div class="m-popup-demo__panel">
+				<strong>{{ item.label }}面板</strong>
+				<p class="m-popup-demo__line">当前外观：{{ theme }}</p>
 				<MButton @click="handleClose(item)">关闭</MButton>
 			</div>
 		</MPopup>
@@ -98,13 +168,14 @@ const handleClosed = () => {
 </template>
 
 <script setup>
-import { ref, inject } from 'vue';
-import { MPopup, MButton } from '@deot/vc';
+import { inject, ref } from 'vue';
+import { MButton, MPopup } from '@deot/vc';
 
 const playground = inject('docs:playground');
 
-const isPreviewVisible = ref(false);
+const themes = ['light', 'dark', 'none'];
 const theme = ref('light');
+const isPreviewVisible = ref(false);
 const panels = ref([
 	{ placement: 'bottom', label: '底部', isVisible: false },
 	{ placement: 'top', label: '顶部', isVisible: false },
@@ -112,19 +183,59 @@ const panels = ref([
 	{ placement: 'right', label: '右侧', isVisible: false },
 	{ placement: 'center', label: '居中', isVisible: false }
 ]);
+
 const handleOpen = playground.run(500, { visible: isPreviewVisible }, (item) => {
 	isPreviewVisible.value = true;
 	item.isVisible = true;
 });
-const handleClose = (item) => { item.isVisible = false; };
+
+const handleClose = (item) => {
+	item.isVisible = false;
+};
+
 const handleClosed = () => {
 	isPreviewVisible.value = panels.value.some(item => item.isVisible);
 };
 </script>
 
 <style scoped>
-.actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
-.content { box-sizing: border-box; min-width: 240px; padding: 24px; }
+.m-popup-demo {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: calc(var(--vc-rem) * 32);
+	padding-inline: calc(var(--vc-rem) * 32);
+}
+
+.m-popup-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: calc(var(--vc-rem) * 16);
+}
+
+.m-popup-demo__result {
+	margin: 0;
+	font-size: calc(var(--vc-rem) * 28);
+	color: var(--vc-color-dark-extralight);
+}
+
+.m-popup-demo__panel {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: calc(var(--vc-rem) * 16);
+	padding: calc(var(--vc-rem) * 48) calc(var(--vc-rem) * 32);
+}
+
+.m-popup-demo__line {
+	margin: 0;
+	line-height: 2;
+}
+
+.m-popup-demo__wrapper .m-popup-demo__panel {
+	min-width: calc(var(--vc-rem) * 480);
+}
 </style>
 ```
 :::
@@ -133,40 +244,110 @@ const handleClosed = () => {
 
 有 `title`、`#header` 插槽或 `closable` 时显示标题栏（标题 34、字重 600、行高 88，即 375 宽下 17 / 44px），关闭按钮在右侧；`content` 与默认插槽依次放在内容区（字号 32、内边距 40 32），`#footer` 在内容区之后。三者都没有时，默认插槽直接放在面板内，不加任何结构。
 
-`scrollable` 默认为 `true`：内容区由 `MScroller`（原生滚动）承载，面板与对边至少留出 80（40px），内容过长时只有内容区滚动，标题栏与底部固定。
+`scrollable` 默认为 `true`：内容区由 `MScroller`（原生滚动）承载，面板与对边至少留出 80（40px），内容过长时只有内容区滚动，标题栏与底部固定；设为 `false` 时内容区不滚动。`contentClass`、`contentStyle` 作用于内容区。`MPopup.open` 以 Portal 打开，`MPopup.destroy` 销毁所有以 `open` 打开的弹出层。
 
 :::playground
-<!-- <config lang="json5">{ viewport: 375, previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	mobile: true,
+	local: false,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
+</config>
+-->
 ```vue
 <template>
-	<div>
-		<MButton @click="isVisible = true">标题与内容</MButton>
-		<MButton @click="handleOpen">MPopup.open</MButton>
-		<p>{{ message }}</p>
-		<MPopup v-model="isVisible" title="标题" closable>
-			<div v-for="item in 30" :key="item" style="line-height: 2;">第 {{ item }} 行</div>
+	<div class="m-popup-demo">
+		<div class="m-popup-demo__row">
+			<MButton @click="isVisible = true">标题与内容</MButton>
+			<MButton @click="isFixedVisible = true">内容区不滚动</MButton>
+			<MButton @click="handleOpen">MPopup.open</MButton>
+		</div>
+		<p class="m-popup-demo__result">{{ result }}</p>
+		<MPopup
+			v-model="isVisible"
+			title="标题"
+			content="content 在默认插槽之前"
+			content-class="m-popup-demo__content"
+			:content-style="{ color: 'var(--vc-color-dark-light)' }"
+			closable
+		>
+			<p v-for="item in 30" :key="item" class="m-popup-demo__line">第 {{ item }} 行</p>
 			<template #footer>
 				<MButton type="primary" long @click="isVisible = false">完成</MButton>
 			</template>
+		</MPopup>
+		<MPopup v-model="isFixedVisible" title="scrollable 为 false" :scrollable="false" closable>
+			<p v-for="item in 4" :key="item" class="m-popup-demo__line">第 {{ item }} 行</p>
 		</MPopup>
 	</div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
-import { MPopup, MButton } from '@deot/vc';
+import { onUnmounted, ref } from 'vue';
+import { MButton, MPopup } from '@deot/vc';
 
 const isVisible = ref(false);
-const message = ref('');
+const isFixedVisible = ref(false);
+const result = ref('等待打开');
+
 const handleOpen = () => {
 	MPopup.open({
 		title: 'MPopup.open',
 		content: '以 Portal 打开，onClose 在离场动画结束后触发。',
 		closable: true,
-		onClose: () => { message.value = 'MPopup.open 已关闭'; }
+		onClose: () => {
+			result.value = 'MPopup.open 已关闭';
+		}
 	});
 };
+
+onUnmounted(() => {
+	MPopup.destroy();
+});
 </script>
+
+<style scoped>
+.m-popup-demo {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: calc(var(--vc-rem) * 32);
+	padding-inline: calc(var(--vc-rem) * 32);
+}
+
+.m-popup-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: calc(var(--vc-rem) * 16);
+}
+
+.m-popup-demo__result {
+	margin: 0;
+	font-size: calc(var(--vc-rem) * 28);
+	color: var(--vc-color-dark-extralight);
+}
+
+.m-popup-demo__panel {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: calc(var(--vc-rem) * 16);
+	padding: calc(var(--vc-rem) * 48) calc(var(--vc-rem) * 32);
+}
+
+.m-popup-demo__line {
+	margin: 0;
+	line-height: 2;
+}
+</style>
 ```
 :::
 
@@ -185,31 +366,92 @@ const handleOpen = () => {
 - 桌面端也可以用鼠标拖动关闭（多档高度同样可以拖动档位）：移动超过 4px 才算拖动，拖动期间不选中文本，松开后不触发点击；从输入框或带 class `vc-drag-ignore` 的元素上按下不会拖动。
 
 :::playground
-<!-- <config lang="json5">{ viewport: 375, previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	mobile: true,
+	local: false,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
+</config>
+-->
 ```vue
 <template>
-	<div>
-		<MButton @click="isVisible = true">下滑关闭</MButton>
-		<MButton @click="isMulti = true">下滑或右滑关闭</MButton>
+	<div class="m-popup-demo">
+		<div class="m-popup-demo__row">
+			<MButton @click="isVisible = true">下滑关闭</MButton>
+			<MButton @click="isMulti = true">下滑或右滑关闭</MButton>
+			<MButton @click="isStrict = true">遮罩不可关闭</MButton>
+		</div>
 		<MPopup v-model="isVisible" title="下滑关闭">
-			<div v-for="item in 40" :key="item" style="line-height: 2;">第 {{ item }} 行</div>
+			<p v-for="item in 40" :key="item" class="m-popup-demo__line">第 {{ item }} 行</p>
 		</MPopup>
 		<MPopup
 			v-model="isMulti"
-			:swipe-closable="{ directions: ['bottom', 'right'] }"
+			:swipe-closable="{ directions: ['bottom', 'right'], threshold: 0.5, speed: 400 }"
 			title="多个方向"
-			content="向下或向右滑动关闭；拖动不到 30% 时回弹。"
+			content="向下或向右滑动关闭；拖动不到 50% 且速度低于 400px/s 时回弹。"
+		/>
+		<MPopup
+			v-model="isStrict"
+			:mask-closable="false"
+			:swipe-closable="true"
+			title="单独开启滑动关闭"
+			content="点击遮罩不会关闭，下滑仍可关闭。"
+			closable
 		/>
 	</div>
 </template>
 
 <script setup>
 import { ref } from 'vue';
-import { MPopup, MButton } from '@deot/vc';
+import { MButton, MPopup } from '@deot/vc';
 
 const isVisible = ref(false);
 const isMulti = ref(false);
+const isStrict = ref(false);
 </script>
+
+<style scoped>
+.m-popup-demo {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: calc(var(--vc-rem) * 32);
+	padding-inline: calc(var(--vc-rem) * 32);
+}
+
+.m-popup-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: calc(var(--vc-rem) * 16);
+}
+
+.m-popup-demo__result {
+	margin: 0;
+	font-size: calc(var(--vc-rem) * 28);
+	color: var(--vc-color-dark-extralight);
+}
+
+.m-popup-demo__panel {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: calc(var(--vc-rem) * 16);
+	padding: calc(var(--vc-rem) * 48) calc(var(--vc-rem) * 32);
+}
+
+.m-popup-demo__line {
+	margin: 0;
+	line-height: 2;
+}
+</style>
 ```
 :::
 
@@ -224,30 +466,86 @@ const isMulti = ref(false);
 - `#footer` 在任何一档都贴住屏幕底边。
 - 面板铺满视口时（如 `'100%'` 的一档）圆角打平，内侧让出安全区（`env(safe-area-inset-*)`），并带 `is-full`；拖离边缘即恢复圆角。
 - 面板固定为最高档的高度，其余部分在屏幕外，拖动与切换只改 `transform`。
+- 没有 `snaps` 时也可用 `handle` 单独显示指示器。
 
 :::playground
-<!-- <config lang="json5">{ viewport: 375, previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	mobile: true,
+	local: false,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
+</config>
+-->
 ```vue
 <template>
-	<div>
-		<MButton @click="isVisible = true">50% → 顶部留白 40px</MButton>
-		<p>当前档：{{ snap }}</p>
-		<MPopup v-model="isVisible" v-model:snap="snap" :snaps="['50%', 'calc(100% - 40px)']" title="长列表">
-			<div v-for="item in 60" :key="item" style="line-height: 2;">第 {{ item }} 行</div>
+	<div class="m-popup-demo">
+		<div class="m-popup-demo__row">
+			<MButton @click="isVisible = true">50% → 顶部留白 40px</MButton>
+			<MButton @click="isHandleVisible = true">无档位显示指示器</MButton>
+		</div>
+		<p class="m-popup-demo__result">当前档：{{ snap }}</p>
+		<MPopup v-model="isVisible" v-model:snap="snap" :snaps="snaps" title="长列表">
+			<p v-for="item in 60" :key="item" class="m-popup-demo__line">第 {{ item }} 行</p>
 			<template #footer>
 				<MButton type="primary" long @click="isVisible = false">完成</MButton>
 			</template>
 		</MPopup>
+		<MPopup v-model="isHandleVisible" handle title="handle" content="未设置 snaps 时用 handle 显示指示器。" />
 	</div>
 </template>
 
 <script setup>
 import { ref } from 'vue';
-import { MPopup, MButton } from '@deot/vc';
+import { MButton, MPopup } from '@deot/vc';
 
+const snaps = ['50%', 'calc(100% - 40px)'];
 const isVisible = ref(false);
+const isHandleVisible = ref(false);
 const snap = ref(0);
 </script>
+
+<style scoped>
+.m-popup-demo {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: calc(var(--vc-rem) * 32);
+	padding-inline: calc(var(--vc-rem) * 32);
+}
+
+.m-popup-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: calc(var(--vc-rem) * 16);
+}
+
+.m-popup-demo__result {
+	margin: 0;
+	font-size: calc(var(--vc-rem) * 28);
+	color: var(--vc-color-dark-extralight);
+}
+
+.m-popup-demo__panel {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: calc(var(--vc-rem) * 16);
+	padding: calc(var(--vc-rem) * 48) calc(var(--vc-rem) * 32);
+}
+
+.m-popup-demo__line {
+	margin: 0;
+	line-height: 2;
+}
+</style>
 ```
 :::
 
@@ -265,17 +563,32 @@ const snap = ref(0);
 - `dragend`：`{ snap, close, progress, velocity }`，`snap` 为松手后吸附到的档，`progress` 为目标位置的进度（关闭为 `-1`）。松手后面板以 300ms、`cubic-bezier(0.34, 0.69, 0.1, 1)` 过渡到目标位置，外部样式用同样的过渡即可同步。
 - 内容区滚动、点击指示器或修改 `v-model:snap` 不触发拖动事件，档位变化见 `update:snap`。
 
-`drag` 每帧触发：在回调里直接修改元素的样式（或 CSS 变量），不要写入模板绑定的响应式数据，否则所在组件每帧重新渲染；此时模板里内联的 `:snaps="[...]"` 每次都是新数组，Popup 连同默认插槽的内容也会随之重新渲染（可把 `snaps` 放到常量里）。只需在拖动时切换样式的，用 `dragstart` / `dragend` 或插槽的 `dragging`。
+`drag` 每帧触发：在回调里直接修改元素的样式（或 CSS 变量），不要写入模板绑定的响应式数据，否则所在组件每帧重新渲染；此时模板里内联的 `:snaps="[...]"` 每次都是新数组，Popup 连同默认插槽的内容也会随之重新渲染（可把 `snaps` 放到常量里）。只需在拖动时切换样式的，用 `dragstart` / `dragend` 或插槽的 `dragging`。下例的 `#handle` 插槽在拖动时变色。
 
 :::playground
-<!-- <config lang="json5">{ viewport: 375, previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	mobile: true,
+	local: false,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
+</config>
+-->
 ```vue
 <template>
-	<div>
+	<div class="m-popup-demo">
 		<MButton @click="isVisible = true">上拉时收起横幅</MButton>
+		<p class="m-popup-demo__result">{{ result }}</p>
 		<MPopup
 			v-model="isVisible"
-			:snaps="['50%', '100%']"
+			:snaps="snaps"
+			@dragstart="handleDragStart"
 			@drag="handleDrag"
 			@dragend="handleDragEnd"
 			@update:snap="handleSnap"
@@ -284,10 +597,16 @@ const snap = ref(0);
 				<template v-if="full">已全屏</template>
 				<template v-else>第 {{ snap + 1 }} 档，上拉查看全部</template>
 			</template>
-			<div ref="banner" class="banner">横幅随上拉渐隐</div>
-			<div v-for="item in 60" :key="item" style="line-height: 2;">第 {{ item }} 行</div>
-			<template #footer="{ dragging, next }">
-				<MButton long :disabled="dragging" @click="next">切换档位</MButton>
+			<template #handle="{ dragging }">
+				<span class="m-popup-demo__handle" :class="{ 'is-dragging': dragging }" />
+			</template>
+			<div ref="banner" class="m-popup-demo__banner">横幅随上拉渐隐</div>
+			<p v-for="item in 60" :key="item" class="m-popup-demo__line">第 {{ item }} 行</p>
+			<template #footer="{ dragging, next, close }">
+				<div class="m-popup-demo__row">
+					<MButton :disabled="dragging" @click="next">切换档位</MButton>
+					<MButton @click="close">关闭</MButton>
+				</div>
 			</template>
 		</MPopup>
 	</div>
@@ -295,32 +614,88 @@ const snap = ref(0);
 
 <script setup>
 import { ref } from 'vue';
-import { MPopup, MButton } from '@deot/vc';
+import { MButton, MPopup } from '@deot/vc';
 
+const snaps = ['50%', '100%'];
 const isVisible = ref(false);
 const banner = ref();
+const result = ref('拖动面板查看事件');
 
 // 进度 0 → 1（最低档 → 最高档）时横幅从不透明到透明
-const setBanner = (progress, animated) => {
+const setBanner = (progress, isAnimated) => {
 	const el = banner.value;
 	if (!el) return;
-	el.style.transition = animated ? 'opacity 300ms cubic-bezier(0.34, 0.69, 0.1, 1)' : 'none';
+	el.style.transition = isAnimated ? 'opacity 300ms cubic-bezier(0.34, 0.69, 0.1, 1)' : 'none';
 	el.style.opacity = `${1 - Math.min(1, Math.max(0, progress))}`;
 };
 
+const handleDragStart = ({ snap, height }) => {
+	result.value = `dragstart：第 ${snap + 1} 档，高 ${Math.round(height)}px`;
+};
+
 const handleDrag = e => setBanner(e.progress, false);
-const handleDragEnd = e => setBanner(e.progress, true);
+
+const handleDragEnd = ({ snap, close }) => {
+	result.value = close ? 'dragend：关闭' : `dragend：吸附到第 ${snap + 1} 档`;
+	setBanner(close ? 0 : snap, true);
+};
+
 // 点击指示器、切换档位按钮不触发拖动事件：档位变化后再同步
 const handleSnap = v => setBanner(v, true);
 </script>
 
-<style>
-.banner {
-	padding: 24px 0;
-	margin-bottom: 12px;
+<style scoped>
+.m-popup-demo {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: calc(var(--vc-rem) * 32);
+	padding-inline: calc(var(--vc-rem) * 32);
+}
+
+.m-popup-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: calc(var(--vc-rem) * 16);
+}
+
+.m-popup-demo__result {
+	margin: 0;
+	font-size: calc(var(--vc-rem) * 28);
+	color: var(--vc-color-dark-extralight);
+}
+
+.m-popup-demo__panel {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: calc(var(--vc-rem) * 16);
+	padding: calc(var(--vc-rem) * 48) calc(var(--vc-rem) * 32);
+}
+
+.m-popup-demo__line {
+	margin: 0;
+	line-height: 2;
+}
+
+.m-popup-demo__banner {
+	padding: calc(var(--vc-rem) * 48) 0;
 	text-align: center;
 	background: var(--vc-background-color-light);
-	border-radius: 8px;
+	border-radius: calc(var(--vc-rem) * 16);
+}
+
+.m-popup-demo__handle {
+	display: block;
+	width: calc(var(--vc-rem) * 96);
+	height: calc(var(--vc-rem) * 8);
+	background: var(--vc-color-neutral);
+	border-radius: calc(var(--vc-rem) * 4);
+}
+
+.m-popup-demo__handle.is-dragging {
+	background: var(--vc-color-primary);
 }
 </style>
 ```
@@ -332,62 +707,125 @@ const handleSnap = v => setBanner(v, true);
 
 遮罩在所有位置均有效；设置 `:mask-closable="false"` 可禁止点击遮罩关闭，此时需提供其他关闭入口（如 `closable`）。
 
-打开期间锁定页面滚动（`body` 的 `overflow`），并阻止触摸滚动穿透到页面：面板内计算样式 `overflow` 为 `auto` / `scroll` 的区域自动识别为滚动区域，滚到边界后不再带动页面。`scrollRegExp` 可额外指定滚动区域，一般不需要。
+打开期间锁定页面滚动（`body` 的 `overflow`），并阻止触摸滚动穿透到页面：面板内计算样式 `overflow` 为 `auto` / `scroll` 的区域自动识别为滚动区域，滚到边界后不再带动页面。`scrollRegExp` 可额外指定滚动区域，一般不需要；`maskStyle` 设置遮罩样式。局部面板没有绑定 `v-model`，通过组件 ref 的 `toggle()` 切换。
 
 :::playground
-<!-- <config lang="json5">{ viewport: 375, previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	mobile: true,
+	local: false,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
+</config>
+-->
 ```vue
 <template>
-	<div>
-		<div class="actions">
-			<MButton @click="handleLocalOpen">局部无遮罩</MButton>
+	<div class="m-popup-demo">
+		<div class="m-popup-demo__row">
+			<MButton @click="handleLocalToggle">切换局部面板</MButton>
 			<MButton @click="handleModalOpen">滚动面板</MButton>
 		</div>
-		<div class="stage">
-			<p>局部定位容器</p>
-			<MPopup v-model="isLocalVisible" :fixed="false" :mask="false">
-				<div class="panel">
-					<p>此面板定位在父容器底部。</p>
-					<MButton @click="handleLocalClose">关闭局部面板</MButton>
+		<div class="m-popup-demo__stage">
+			<p class="m-popup-demo__line">局部定位容器</p>
+			<MPopup ref="localPopup" :fixed="false" :mask="false">
+				<div class="m-popup-demo__panel">
+					<p class="m-popup-demo__line">此面板定位在父容器底部，由 ref 的 toggle() 切换。</p>
 				</div>
 			</MPopup>
 		</div>
-		<MPopup v-model="isModalVisible" :mask-closable="false" @close="isPreviewVisible = false">
-			<div class="panel">
-				<h3>滚动列表</h3>
-				<div class="vcm-popup-scrollable list">
-					<p v-for="item in 20" :key="item">选项 {{ item }}</p>
+		<MPopup
+			v-model="isModalVisible"
+			:mask-closable="false"
+			:mask-style="{ background: 'rgba(0, 0, 0, 0.7)' }"
+			:scroll-reg-exp="{ className: /m-popup-demo__list/ }"
+			@close="isPreviewVisible = false"
+		>
+			<div class="m-popup-demo__panel">
+				<strong>滚动列表</strong>
+				<div class="m-popup-demo__list">
+					<p v-for="item in 20" :key="item" class="m-popup-demo__line">选项 {{ item }}</p>
 				</div>
-				<MButton @click="handleModalClose">关闭滚动面板</MButton>
+				<MButton @click="isModalVisible = false">关闭滚动面板</MButton>
 			</div>
 		</MPopup>
 	</div>
 </template>
 
 <script setup>
-import { ref, inject } from 'vue';
-import { MPopup, MButton } from '@deot/vc';
+import { inject, ref } from 'vue';
+import { MButton, MPopup } from '@deot/vc';
 
 const playground = inject('docs:playground');
 
-const isLocalVisible = ref(false);
+const localPopup = ref();
 const isModalVisible = ref(false);
 const isPreviewVisible = ref(false);
-const handleLocalOpen = () => { isLocalVisible.value = true; };
-const handleLocalClose = () => { isLocalVisible.value = false; };
+
+const handleLocalToggle = () => {
+	localPopup.value.toggle();
+};
+
 const handleModalOpen = playground.run(560, { visible: isPreviewVisible }, () => {
 	isPreviewVisible.value = true;
 	isModalVisible.value = true;
 });
-const handleModalClose = () => { isModalVisible.value = false; };
 </script>
 
 <style scoped>
-.actions { display: flex; flex-wrap: wrap; gap: 12px; }
-.stage { position: relative; height: 280px; margin-top: 20px; border: 1px dashed currentColor; }
-.stage > p { padding: 16px; }
-.panel { padding: 20px; }
-.list { height: 180px; overflow-y: auto; margin-bottom: 16px; }
+.m-popup-demo {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: calc(var(--vc-rem) * 32);
+	padding-inline: calc(var(--vc-rem) * 32);
+}
+
+.m-popup-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: calc(var(--vc-rem) * 16);
+}
+
+.m-popup-demo__result {
+	margin: 0;
+	font-size: calc(var(--vc-rem) * 28);
+	color: var(--vc-color-dark-extralight);
+}
+
+.m-popup-demo__panel {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: calc(var(--vc-rem) * 16);
+	padding: calc(var(--vc-rem) * 48) calc(var(--vc-rem) * 32);
+}
+
+.m-popup-demo__line {
+	margin: 0;
+	line-height: 2;
+}
+
+.m-popup-demo__stage {
+	position: relative;
+	align-self: stretch;
+	height: calc(var(--vc-rem) * 480);
+	padding: calc(var(--vc-rem) * 32);
+	overflow: hidden;
+	border: 1px dashed currentColor;
+}
+
+.m-popup-demo__list {
+	align-self: stretch;
+	height: calc(var(--vc-rem) * 360);
+	overflow-y: auto;
+}
 </style>
 ```
 :::
@@ -451,7 +889,7 @@ const handleModalClose = () => { isModalVisible.value = false; };
 | content | 内容，在默认插槽之前，使用 Customer 渲染 | `CustomerValue` | - | - |
 | closable | 标题栏右侧显示关闭按钮 | `boolean` | - | `false` |
 | scrollable | 有标题栏或 content 时，内容区由 `MScroller` 滚动；为 `false` 时内容区不滚动 | `boolean` | - | `true` |
-| swipeClosable | 手势滑动关闭，见 [手势滑动关闭](#手势滑动关闭)；不设置时跟随 `maskClosable` | `boolean \| { directions?: Placement[]; threshold?: number; speed?: number }` | - | - |
+| swipeClosable | 手势滑动关闭，见 [手势滑动关闭](#手势滑动关闭)；不设置时跟随 `maskClosable` | `boolean \| { directions?: Array<'top' \| 'right' \| 'bottom' \| 'left'>; threshold?: number; speed?: number }` | - | - |
 | snaps | 多档高度（`bottom` / `top`），从低到高；数字为 750 稿长度，字符串为 CSS 长度，百分比相对视口高度（`'100%'` 即全屏），见 [多档高度](#多档高度) | `Array<number \| string>` | - | - |
 | snap | 当前档的序号，支持 `v-model:snap` | `number` | - | `0` |
 | handle | 是否显示指示器；不设置时在设置了 `snaps` 时显示 | `boolean` | - | - |

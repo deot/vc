@@ -2,6 +2,8 @@
 
 用于切换单个选项的状态，或从一组选项中选择多项。提供 `Checkbox`、`CheckboxGroup` 及移动端的 `MCheckbox`、`MCheckboxGroup`。
 
+移动端入口导出的 `MCheckbox`、`MCheckboxGroup` 与桌面端的数据和事件约定相同，默认为圆形，尺寸按 750 稿随 `--vc-rem` 缩放，见 [移动端](#移动端)。
+
 ### 何时使用
 
 - 使用单个多选框表示同意、订阅等可选状态。
@@ -10,15 +12,25 @@
 
 ### 基础用法
 
-单独使用时，`v-model` 默认绑定布尔值。默认插槽优先于 `label` 显示。
+单独使用时，`v-model` 默认绑定布尔值。默认插槽优先于 `label` 显示；`name` 传给原生 input。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div>
-		<Checkbox v-model="isChecked">选择条目</Checkbox>
-		<p>当前状态：{{ isChecked ? '已选中' : '未选中' }}</p>
+	<div class="checkbox-demo">
+		<div class="checkbox-demo__row">
+			<Checkbox v-model="isChecked" name="item">选择条目</Checkbox>
+			<Checkbox v-model="isLabelChecked" label="使用 label 显示" />
+		</div>
+		<p class="checkbox-demo__result">当前状态：{{ isChecked ? '已选中' : '未选中' }}</p>
 	</div>
 </template>
 
@@ -27,7 +39,27 @@ import { ref } from 'vue';
 import { Checkbox } from '@deot/vc';
 
 const isChecked = ref(false);
+const isLabelChecked = ref(true);
 </script>
+
+<style scoped>
+.checkbox-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.checkbox-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+.checkbox-demo__result {
+	margin: 0;
+}
+</style>
 ```
 :::
 
@@ -36,7 +68,14 @@ const isChecked = ref(false);
 `disabled` 禁止交互，也可与选中或半选状态一起使用。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
 	<div class="checkbox-demo">
@@ -54,7 +93,8 @@ import { Checkbox } from '@deot/vc';
 .checkbox-demo {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 8px 16px;
+	align-items: center;
+	gap: 8px;
 }
 </style>
 ```
@@ -62,19 +102,27 @@ import { Checkbox } from '@deot/vc';
 
 ### 组合选择
 
-组合使用 `value` 作为数组中的选项值，`label` 作为显示文案。`value` 未设置或为空字符串时回退到 `label`；`label` 未设置或为空字符串时回退显示 `value`。建议每个选项使用唯一且类型一致的值。
+组合使用 `value` 作为数组中的选项值，`label` 作为显示文案。`value` 未设置或为空字符串时回退到 `label`；`label` 未设置或为空字符串时回退显示 `value`。建议每个选项使用唯一且类型一致的值。子项交互后组合发出 `change`，外部赋值不触发。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div>
-		<CheckboxGroup v-model="selectedItems">
+	<div class="checkbox-demo">
+		<CheckboxGroup v-model="selectedItems" @change="handleChange">
 			<Checkbox value="item-a" label="条目 A" />
 			<Checkbox value="item-b" label="条目 B" />
 			<Checkbox value="item-c" label="条目 C" />
 		</CheckboxGroup>
-		<p>已选值：{{ selectedItems }}</p>
+		<p class="checkbox-demo__result">已选值：{{ selectedItems }}</p>
+		<p class="checkbox-demo__result">change 触发 {{ count }} 次</p>
 	</div>
 </template>
 
@@ -83,16 +131,40 @@ import { ref } from 'vue';
 import { Checkbox, CheckboxGroup } from '@deot/vc';
 
 const selectedItems = ref(['item-a']);
+const count = ref(0);
+
+const handleChange = () => {
+	count.value++;
+};
 </script>
+
+<style scoped>
+.checkbox-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.checkbox-demo__result {
+	margin: 0;
+}
+</style>
 ```
 :::
 
 ### 全选与半选
 
-`indeterminate` 只控制外观，不改变绑定值或原生 input 的半选属性。全选状态和已选数组由调用方维护。
+`indeterminate` 只控制外观，不改变绑定值或原生 input 的半选属性。全选状态和已选数组由调用方维护，单独使用时在 `change` 中处理。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
 	<div class="checkbox-demo">
@@ -106,7 +178,7 @@ const selectedItems = ref(['item-a']);
 		<CheckboxGroup v-model="selectedItems">
 			<Checkbox v-for="item in items" :key="item" :value="item" />
 		</CheckboxGroup>
-		<p>已选择 {{ selectedItems.length }} / {{ items.length }} 项</p>
+		<p class="checkbox-demo__result">已选择 {{ selectedItems.length }} / {{ items.length }} 项</p>
 	</div>
 </template>
 
@@ -126,8 +198,14 @@ const handleCheckAll = (isChecked) => {
 
 <style scoped>
 .checkbox-demo {
-	display: grid;
-	gap: 8px;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 16px;
+}
+
+.checkbox-demo__result {
+	margin: 0;
 }
 </style>
 ```
@@ -138,14 +216,21 @@ const handleCheckAll = (isChecked) => {
 单独使用时可通过 `checkedValue` 和 `uncheckedValue` 映射业务值；这两个属性在组合中无效。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div>
+	<div class="checkbox-demo">
 		<Checkbox v-model="status" checked-value="enabled" unchecked-value="disabled">
 			启用选项
 		</Checkbox>
-		<p>当前值：{{ status }}</p>
+		<p class="checkbox-demo__result">当前值：{{ status }}</p>
 	</div>
 </template>
 
@@ -155,6 +240,19 @@ import { Checkbox } from '@deot/vc';
 
 const status = ref('disabled');
 </script>
+
+<style scoped>
+.checkbox-demo {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 16px;
+}
+
+.checkbox-demo__result {
+	margin: 0;
+}
+</style>
 ```
 :::
 
@@ -166,16 +264,27 @@ const status = ref('disabled');
 - 组合的 `disabled` 禁用全部选项。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div>
+	<div class="checkbox-demo">
 		<CheckboxGroup v-model="selected" :max="2" shape="circle" vertical>
 			<Checkbox value="a" label="选项 1" />
 			<Checkbox value="b" label="选项 2" />
-			<Checkbox value="c" label="选项 3" />
+			<Checkbox value="c" label="选项 3" shape="square" />
 		</CheckboxGroup>
-		<p>最多可选两项，已选：{{ selected }}</p>
+		<p class="checkbox-demo__result">最多可选两项，已选：{{ selected }}</p>
+		<CheckboxGroup :model-value="['a']" disabled>
+			<Checkbox value="a" label="整组禁用 1" />
+			<Checkbox value="b" label="整组禁用 2" />
+		</CheckboxGroup>
 	</div>
 </template>
 
@@ -185,6 +294,18 @@ import { Checkbox, CheckboxGroup } from '@deot/vc';
 
 const selected = ref(['a']);
 </script>
+
+<style scoped>
+.checkbox-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.checkbox-demo__result {
+	margin: 0;
+}
+</style>
 ```
 :::
 
@@ -193,15 +314,30 @@ const selected = ref(['a']);
 `#icon` 插槽替换内置的勾选框，参数为 `{ checked, indeterminate, disabled }`。写在组合上时作用于组内全部选项，选项自身的插槽优先。原生 input 仍覆盖在图标上，点击和键盘操作不变。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<CheckboxGroup v-model="selected">
-		<template #icon="{ checked }">
-			<span :class="['star', { 'is-on': checked }]">{{ checked ? '★' : '☆' }}</span>
+	<CheckboxGroup v-model="selected" class="checkbox-demo">
+		<template #icon="{ checked, disabled }">
+			<span :class="['checkbox-demo__star', { 'is-on': checked, 'is-disabled': disabled }]">
+				{{ checked ? '★' : '☆' }}
+			</span>
 		</template>
-		<Checkbox value="a" label="收藏 1" />
-		<Checkbox value="b" label="收藏 2" />
+		<Checkbox value="a" label="条目 1" />
+		<Checkbox value="b" label="条目 2" />
+		<Checkbox value="c" label="条目 3" disabled />
+		<Checkbox value="d" label="选项自身的插槽">
+			<template #icon="{ checked }">
+				<span :class="['checkbox-demo__star', { 'is-on': checked }]">{{ checked ? '●' : '○' }}</span>
+			</template>
+		</Checkbox>
 	</CheckboxGroup>
 </template>
 
@@ -213,13 +349,17 @@ const selected = ref(['a']);
 </script>
 
 <style scoped>
-.star {
+.checkbox-demo__star {
 	line-height: 1;
-	color: #c9cdd4;
+	color: var(--vc-color-neutral);
 }
 
-.star.is-on {
-	color: #456cf6;
+.checkbox-demo__star.is-on {
+	color: var(--vc-color-primary);
+}
+
+.checkbox-demo__star.is-disabled {
+	opacity: 0.5;
 }
 </style>
 ```
@@ -241,19 +381,36 @@ const selected = ref(['a']);
 `max`、`disabled`、`vertical` 对分组样式同样生效；`shape` 和 `#icon` 插槽只作用于勾选框。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
 	<div class="checkbox-demo">
-		<CheckboxGroup v-for="type in types" :key="type" v-model="selected" :type="type" :size="size">
+		<RadioGroup v-model="size" type="capsule">
+			<Radio v-for="item in sizes" :key="item" :value="item" :label="item" />
+		</RadioGroup>
+		<CheckboxGroup
+			v-for="type in types"
+			:key="type"
+			v-model="selected"
+			:type="type"
+			:size="size"
+		>
 			<Checkbox value="a" label="选项 A" />
 			<Checkbox value="b" label="选项 B" />
 			<Checkbox value="c" label="选项 C" />
 			<Checkbox value="d" label="不可选" disabled />
 		</CheckboxGroup>
-		<RadioGroup v-model="size" type="capsule">
-			<Radio v-for="item in sizes" :key="item" :value="item" :label="item" />
-		</RadioGroup>
+		<CheckboxGroup v-model="selected" type="button">
+			<Checkbox value="a" label="选项自身 large" size="large" />
+			<Checkbox value="b" label="跟随分组" />
+		</CheckboxGroup>
 	</div>
 </template>
 
@@ -269,17 +426,183 @@ const size = ref('medium');
 
 <style scoped>
 .checkbox-demo {
-	display: grid;
-	gap: 12px;
-	justify-items: start;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 16px;
 }
 </style>
 ```
 :::
 
-### 移动端
+### 只保留联动（styleless）
 
-`MCheckbox` 与 `MCheckboxGroup` 使用相同的数据和事件约定，默认为圆形。尺寸使用 750 稿单位，随 `--vc-rem` 缩放：
+`styleless` 不渲染组合的外层容器，只保留选择联动，选项可以放进任意布局，例如表格单元格中。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
+```vue
+<template>
+	<div class="checkbox-demo">
+		<table class="checkbox-demo__table">
+			<tbody>
+				<CheckboxGroup v-model="selected" styleless>
+					<tr v-for="row in rows" :key="row.value">
+						<td><Checkbox :value="row.value" :label="row.label" /></td>
+						<td>{{ row.description }}</td>
+					</tr>
+				</CheckboxGroup>
+			</tbody>
+		</table>
+		<p class="checkbox-demo__result">已选值：{{ selected }}</p>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { Checkbox, CheckboxGroup } from '@deot/vc';
+
+const rows = [
+	{ value: 1, label: '第 1 行', description: '说明一' },
+	{ value: 2, label: '第 2 行', description: '说明二' },
+	{ value: 3, label: '第 3 行', description: '说明三' }
+];
+const selected = ref([2]);
+</script>
+
+<style scoped>
+.checkbox-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.checkbox-demo__table {
+	border-collapse: collapse;
+}
+
+.checkbox-demo__table td {
+	padding: 8px 16px;
+	border: 1px solid var(--vc-border-color);
+}
+
+.checkbox-demo__result {
+	margin: 0;
+}
+</style>
+```
+:::
+
+## 移动端
+
+`MCheckbox` 与 `MCheckboxGroup` 使用相同的数据、事件和插槽约定，根节点为 `.vcm-checkbox`、`.vcm-checkbox-group`，默认为圆形。尺寸按 750 稿设计，写为 `calc(var(--vc-rem) * n)`，随 `--vc-rem` 缩放；底栏切换 `rem` 可查看不同屏宽下的效果。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	mobile: true,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
+</config>
+-->
+```vue
+<template>
+	<div class="m-checkbox-demo">
+		<div class="m-checkbox-demo__row">
+			<MCheckbox v-model="isChecked" label="选项内容" />
+			<MCheckbox v-model="isSquare" shape="square" label="方形" />
+			<MCheckbox :model-value="true" disabled label="选中禁用" />
+		</div>
+		<MCheckbox
+			:model-value="isAll"
+			:indeterminate="isIndeterminate"
+			label="全选"
+			@change="handleCheckAll"
+		/>
+		<MCheckboxGroup v-model="checked" vertical>
+			<MCheckbox v-for="item in all" :key="item" :value="item" :label="`选项内容 ${item}`" />
+		</MCheckboxGroup>
+		<MCheckboxGroup
+			v-for="type in types"
+			:key="type"
+			v-model="typed"
+			:type="type"
+		>
+			<MCheckbox value="a" label="选项 1" />
+			<MCheckbox value="b" label="选项 2" />
+			<MCheckbox value="c" label="选项 3" />
+			<MCheckbox value="d" label="禁用" disabled />
+		</MCheckboxGroup>
+		<MCheckboxGroup
+			v-for="size in sizes"
+			:key="size"
+			v-model="typed"
+			type="button"
+			:size="size"
+		>
+			<MCheckbox value="a" :label="size" />
+			<MCheckbox value="b" label="选项 2" />
+		</MCheckboxGroup>
+		<MCheckboxGroup v-model="tags" type="round" :max="3">
+			<MCheckbox v-for="item in tagOptions" :key="item" :value="item" :label="item" />
+		</MCheckboxGroup>
+	</div>
+</template>
+
+<script setup>
+import { computed, ref } from 'vue';
+import { MCheckbox, MCheckboxGroup } from '@deot/vc';
+
+const isChecked = ref(false);
+const isSquare = ref(true);
+const all = [1, 2, 3, 4];
+const checked = ref([1]);
+const isAll = computed(() => checked.value.length === all.length);
+const isIndeterminate = computed(() => checked.value.length > 0 && !isAll.value);
+const types = ['button', 'card', 'capsule', 'text', 'round'];
+const sizes = ['mini', 'small', 'medium', 'large'];
+const typed = ref(['a']);
+const tagOptions = ['标签一', '标签二', '较长的标签三', '标签四', '标签五'];
+const tags = ref(['标签一']);
+
+const handleCheckAll = (value) => {
+	checked.value = value ? [...all] : [];
+};
+</script>
+
+<style scoped>
+.m-checkbox-demo {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: calc(var(--vc-rem) * 32);
+	padding-inline: calc(var(--vc-rem) * 32);
+}
+
+.m-checkbox-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: calc(var(--vc-rem) * 32);
+}
+</style>
+```
+:::
+
+尺寸（750 稿单位）：
 
 - 图标盒 40，其中圆形直径 36，方形边长 32、圆角 4；
 - 图标与文字间距 16，字号 32，行高 1.4；
@@ -293,46 +616,6 @@ const size = ref('medium');
 - `button`、`round` 选项多时换行，横竖间距相同；
 - 没有悬停样式和焦点光晕；`size` 只作用于分组样式，不改变勾选框。
 
-:::playground
-<!-- <config lang="json5">{ viewport: 375, previewInset: 16 }</config> -->
-```vue
-<template>
-	<div class="checkbox-demo">
-		<MCheckboxGroup v-model="selectedOptions" vertical>
-			<MCheckbox value="option-a" label="选项 A" />
-			<MCheckbox value="option-b" label="选项 B" />
-			<MCheckbox value="option-c" label="选项 C（不可选）" disabled />
-		</MCheckboxGroup>
-		<MCheckbox v-model="agreed" shape="square" label="方形" />
-		<MCheckboxGroup v-model="tags" type="round" :max="3">
-			<MCheckbox v-for="item in tagOptions" :key="item" :value="item" :label="item" />
-		</MCheckboxGroup>
-	</div>
-</template>
-
-<script setup>
-import { ref } from 'vue';
-import { MCheckbox, MCheckboxGroup } from '@deot/vc';
-
-const selectedOptions = ref(['option-a']);
-const agreed = ref(false);
-const tagOptions = ['标签一', '标签二', '较长的标签三', '标签四', '标签五'];
-const tags = ref(['标签一']);
-</script>
-
-<style scoped>
-.checkbox-demo {
-	display: grid;
-	gap: 20px;
-}
-</style>
-```
-:::
-
-### 只保留联动（styleless）
-
-`styleless` 不渲染组合的外层容器，只保留选择联动，选项可以放进任意布局，例如表格单元格中。
-
 ## 主题与局部覆盖
 
 全局参数通过 `--vc-<参数>` 配置，单个组件通过 `--vc-checkbox-<参数>`、`--vc-checkbox-group-<参数>`、`--vc-m-checkbox-<参数>`、`--vc-m-checkbox-group-<参数>` 覆盖。同一参数可能作用于多个状态；多命名空间时在使用位置中标明。
@@ -344,13 +627,14 @@ const tags = ref(['标签一']);
 | 参数 | 使用位置 | 值 |
 | --- | --- | --- |
 | color-contrast-light | 勾选标记（checkbox / m-checkbox） | `#FFFFFF`（亮暗主题相同） |
-| color-error | 校验错误边框（checkbox / m-checkbox） | `#F53F3F` |
+| color-error | 校验错误边框及分组样式的错误文字（checkbox / m-checkbox / checkbox-group / m-checkbox-group） | `#F53F3F` |
 | color-light-extradeep | 禁用且选中时的勾选标记（checkbox） | 亮色：`#B9B9B9`；暗色：`#F8F8F8` |
-| color-primary | 选中及半选背景、边框；移动端禁用且选中的浅底（checkbox / m-checkbox） | `#456CF6` |
-| color-primary-lighter | 焦点阴影（checkbox） | `rgba(45, 140, 240, 0.2)` |
-| background-color | 禁用勾选框背景（checkbox / m-checkbox） | 亮色：`#F5F6FA`；暗色：`#252B3A` |
-| background-color-lightest | 勾选框背景（checkbox / m-checkbox） | 亮色：`#FFFFFF`；暗色：`#252B3A` |
+| color-primary | 选中及半选背景、边框；移动端禁用且选中的浅底；分组样式选中文字及边框（checkbox / m-checkbox / checkbox-group / m-checkbox-group） | `#456CF6` |
+| color-primary-lighter | 焦点阴影（checkbox / checkbox-group / m-checkbox-group） | `rgba(45, 140, 240, 0.2)` |
+| background-color | 禁用勾选框背景；分组样式禁用背景（checkbox / m-checkbox / checkbox-group / m-checkbox-group） | 亮色：`#F5F6FA`；暗色：`#252B3A` |
+| background-color-lightest | 勾选框背景；卡片、按钮及胶囊选中项背景（checkbox / m-checkbox / checkbox-group / m-checkbox-group） | 亮色：`#FFFFFF`；暗色：`#252B3A` |
 | border-color | 勾选框边框及禁用边框；卡片边框（checkbox / m-checkbox / checkbox-group / m-checkbox-group） | `#D5D9E1` |
+| color-dark-light | 胶囊、文字、圆角样式的悬停文字（checkbox-group） | 亮色：`#080F20`；暗色：`#E8E8E8` |
 | color-dark-lightest | 分组样式文字（checkbox-group / m-checkbox-group） | 亮色：`#64758B`；暗色：`#C9C9C9` |
 | color-dark-extralight | 分组样式的禁用文字（checkbox-group / m-checkbox-group） | 亮色：`#909399`；暗色：`#B9B9B9` |
 | color-neutral-light | 胶囊容器背景、文字样式分隔线、圆角样式选中背景、按钮背景（checkbox-group / m-checkbox-group） | 亮色：`#EDEFF1`；暗色：`#3B4354` |
@@ -404,7 +688,7 @@ const tags = ref(['标签一']);
 | size | 组内选项的尺寸，选项自身的 size 优先 | `string` | `'mini'` / `'small'` / `'medium'` / `'large'` | `'medium'` |
 | disabled | 禁用全部选项 | `boolean` | - | `false` |
 | max | 最多可选数量，0 表示不限；达到上限后未选中的项禁用 | `number` | - | `0` |
-| vertical | 纵向排列，每项独占一行 | `boolean` | - | `false` |
+| vertical | 纵向排列，每项独占一行；卡片模式下无效 | `boolean` | - | `false` |
 | shape | 组内选项的形状，选项自身的 shape 优先 | `string` | `square` / `circle` | - |
 | styleless | 只渲染默认插槽，不生成外层容器，保留选择联动；vertical 等容器样式不生效 | `boolean` | - | `false` |
 

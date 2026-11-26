@@ -11,82 +11,68 @@
 
 ### 基础用法
 
-通过 `placement` 控制抽屉出现的位置 `top`、`right`、`bottom`、`left`。
+通过 `placement` 控制抽屉出现的位置 `top`、`right`、`bottom`、`left`。左右抽屉的宽度由 `width` 设置，上下抽屉的高度由 `height` 设置：数字单位为 px，字符串为 CSS 长度。`title` 设置标题，`content` 或默认插槽提供内容。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16, expandable: true }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="v-drawer-basic">
-		<p class="drawer-description">选择展开方向，在当前页面中查看条目详情。</p>
-		<div class="drawer-actions">
-			<Button @click="handleDrawer('top')">
-				从上到下
-			</Button>
-			<Button @click="handleDrawer('left')">
-				从左到右
-			</Button>
-			<Button @click="handleDrawer('bottom')">
-				从下到上
-			</Button>
-			<Button @click="handleDrawer('right')">
-				从右到左
-			</Button>
+	<div class="drawer-demo">
+		<p class="drawer-demo__result">选择展开方向，在当前页面中查看条目详情。</p>
+		<div class="drawer-demo__row">
+			<Button @click="handleOpen('top')">从上到下</Button>
+			<Button @click="handleOpen('left')">从左到右</Button>
+			<Button @click="handleOpen('bottom')">从下到上</Button>
+			<Button @click="handleOpen('right')">从右到左</Button>
 		</div>
 		<Drawer
 			v-model="isActive"
-			title="基础抽屉"
 			:placement="placement"
+			:width="360"
+			height="40%"
+			title="基础抽屉"
+			content="查看完毕后关闭抽屉，即可继续当前任务。"
 		>
-			<div class="drawer-content">
-				<strong>条目详情</strong>
-				<p>当前展开方向：{{ placement }}</p>
-				<p class="drawer-description">查看完毕后关闭抽屉，即可继续当前任务。</p>
-			</div>
+			<p class="drawer-demo__result">当前展开方向：{{ placement }}</p>
 		</Drawer>
 	</div>
 </template>
+
 <script setup>
-import { inject, ref } from 'vue';
+import { ref } from 'vue';
 import { Button, Drawer } from '@deot/vc';
 
 const isActive = ref(false);
 const placement = ref('top');
-const playground = inject('docs:playground');
-const handleDrawer = playground.run(500, { visible: isActive }, (res) => {
-	placement.value = res;
+
+const handleOpen = (value) => {
+	placement.value = value;
 	isActive.value = true;
-});
+};
 </script>
 
 <style scoped>
-.v-drawer-basic {
-	display: grid;
-	gap: 16px;
-	align-content: start;
-}
-
-.drawer-actions {
+.drawer-demo {
 	display: flex;
-	gap: 12px;
-	align-items: center;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.drawer-demo__row {
+	display: flex;
 	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
 }
 
-.drawer-description {
-	margin: 0;
-	font-size: 14px;
-	line-height: 1.7;
-	color: var(--vc-color-dark-lightest);
-}
-
-.drawer-content {
-	display: grid;
-	gap: 12px;
-	line-height: 1.7;
-}
-
-.drawer-content p {
+.drawer-demo__result {
 	margin: 0;
 }
 </style>
@@ -94,148 +80,227 @@ const handleDrawer = playground.run(500, { visible: isActive }, (res) => {
 :::
 
 ### 是否显示遮罩层
-通过`mask`控制遮罩层。
+
+通过 `mask` 控制遮罩层，`maskStyle` 设置遮罩样式。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16, expandable: true }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="v-drawer-mask">
-		<p class="drawer-description">对比两种遮罩模式，选择适合当前任务的展示方式。</p>
-		<div class="drawer-actions">
-			<Button type="primary" @click="handleDrawer(true)">
-				有遮罩层
-			</Button>
-			<Button @click="handleDrawer(false)">
-				无遮罩层
-			</Button>
-		</div>
-		<Drawer
-			v-model="isActive"
-			title="遮罩设置"
-			:mask="isMask"
-		>
-			<div class="drawer-content">
-				<strong>{{ isMask ? '已显示遮罩' : '已隐藏遮罩' }}</strong>
-				<p class="drawer-description">可以通过关闭图标或底部按钮关闭抽屉。</p>
-			</div>
+	<div class="drawer-demo">
+		<Button type="primary" @click="handleOpen(true)">有遮罩层</Button>
+		<Button @click="handleOpen(false)">无遮罩层</Button>
+		<Drawer v-model="isActive" :mask="isMask" :mask-style="{ background: 'rgb(0 0 0 / 15%)' }" title="遮罩设置">
+			{{ isMask ? '已显示浅色遮罩' : '已隐藏遮罩' }}，可以通过关闭图标或底部按钮关闭抽屉。
 		</Drawer>
 	</div>
 </template>
+
 <script setup>
-import { inject, ref } from 'vue';
+import { ref } from 'vue';
 import { Button, Drawer } from '@deot/vc';
 
 const isActive = ref(false);
 const isMask = ref(true);
-const playground = inject('docs:playground');
-const handleDrawer = playground.run(500, { visible: isActive }, (res) => {
-	isMask.value = res;
+
+const handleOpen = (value) => {
+	isMask.value = value;
 	isActive.value = true;
-});
+};
 </script>
 
 <style scoped>
-.v-drawer-mask {
-	display: grid;
-	gap: 16px;
-	align-content: start;
-}
-
-.drawer-actions {
+.drawer-demo {
 	display: flex;
-	gap: 12px;
-	align-items: center;
 	flex-wrap: wrap;
-}
-
-.drawer-description {
-	margin: 0;
-	font-size: 14px;
-	line-height: 1.7;
-	color: var(--vc-color-dark-lightest);
-}
-
-.drawer-content {
-	display: grid;
-	gap: 12px;
-	line-height: 1.7;
-}
-
-.drawer-content p {
-	margin: 0;
+	align-items: center;
+	gap: 8px;
 }
 </style>
 ```
 :::
 
 ### 关闭抽屉
-通过`maskClosable`控制是否能够点击遮罩关闭抽屉；`closable` 控制右上角的关闭按钮，`escClosable` 控制按 Esc 关闭（多个弹层时由最后打开的处理）。没有标题、`header` 插槽且 `closable` 为 `false` 时不渲染标题栏。
+
+通过 `maskClosable` 控制是否能够点击遮罩关闭抽屉；`closable` 控制右上角的关闭按钮，`escClosable` 控制按 Esc 关闭（多个弹层时由最后打开的处理）。没有标题、`header` 插槽且 `closable` 为 `false` 时不渲染标题栏。`closeWithCancel`（默认开启）让这些关闭操作先执行 `cancel`，设为 `false` 时直接关闭。
+
+通过 ref 调用 `toggle()` 切换显示。打开时 `visible-change` 传 `true`；离场动画结束后传 `false`，并触发 `close`。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16, expandable: true }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="v-drawer-close">
-		<p class="drawer-description">填写内容时，可禁止点击遮罩关闭，避免误操作。</p>
-		<div class="drawer-actions">
-			<Button type="primary" @click="handleDrawer">
-				打开抽屉
-			</Button>
+	<div class="drawer-demo">
+		<div class="drawer-demo__row">
+			<Checkbox v-model="isMaskClosable">点遮罩关闭</Checkbox>
+			<Checkbox v-model="isClosable">关闭按钮</Checkbox>
+			<Checkbox v-model="isEscClosable">Esc 关闭</Checkbox>
+			<Checkbox v-model="isCloseWithCancel">关闭时执行 cancel</Checkbox>
 		</div>
+		<div class="drawer-demo__row">
+			<Button type="primary" @click="handleToggle">toggle 打开</Button>
+		</div>
+		<p class="drawer-demo__result">{{ status }}</p>
 		<Drawer
-			v-model="isActive"
+			ref="drawerRef"
+			:mask-closable="isMaskClosable"
+			:closable="isClosable"
+			:esc-closable="isEscClosable"
+			:close-with-cancel="isCloseWithCancel"
 			title="关闭设置"
-			:mask-closable="false"
+			@cancel="handleCancel"
+			@visible-change="handleVisibleChange"
+			@close="handleClose"
 		>
-			<div class="drawer-content">
-				<strong>点击遮罩不会关闭</strong>
-				<p class="drawer-description">操作完成后，请使用关闭图标或底部按钮退出。</p>
+			按勾选的方式关闭抽屉，观察触发的事件。
+		</Drawer>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { Button, Checkbox, Drawer } from '@deot/vc';
+
+const drawerRef = ref();
+const isMaskClosable = ref(false);
+const isClosable = ref(true);
+const isEscClosable = ref(true);
+const isCloseWithCancel = ref(true);
+const status = ref('等待操作');
+
+const handleToggle = () => {
+	drawerRef.value.toggle();
+};
+
+const handleCancel = () => {
+	status.value = '触发 cancel';
+};
+
+const handleVisibleChange = (visible) => {
+	status.value = `visible-change：${visible}`;
+};
+
+const handleClose = () => {
+	status.value += '；触发 close';
+};
+</script>
+
+<style scoped>
+.drawer-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.drawer-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+.drawer-demo__result {
+	margin: 0;
+}
+</style>
+```
+:::
+
+### 自定义结构与样式
+
+`header` 插槽替换标题内容（保留关闭图标），`footer` 插槽替换默认按钮，`footer-extra` 位于按钮之前；`footer` 为 `false` 时不显示底部区域。`okText`、`cancelText` 修改按钮文案（传 `false` 隐藏），`okDisabled`、`cancelDisabled` 禁用按钮。`wrapperClass` / `wrapperStyle` 作用于面板容器，`contentClass` / `contentStyle` 作用于滚动内容区；内容区默认由内置 Scroller 滚动，`scrollerOptions` 传给它，`scrollable` 为 `false` 时由内容自行滚动。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
+```vue
+<template>
+	<div class="drawer-demo">
+		<Button type="primary" @click="isCustom = true">自定义按钮</Button>
+		<Button @click="isSlot = true">自定义页头页脚</Button>
+		<Button @click="isPlain = true">无底部、内容自行滚动</Button>
+		<Drawer
+			v-model="isCustom"
+			:ok-disabled="!isAgreed"
+			:cancel-disabled="isCancelDisabled"
+			:scroller-options="{ always: true }"
+			:content-style="{ lineHeight: 2 }"
+			:wrapper-style="{ maxWidth: '100%' }"
+			wrapper-class="drawer-demo__wrapper"
+			content-class="drawer-demo__content"
+			title="阅读条款"
+			ok-text="同意"
+			cancel-text="暂不"
+		>
+			<p v-for="index in 20" :key="index" class="drawer-demo__line">第 {{ index }} 条内容</p>
+			<template #footer-extra>
+				<Checkbox v-model="isAgreed">已阅读</Checkbox>
+				<Checkbox v-model="isCancelDisabled">禁用取消</Checkbox>
+			</template>
+		</Drawer>
+		<Drawer v-model="isSlot">
+			<template #header>
+				<strong>自定义页头</strong>
+			</template>
+			页脚由插槽提供。
+			<template #footer>
+				<Button type="primary" @click="isSlot = false">完成</Button>
+			</template>
+		</Drawer>
+		<Drawer v-model="isPlain" :footer="false" :scrollable="false" title="无底部">
+			<div class="drawer-demo__scroll">
+				<p v-for="index in 40" :key="index" class="drawer-demo__line">第 {{ index }} 行</p>
 			</div>
 		</Drawer>
 	</div>
 </template>
 
 <script setup>
-import { inject, ref } from 'vue';
-import { Button, Drawer } from '@deot/vc';
+import { ref } from 'vue';
+import { Button, Checkbox, Drawer } from '@deot/vc';
 
-const isActive = ref(false);
-const playground = inject('docs:playground');
-const handleDrawer = playground.run(500, { visible: isActive }, () => {
-	isActive.value = true;
-});
+const isCustom = ref(false);
+const isSlot = ref(false);
+const isPlain = ref(false);
+const isAgreed = ref(false);
+const isCancelDisabled = ref(false);
 </script>
 
 <style scoped>
-.v-drawer-close {
-	display: grid;
-	gap: 16px;
-	align-content: start;
-}
-
-.drawer-actions {
+.drawer-demo {
 	display: flex;
-	gap: 12px;
-	align-items: center;
 	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
 }
 
-.drawer-description {
+.drawer-demo__line {
 	margin: 0;
-	font-size: 14px;
-	line-height: 1.7;
-	color: var(--vc-color-dark-lightest);
 }
 
-.drawer-content {
-	display: grid;
-	gap: 12px;
-	line-height: 1.7;
-}
-
-.drawer-content p {
-	margin: 0;
+.drawer-demo__scroll {
+	min-height: 0;
+	overflow: auto;
 }
 </style>
 ```
@@ -243,42 +308,34 @@ const handleDrawer = playground.run(500, { visible: isActive }, () => {
 
 ### 函数调用与异步确认
 
-`Drawer.open(options)` 创建挂载到 body 的抽屉，支持多个实例。确认回调返回 Promise 时，等待兑现后关闭。
+`Drawer.open(options)` 创建挂载到 body 的抽屉，支持多个实例，返回的 `PortalLeaf` 可调用 `destroy()`；`Drawer.destroy()` 立即销毁所有由它创建的实例。确认回调返回 Promise 时，等待兑现后关闭。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16, expandable: true }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="drawer-open-demo">
-		<p class="drawer-description">模拟异步保存，完成后关闭抽屉并显示操作结果。</p>
-		<div class="drawer-actions">
-			<Button type="primary" @click="handleOpen">异步确认</Button>
-			<span class="drawer-description" role="status">{{ status }}</span>
-		</div>
+	<div class="drawer-demo">
+		<Button type="primary" @click="handleOpen">异步确认</Button>
+		<span role="status">{{ status }}</span>
 	</div>
 </template>
 
 <script setup>
-import { inject, onUnmounted, ref } from 'vue';
+import { onUnmounted, ref } from 'vue';
 import { Button, Drawer } from '@deot/vc';
 
 const status = ref('等待操作');
-const playground = inject('docs:playground');
-const isVisible = ref(false);
 let leaf;
-let closeTimer;
-const handleClose = () => {
-	clearTimeout(closeTimer);
-	closeTimer = setTimeout(() => {
-		leaf?.destroy();
-		leaf = undefined;
-		isVisible.value = false;
-	}, 300);
-};
-const handleOpen = playground.run(500, { visible: isVisible }, () => {
-	isVisible.value = true;
-	leaf?.destroy();
 
+const handleOpen = () => {
+	leaf?.destroy();
 	leaf = Drawer.open({
 		title: '保存详情',
 		content: '点击保存，等待一秒后关闭。',
@@ -290,38 +347,26 @@ const handleOpen = playground.run(500, { visible: isVisible }, () => {
 				setTimeout(() => {
 					status.value = '已保存';
 					resolve();
-					handleClose();
 				}, 1000);
 			});
 		},
-		onCancel: handleClose
+		onClose: () => {
+			leaf = undefined;
+		}
 	});
-});
+};
+
 onUnmounted(() => {
-	clearTimeout(closeTimer);
-	leaf?.destroy();
+	Drawer.destroy();
 });
 </script>
 
 <style scoped>
-.drawer-open-demo {
-	display: grid;
-	gap: 16px;
-	align-content: start;
-}
-
-.drawer-actions {
+.drawer-demo {
 	display: flex;
-	gap: 12px;
-	align-items: center;
 	flex-wrap: wrap;
-}
-
-.drawer-description {
-	margin: 0;
-	font-size: 14px;
-	line-height: 1.7;
-	color: var(--vc-color-dark-lightest);
+	align-items: center;
+	gap: 8px;
 }
 </style>
 ```
@@ -329,39 +374,116 @@ onUnmounted(() => {
 
 ## 移动端
 
-`MDrawer` 由 [MPopup](../popup/README.md) 承载面板：标题栏、关闭按钮、内容区滚动（`MScroller` 原生滚动）、圆角、安全区、进出动画与手势滑动关闭都与 `MPopup` 相同，尺寸按 750 稿随 `--vc-rem` 缩放。在此之上提供与 `Drawer` 相同的确定、取消与异步确认：
+`MDrawer` 由 [MPopup](../popup/README.md) 承载面板：标题栏、关闭按钮、内容区滚动（`MScroller` 原生滚动）、圆角、安全区、进出动画与手势滑动关闭都与 `MPopup` 相同，尺寸按 750 稿设计，写为 `calc(var(--vc-rem) * n)`，随 `--vc-rem` 缩放，底栏切换 `rem` 可查看不同屏宽下的效果。在此之上提供与 `Drawer` 相同的确定、取消与异步确认：
 
 - 底部默认是两个 `size="large"` 的 `MButton`（取消、确定），等分宽度，间距 24（375 宽下 12px）；`footer-extra` 插槽保持自身宽度，`footer` 插槽替换两个按钮。
 - `width`、`height` 的数字为 750 稿长度，字符串为 CSS 长度。左右抽屉默认宽 600，即屏宽的 80%；上下抽屉不设置 `height` 时高度由内容决定，内容过长时内容区滚动，面板与对边至少留出 `MPopup` 的间距。
 - `swipeClosable`：同 `MPopup`，沿弹出方向滑动关闭，不设置时跟随 `maskClosable`。`closeWithCancel` 为 `true` 时滑动关闭也先经过 `onCancel`：同步允许时从当前位置滑出；返回 Promise 时面板先回弹，兑现后再关闭，拒绝时保持打开。
 - 没有 `scrollerOptions`（内容区为原生滚动）。
 - 类名：根节点为 `.vcm-popup.vcm-drawer`，标题栏、内容区沿用 `.vcm-popup__*`；底部为 `.vcm-drawer__footer`，按钮为 `.vcm-drawer__cancel`、`.vcm-drawer__ok`（都带 `.vcm-drawer__button`）。主题参数与局部变量见 [Popup](../popup/README.md#主题与局部覆盖)、[Button](../button/README.md#移动端)。
+- `MDrawer.open(options)` 与 `Drawer.open` 相同，参数为上述属性及 `onClose`。
 
+:::playground
+<!--
+<config lang="json5">
+{
+	mobile: true,
+	local: false,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
+</config>
+-->
 ```vue
 <template>
-	<MListItem label="填写信息" @click="isActive = true" />
-	<MDrawer
-		v-model="isActive"
-		title="填写信息"
-		placement="bottom"
-		:on-ok="handleSubmit"
-	>
-		<MInput v-model="name" placeholder="名称" />
-	</MDrawer>
+	<div class="m-drawer-demo">
+		<MListItem label="底部抽屉：填写信息" @click="isActive = true" />
+		<MListItem label="左侧抽屉：宽 480" @click="isSide = true" />
+		<MListItem label="MDrawer.open 直接调用" @click="handleOpen" />
+		<p class="m-drawer-demo__result">{{ status }}</p>
+		<MDrawer
+			v-model="isActive"
+			:on-ok="handleSubmit"
+			swipe-closable
+			title="填写信息"
+			placement="bottom"
+		>
+			<MInput v-model="name" placeholder="名称" />
+			<template #footer-extra>
+				<span class="m-drawer-demo__extra">可下滑关闭</span>
+			</template>
+		</MDrawer>
+		<MDrawer v-model="isSide" :width="480" :footer="false" placement="left" title="侧边面板">
+			<p v-for="index in 6" :key="index" class="m-drawer-demo__line">第 {{ index }} 项</p>
+		</MDrawer>
+	</div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { onUnmounted, ref } from 'vue';
 import { MDrawer, MInput, MListItem } from '@deot/vc';
 
 const isActive = ref(false);
+const isSide = ref(false);
 const name = ref('');
-// 返回 Promise：兑现后关闭，拒绝时保持打开
-const handleSubmit = () => new Promise(resolve => setTimeout(resolve, 800));
-</script>
-```
+const status = ref('等待操作');
 
-`MDrawer.open(options)` 与 `Drawer.open` 相同，参数为上述属性及 `onClose`。
+// 返回 Promise：兑现后关闭，拒绝时保持打开
+const handleSubmit = () => new Promise((resolve) => {
+	setTimeout(() => {
+		status.value = `已提交：${name.value || '空'}`;
+		resolve();
+	}, 800);
+});
+
+const handleOpen = () => {
+	MDrawer.open({
+		title: '直接调用',
+		content: '由 MDrawer.open 创建的抽屉。',
+		placement: 'bottom',
+		onOk: () => {
+			status.value = '已确定';
+		},
+		onClose: () => {
+			status.value += '，已关闭';
+		}
+	});
+};
+
+onUnmounted(() => {
+	MDrawer.destroy();
+});
+</script>
+
+<style scoped>
+.m-drawer-demo {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--vc-rem) * 16);
+}
+
+.m-drawer-demo__extra {
+	align-self: center;
+	font-size: calc(var(--vc-rem) * 24);
+	color: var(--vc-color-dark-extralight);
+}
+
+.m-drawer-demo__line {
+	margin: 0;
+	padding: calc(var(--vc-rem) * 16) 0;
+}
+
+.m-drawer-demo__result {
+	margin: 0;
+	padding-inline: calc(var(--vc-rem) * 32);
+}
+</style>
+```
+:::
 
 ## 主题与局部覆盖
 

@@ -2,6 +2,8 @@
 
 依附触发元素展示说明或操作内容的气泡浮层。
 
+移动端入口导出的 `MPopover` 与 `Popover` 的属性、事件、插槽相同，`trigger` 默认为 `click`，浮层尺寸为 750 稿，见 [移动端](#移动端)。
+
 ### 何时使用
 
 当目标元素有进一步的描述或相关操作时，通过悬停、点击或受控状态展示内容。
@@ -11,7 +13,15 @@
 `hover` 支持移入浮层继续操作；`strictHover` 只认触发器：离开触发器后延时关闭，移入浮层不会保持打开，延时内移回触发器则取消关闭。`focus` 监听 Popover 根节点的焦点事件，因此示例通过 `tabindex` 让根节点可聚焦。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16, expandable: true }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16,
+	expandable: true
+}
+</config>
+-->
 ```vue
 <template>
 	<div class="popover-demo">
@@ -32,7 +42,15 @@
 			<Button>点击打开</Button>
 		</Popover>
 		<Popover
-			class="focus-trigger"
+			content="只认触发器，移入浮层也会关闭"
+			trigger="strictHover"
+			@visible-change="visible => visible && handleVisibleChange('strict', true)"
+			@close="handleVisibleChange('strict', false)"
+		>
+			<Button>strictHover</Button>
+		</Popover>
+		<Popover
+			class="popover-demo__focus"
 			content="失去焦点后关闭"
 			trigger="focus"
 			tabindex="0"
@@ -61,12 +79,12 @@ const handleVisibleChange = (key, visible) => {
 .popover-demo {
 	display: flex;
 	flex-wrap: wrap;
-	justify-content: center;
 	align-items: center;
-	gap: 16px;
+	justify-content: center;
+	gap: 8px;
 }
 
-.focus-trigger {
+.popover-demo__focus {
 	padding: 8px 16px;
 	border: 1px solid var(--vc-color-light-deeper);
 	border-radius: 4px;
@@ -80,17 +98,25 @@ const handleVisibleChange = (key, visible) => {
 
 支持 12 种位置；空间不足时自动调整方向。边界为浏览器的可见视口（不含滚动条，四周留 8px；移动端软键盘弹出、双指缩放后按 `visualViewport` 的可见区域计算，可见区域变化时重新定位），触发器位于滚动容器（含 Scroller）内时为视口与容器可视区的交集，因此靠近容器底部的浮层会向上打开；挂在 body 上的 hover 浮层只按视口判断，可以超出容器（如 Table 表体中的提示），避免朝下打开后挡住向下移动的鼠标。
 
-浮层内容的最大宽高为所在一侧的可用空间，超出时在浮层内滚动，不可断行的长串在宽度内换行；交叉轴方向超出视口时位置会被修正回视口内，箭头仍指向触发器中心。浮层内容尺寸变化（如图片加载）后会重新判断方向并定位；`top`、`left` 系列以靠近触发器的一边对齐，内容变大时朝远离触发器的方向伸展。可展开预览以观察完整浮层。
+浮层内容的最大宽高为所在一侧的可用空间，超出时在浮层内滚动，不可断行的长串在宽度内换行；交叉轴方向超出视口时位置会被修正回视口内，箭头仍指向触发器中心。浮层内容尺寸变化（如图片加载）后会重新判断方向并定位；`top`、`left` 系列以靠近触发器的一边对齐，内容变大时朝远离触发器的方向伸展。可展开预览以观察完整浮层；预览上下留出 80px，为四周的浮层留出空间。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16, expandable: true }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16,
+	expandable: true
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="placement-demo">
+	<div class="popover-demo">
 		<Popover
 			v-for="placement in placements"
 			:key="placement"
-			:class="`placement-demo__${placement}`"
+			:class="`popover-demo__${placement}`"
 			:placement="placement"
 			trigger="hover"
 			@visible-change="visible => visible && handleVisibleChange(placement, true)"
@@ -98,7 +124,7 @@ const handleVisibleChange = (key, visible) => {
 		>
 			<Button>{{ placement }}</Button>
 			<template #content>
-				<div style="height: 100px;">{{ placement }}</div>
+				<div class="popover-demo__content">{{ placement }}</div>
 			</template>
 		</Popover>
 	</div>
@@ -126,7 +152,7 @@ const placements = [
 </script>
 
 <style scoped>
-.placement-demo {
+.popover-demo {
 	display: grid;
 	grid-template-areas:
 		"top-left top top-right"
@@ -135,37 +161,40 @@ const placements = [
 		"left-bottom . right-bottom"
 		"bottom-left bottom bottom-right";
 	grid-template-columns: repeat(3, 120px);
-	gap: 16px;
-	width: fit-content;
-	margin: 0 auto;
+	justify-content: center;
+	gap: 8px;
 	padding: 80px 0;
 }
 
-.placement-demo :deep(.vc-button) {
+.popover-demo :deep(.vc-button) {
 	width: 120px;
 }
 
-.placement-demo__top-left { grid-area: top-left; }
-.placement-demo__top { grid-area: top; }
-.placement-demo__top-right { grid-area: top-right; }
-.placement-demo__left-top { grid-area: left-top; }
-.placement-demo__left { grid-area: left; }
-.placement-demo__left-bottom { grid-area: left-bottom; }
-.placement-demo__right-top { grid-area: right-top; }
-.placement-demo__right { grid-area: right; }
-.placement-demo__right-bottom { grid-area: right-bottom; }
-.placement-demo__bottom-left { grid-area: bottom-left; }
-.placement-demo__bottom { grid-area: bottom; }
-.placement-demo__bottom-right { grid-area: bottom-right; }
+.popover-demo__content {
+	height: 100px;
+}
+
+.popover-demo__top-left { grid-area: top-left; }
+.popover-demo__top { grid-area: top; }
+.popover-demo__top-right { grid-area: top-right; }
+.popover-demo__left-top { grid-area: left-top; }
+.popover-demo__left { grid-area: left; }
+.popover-demo__left-bottom { grid-area: left-bottom; }
+.popover-demo__right-top { grid-area: right-top; }
+.popover-demo__right { grid-area: right; }
+.popover-demo__right-bottom { grid-area: right-bottom; }
+.popover-demo__bottom-left { grid-area: bottom-left; }
+.popover-demo__bottom { grid-area: bottom; }
+.popover-demo__bottom-right { grid-area: bottom-right; }
 
 @media (width <= 440px) {
-	.placement-demo {
+	.popover-demo {
 		grid-template-columns: repeat(2, 120px);
 		grid-template-areas: none;
 		padding: 64px 0;
 	}
 
-	.placement-demo > :deep(.vc-popover) {
+	.popover-demo > :deep(.vc-popover) {
 		grid-area: auto;
 	}
 }
@@ -175,13 +204,21 @@ const placements = [
 
 ### 自定义内容与受控状态
 
-`content` 插槽优先于同名属性。浮层放不下时按所在一侧的可用空间限制尺寸，内容区在 Scroller 内滚动；需要固定在顶部、底部的内容（如标题、操作按钮）放到 `header`、`footer` 插槽，不随内容滚动，没有渲染出内容时不占位。插槽与属性在浮层打开期间实时生效。`scrollerOptions` 透传内置 Scroller 的属性（如 `maxHeight`、`native`、`always`）；设置 `always` 后滚动条常显，并在各系统下统一使用自绘滚动条。内容需要自己滚动时（如多列各自滚动、虚拟列表）设置 `scrollable` 为 `false`：内容区变为纵向 flex 容器，内容的根节点设置 `min-height: 0` 后在浮层的高度上限内收缩，由其内部的滚动容器滚动。通过 `trigger="custom"` 和 `v-model` 自行控制显隐；需要禁止外部点击关闭时，设置 `outsideClickable` 为 `false`。
+`content` 插槽优先于同名属性。浮层放不下时按所在一侧的可用空间限制尺寸，内容区在 Scroller 内滚动；需要固定在顶部、底部的内容（如标题、操作按钮）放到 `header`、`footer` 插槽，不随内容滚动，没有渲染出内容时不占位。插槽与属性在浮层打开期间实时生效。`scrollerOptions` 透传内置 Scroller 的属性（如 `maxHeight`、`native`、`always`）；设置 `always` 后滚动条常显，并在各系统下统一使用自绘滚动条。内容需要自己滚动时（如多列各自滚动、虚拟列表）设置 `scrollable` 为 `false`：内容区变为纵向 flex 容器，内容的根节点设置 `min-height: 0` 后在浮层的高度上限内收缩，由其内部的滚动容器滚动。通过 `trigger="custom"` 和 `v-model` 自行控制显隐；需要禁止外部点击关闭时，设置 `outsideClickable` 为 `false`。`always` 禁止一切交互关闭，需配合 `modelValue` 为 `true` 显示，仍可通过 `modelValue` 关闭。`header`、`footer` 与滚动的示例见 [固定区与滚动](#固定区与滚动)。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16, expandable: true }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16,
+	expandable: true
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="custom-demo">
+	<div class="popover-demo">
 		<Popover
 			v-model="isVisible"
 			trigger="custom"
@@ -190,14 +227,17 @@ const placements = [
 		>
 			<Button @click="handleToggle">自定义操作</Button>
 			<template #content>
-				<div class="custom-content">
-					<p>已操作 {{ count }} 次</p>
-					<div class="custom-actions">
+				<div class="popover-demo__panel">
+					<p class="popover-demo__result">已操作 {{ count }} 次</p>
+					<div class="popover-demo__actions">
 						<Button @click="handleIncrease">增加</Button>
 						<Button @click="handleClose">关闭</Button>
 					</div>
 				</div>
 			</template>
+		</Popover>
+		<Popover v-model="isAlways" always content="点击外部不会关闭">
+			<Button @click="handleAlways">{{ isAlways ? '关闭 always 浮层' : '打开 always 浮层' }}</Button>
 		</Popover>
 	</div>
 </template>
@@ -210,6 +250,7 @@ const playground = inject('docs:playground');
 
 const isVisible = ref(false);
 const isPreviewVisible = ref(false);
+const isAlways = ref(false);
 const count = ref(0);
 
 const handleOpen = playground.run(320, { visible: isPreviewVisible }, () => {
@@ -226,20 +267,31 @@ const handleIncrease = () => {
 const handleClose = () => {
 	isVisible.value = false;
 };
+const handleAlways = playground.run(320, { visible: isAlways }, () => {
+	isAlways.value = !isAlways.value;
+});
 </script>
 
 <style scoped>
-.custom-demo {
+.popover-demo {
 	display: flex;
+	flex-wrap: wrap;
 	align-items: flex-start;
 	justify-content: center;
+	gap: 8px;
 }
 
-.custom-content p {
-	margin: 0 0 12px;
+.popover-demo__panel {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
 }
 
-.custom-actions {
+.popover-demo__result {
+	margin: 0;
+}
+
+.popover-demo__actions {
 	display: flex;
 	gap: 8px;
 }
@@ -254,10 +306,18 @@ const handleClose = () => {
 浮层渲染在组件树内（挂载位置由 Teleport 决定），内容继承外层的 `provide`、路由、状态与全局组件。表单、组与布局类的上下文在浮层边界隔离：浮层里的输入框不参与外层表单项的校验，复选框、单选框不加入外层的组，按钮不继承外层按钮组的尺寸，树节点、Affix 的上下文也不延续到浮层内。浮层在打开时挂载、关闭动画结束后卸载；所在页面被 KeepAlive 缓存而失活时立即关闭，重新激活时若 `modelValue` 仍为 `true`（单向传入）则恢复打开。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16, expandable: true }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16,
+	expandable: true
+}
+</config>
+-->
 ```vue
 <template>
-	<div ref="container" class="container-demo">
+	<div ref="container" class="popover-demo">
 		<Popover
 			:to="container"
 			trigger="click"
@@ -295,14 +355,14 @@ const container = ref();
 </script>
 
 <style scoped>
-.container-demo {
+.popover-demo {
 	position: relative;
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
 	justify-content: center;
-	gap: 16px;
-	padding: 32px 24px;
+	gap: 8px;
+	padding: 32px 16px;
 	border: 1px dashed var(--vc-color-light-deeper);
 	border-radius: 8px;
 }
@@ -315,10 +375,18 @@ const container = ref();
 触发器是输入框时（如可搜索的下拉、可键入的日期），设置 `keepFocus` 让焦点留在输入框：在浮层内、触发器的非输入区域（图标、标签等）按下鼠标不转移焦点（触发器上只在焦点已在触发器内时生效，焦点在页面其他位置时照常转移），文字输入框照常获得焦点，复选框等照常可点；浮层打开时点击触发器里的输入框只移动光标、不关闭浮层，这次点击照常冒泡到祖先节点，点击其他区域照常切换。只读的输入框不算可输入。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16, expandable: true }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16,
+	expandable: true
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="keep-focus-demo">
+	<div class="popover-demo">
 		<Popover
 			v-model="isVisible"
 			trigger="click"
@@ -329,15 +397,15 @@ const container = ref();
 		>
 			<Input
 				v-model="keyword"
-				placeholder="输入或选择城市"
+				placeholder="输入或选择选项"
 				@input="isVisible = true"
 				@focus="isFocused = true"
 				@blur="isFocused = false"
 			/>
 			<template #content>
-				<ul class="keep-focus-demo__list">
-					<li v-for="city in matched" :key="city" @click="handleSelect(city)">
-						{{ city }}
+				<ul class="popover-demo__list">
+					<li v-for="option in matched" :key="option" @click="handleSelect(option)">
+						{{ option }}
 					</li>
 					<li v-if="!matched.length" class="is-empty">
 						无匹配
@@ -345,7 +413,7 @@ const container = ref();
 				</ul>
 			</template>
 		</Popover>
-		<p>焦点{{ isFocused ? '在' : '不在' }}输入框内</p>
+		<p class="popover-demo__result">焦点{{ isFocused ? '在' : '不在' }}输入框内</p>
 	</div>
 </template>
 
@@ -356,48 +424,48 @@ import { Popover, Input } from '@deot/vc';
 const playground = inject('docs:playground');
 const handleVisibleChange = playground.run(320);
 
-const cities = ['北京', '上海', '广州', '深圳', '杭州', '成都'];
+const options = ['选项 A', '选项 B', '选项 C', '选项 D', '选项 E', '选项 F'];
 const keyword = ref('');
 const isVisible = ref(false);
 const isFocused = ref(false);
-const matched = computed(() => cities.filter(city => city.includes(keyword.value)));
+const matched = computed(() => options.filter(option => option.includes(keyword.value)));
 
-const handleSelect = (city) => {
-	keyword.value = city;
+const handleSelect = (option) => {
+	keyword.value = option;
 	isVisible.value = false;
 };
 </script>
 
 <style scoped>
-.keep-focus-demo {
+.popover-demo {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	gap: 12px;
+	gap: 16px;
 }
 
-.keep-focus-demo p {
+.popover-demo__result {
 	margin: 0;
 	color: var(--vc-color-dark-light);
 }
 
-.keep-focus-demo__list {
+.popover-demo__list {
 	width: 180px;
 	margin: 0;
 	padding: 4px 0;
 	list-style: none;
 }
 
-.keep-focus-demo__list li {
+.popover-demo__list li {
 	padding: 6px 12px;
 	cursor: pointer;
 }
 
-.keep-focus-demo__list li:hover {
+.popover-demo__list li:hover {
 	background: var(--vc-background-color-primary-light);
 }
 
-.keep-focus-demo__list li.is-empty {
+.popover-demo__list li.is-empty {
 	cursor: default;
 	color: var(--vc-color-dark-extralight);
 }
@@ -410,10 +478,18 @@ const handleSelect = (city) => {
 挂载到 body 的子弹层（`Popover.open`、内容区中的 Select / Popover 等）在 DOM 上不在当前浮层内。只要子弹层的触发器位于当前 Popover 的触发器或浮层内，在子弹层中点击不视为点击外部，当前浮层保持打开（可多层嵌套）。hover 触发的嵌套需要内层设置 `portal="false"`。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16, expandable: true }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16,
+	expandable: true
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="nested-demo">
+	<div class="popover-demo">
 		<Popover
 			trigger="click"
 			@visible-change="visible => visible && handleVisibleChange(true)"
@@ -421,7 +497,7 @@ const handleSelect = (city) => {
 		>
 			<Button>打开筛选</Button>
 			<template #content>
-				<div class="nested-demo__content">
+				<div class="popover-demo__content">
 					<Select v-model="value" :data="data" />
 				</div>
 			</template>
@@ -444,15 +520,228 @@ const data = [
 </script>
 
 <style scoped>
-.nested-demo {
+.popover-demo {
 	display: flex;
 	align-items: flex-start;
 	justify-content: center;
 }
 
-.nested-demo__content {
+.popover-demo__content {
 	width: 220px;
 	padding: 8px 0;
+}
+</style>
+```
+:::
+
+### 外观与禁用
+
+`arrow` 为 `false` 时不显示箭头；`autoWidth` 为 `false` 时浮层宽度跟随触发元素；`animation` 设置 TransitionScale 的动画模式（`part`、`both`、`x`、`y`），未设置时为 `part`；`tag` 设置触发器根节点的标签。`disabled` 禁用交互触发，不阻止外部 `modelValue` 控制。浮层节点挂载完成时触发 `ready`。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16,
+	expandable: true
+}
+</config>
+-->
+```vue
+<template>
+	<div class="popover-demo">
+		<div class="popover-demo__row">
+			<Popover
+				:arrow="false"
+				trigger="click"
+				content="没有箭头"
+				@ready="handleReady"
+				@visible-change="visible => visible && handleVisibleChange('arrow', true)"
+				@close="handleVisibleChange('arrow', false)"
+			>
+				<Button>无箭头</Button>
+			</Popover>
+			<Popover
+				:auto-width="false"
+				trigger="click"
+				content="与触发器同宽"
+				@ready="handleReady"
+				@visible-change="visible => visible && handleVisibleChange('width', true)"
+				@close="handleVisibleChange('width', false)"
+			>
+				<Button class="popover-demo__wide">跟随触发器宽度</Button>
+			</Popover>
+			<Popover
+				animation="y"
+				tag="div"
+				trigger="click"
+				content="纵向展开的动画"
+				@ready="handleReady"
+				@visible-change="visible => visible && handleVisibleChange('animation', true)"
+				@close="handleVisibleChange('animation', false)"
+			>
+				<Button>animation y</Button>
+			</Popover>
+			<Popover :disabled="isDisabled" trigger="click" content="未禁用时可打开">
+				<Button :type="isDisabled ? 'default' : 'primary'">disabled：{{ isDisabled }}</Button>
+			</Popover>
+		</div>
+		<div class="popover-demo__row">
+			<Switch v-model="isDisabled" />
+			<span>禁用最后一个</span>
+		</div>
+		<p class="popover-demo__result">ready {{ count }} 次</p>
+	</div>
+</template>
+
+<script setup>
+import { inject, ref } from 'vue';
+import { Button, Popover, Switch } from '@deot/vc';
+
+const playground = inject('docs:playground');
+const visibleStates = {};
+const handlePreview = playground.run(320);
+const handleVisibleChange = (key, visible) => {
+	visibleStates[key] = visible;
+	return handlePreview(Object.values(visibleStates).some(Boolean));
+};
+
+const isDisabled = ref(true);
+const count = ref(0);
+
+const handleReady = () => {
+	count.value++;
+};
+</script>
+
+<style scoped>
+.popover-demo {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 16px;
+}
+
+.popover-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+}
+
+.popover-demo__wide {
+	width: 240px;
+}
+
+.popover-demo__result {
+	margin: 0;
+}
+</style>
+```
+:::
+
+### 固定区与滚动
+
+`header`、`footer` 插槽不随内容滚动；`scrollerOptions` 透传内置 Scroller 的属性，下例限定 `maxHeight` 并常显滚动条。`scrollable` 为 `false` 时内容自行滚动，内容的根节点设置 `min-height: 0` 后在浮层的高度上限内收缩。`keepEdge` 设置指针在浮层内、内容变窄时保持不动的一边（`start`、`end`），下例点击「切换宽度」观察右侧保持不动。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16,
+	expandable: true
+}
+</config>
+-->
+```vue
+<template>
+	<div class="popover-demo">
+		<Popover
+			trigger="click"
+			keep-edge="end"
+			:scroller-options="{ maxHeight: 160, always: true }"
+			@visible-change="visible => visible && handleVisibleChange('sections', true)"
+			@close="handleVisibleChange('sections', false)"
+		>
+			<Button>header / footer</Button>
+			<template #header>
+				<strong>标题</strong>
+			</template>
+			<template #content>
+				<div class="popover-demo__list" :class="{ 'is-wide': isWide }">
+					<p v-for="i in 12" :key="i" class="popover-demo__line">第 {{ i }} 行内容</p>
+				</div>
+			</template>
+			<template #footer>
+				<Button size="small" @click="isWide = !isWide">切换宽度</Button>
+			</template>
+		</Popover>
+		<Popover
+			trigger="click"
+			:scrollable="false"
+			@visible-change="visible => visible && handleVisibleChange('scrollable', true)"
+			@close="handleVisibleChange('scrollable', false)"
+		>
+			<Button>scrollable false</Button>
+			<template #content>
+				<div class="popover-demo__columns">
+					<div v-for="column in 2" :key="column" class="popover-demo__column">
+						<p v-for="i in 20" :key="i" class="popover-demo__line">第 {{ column }} 列第 {{ i }} 行</p>
+					</div>
+				</div>
+			</template>
+		</Popover>
+	</div>
+</template>
+
+<script setup>
+import { inject, ref } from 'vue';
+import { Button, Popover } from '@deot/vc';
+
+const playground = inject('docs:playground');
+const visibleStates = {};
+const handlePreview = playground.run(400);
+const handleVisibleChange = (key, visible) => {
+	visibleStates[key] = visible;
+	return handlePreview(Object.values(visibleStates).some(Boolean));
+};
+
+const isWide = ref(true);
+</script>
+
+<style scoped>
+.popover-demo {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-start;
+	justify-content: center;
+	gap: 8px;
+}
+
+.popover-demo__list {
+	width: 120px;
+}
+
+.popover-demo__list.is-wide {
+	width: 200px;
+}
+
+.popover-demo__line {
+	margin: 0;
+}
+
+.popover-demo__columns {
+	display: flex;
+	gap: 16px;
+	min-height: 0;
+	max-height: 200px;
+}
+
+.popover-demo__column {
+	overflow: auto;
 }
 </style>
 ```
@@ -465,10 +754,18 @@ const data = [
 浮层默认字体取主题变量 `--vc-font-size-small`（13px）、`--vc-line-height-large`（20px，与 Table 单元格一致）与 `--vc-color-dark-lighter`，可分别通过 `--vc-popover-wrapper-font-size-small`、`--vc-popover-wrapper-line-height-large`、`--vc-popover-wrapper-color-dark-lighter` 单独覆盖浮层。默认字体的优先级为 0，组件或 `portalClass` 上设置的字体始终优先，与样式加载顺序无关。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16, expandable: true }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16,
+	expandable: true
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="theme-demo">
+	<div class="popover-demo">
 		<Popover
 			v-for="theme in ['light', 'dark', 'none']"
 			:key="theme"
@@ -497,12 +794,12 @@ const handleVisibleChange = (key, visible) => {
 </script>
 
 <style scoped>
-.theme-demo {
+.popover-demo {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 16px;
 	align-items: center;
 	justify-content: center;
+	gap: 8px;
 }
 </style>
 ```
@@ -513,10 +810,18 @@ const handleVisibleChange = (key, visible) => {
 `Popover.open` 立即创建浮层，`triggerElement` 必须传真实 DOM 元素。`triggerElement` 被移除（如列表按 key 重新渲染）后浮层会自动关闭并销毁；返回的 `PortalLeaf` 也可通过 `destroy()` 主动清理，页面卸载时应清理仍存在的实例。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16, expandable: true }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16,
+	expandable: true
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="method-demo">
+	<div class="popover-demo">
 		<Button @click="event => handleOpen(event.currentTarget)">调用 Popover.open</Button>
 	</div>
 </template>
@@ -542,7 +847,7 @@ onUnmounted(() => leaf?.destroy());
 </script>
 
 <style scoped>
-.method-demo {
+.popover-demo {
 	display: flex;
 	align-items: flex-start;
 	justify-content: center;
@@ -550,6 +855,139 @@ onUnmounted(() => leaf?.destroy());
 </style>
 ```
 :::
+
+## 移动端
+
+`MPopover` 的属性、事件、插槽与 `Popover` 相同，区别只有两点：
+
+- `trigger` 默认为 `click`：点按触发器开关，点外部关闭；
+- 浮层带有移动端外观类 `vcm-popover-wrapper`，字号、行高、内边距、圆角写为 `calc(var(--vc-rem) * n)`（n 为 750 稿长度），随 `--vc-rem` 缩放。箭头与触发器、视口的间距保持 px。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	mobile: true,
+	local: false,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
+</config>
+-->
+```vue
+<template>
+	<div class="m-popover-demo">
+		<div class="m-popover-demo__row">
+			<MPopover content="浅色气泡" placement="top">
+				<MButton size="small">浅色</MButton>
+			</MPopover>
+			<MPopover content="深色气泡" placement="top" theme="dark">
+				<MButton size="small">深色</MButton>
+			</MPopover>
+			<MPopover placement="top" theme="dark">
+				<MButton size="small">多行</MButton>
+				<template #content>
+					<div class="m-popover-demo__text">文字较长时在可用宽度内换行，行高与字号一起缩放</div>
+				</template>
+			</MPopover>
+		</div>
+		<div class="m-popover-demo__grid">
+			<MPopover
+				v-for="placement in placements"
+				:key="placement"
+				:placement="placement"
+				:content="placement"
+			>
+				<MButton size="mini" long>{{ placement }}</MButton>
+			</MPopover>
+		</div>
+		<div class="m-popover-demo__row">
+			<MPopover v-model="isVisible" placement="bottom" :scroller-options="{ maxHeight: 'calc(var(--vc-rem) * 400)' }">
+				<MButton size="small">{{ isVisible ? '已打开' : 'header / footer' }}</MButton>
+				<template #header>
+					<strong>标题</strong>
+				</template>
+				<template #content>
+					<div class="m-popover-demo__list">
+						<p v-for="i in 12" :key="i" class="m-popover-demo__line">第 {{ i }} 行内容</p>
+					</div>
+				</template>
+				<template #footer>
+					<MButton size="mini" @click="isVisible = false">关闭</MButton>
+				</template>
+			</MPopover>
+			<MButton size="small" @click="handleOpen">调用 MPopover.open</MButton>
+		</div>
+	</div>
+</template>
+
+<script setup>
+import { onUnmounted, ref } from 'vue';
+import { MButton, MPopover } from '@deot/vc';
+
+const placements = ['top-left', 'top', 'top-right', 'bottom-left', 'bottom', 'bottom-right'];
+const isVisible = ref(false);
+
+let leaf;
+const handleOpen = (e) => {
+	leaf?.destroy();
+	leaf = MPopover.open({
+		triggerElement: e.currentTarget,
+		placement: 'bottom',
+		content: '点外部关闭'
+	});
+};
+
+onUnmounted(() => leaf?.destroy());
+</script>
+
+<style scoped>
+.m-popover-demo {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--vc-rem) * 32);
+	padding: calc(var(--vc-rem) * 64) calc(var(--vc-rem) * 32);
+}
+
+.m-popover-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: calc(var(--vc-rem) * 16);
+}
+
+.m-popover-demo__grid {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: calc(var(--vc-rem) * 16);
+}
+
+.m-popover-demo__text,
+.m-popover-demo__list {
+	width: calc(var(--vc-rem) * 320);
+}
+
+.m-popover-demo__line {
+	margin: 0;
+}
+</style>
+```
+:::
+
+示例根节点的上下内边距为浮层留出展开空间。尺寸对照如下：
+
+| 项 | `Popover` | `MPopover`（750 稿） | 375 宽下 |
+| --- | --- | --- | --- |
+| 字号 / 行高 | `13px` / `20px` | `28` / `40` | `14px` / `20px` |
+| 内边距 | `5px 12px` | `16 24` | `8px 12px` |
+| 圆角 | `4px` | `8` | `4px` |
+| 浅色外观的文字颜色 | `color-dark-lighter` | `color-dark-light` | - |
+
+移动端外观只覆盖 `--vc-popover-wrapper-*` 变量，结构样式与 `Popover` 共用，全局或 `portalStyle` 上的变量覆盖对两端同样生效。`MPopover.open` 与 `Popover.open` 参数相同，创建的浮层同样带有该类；直接渲染 `PopoverView` 时，在 `portalClass` 中加入 `vcm-popover-wrapper` 即可使用移动端外观。浮层内部元素的类名仍为 `.vc-popover-wrapper__*`。
 
 ## 主题与局部覆盖
 
@@ -626,9 +1064,9 @@ onUnmounted(() => leaf?.destroy());
 | 方法名 | 说明 | 参数 | 返回值 |
 | --- | --- | --- | --- |
 | Popover.open | 创建独立浮层 | `options`：浮层属性与 Portal 配置 | `PortalLeaf` |
-| update | 组件 ref 的方法：触发节点移动而尺寸不变时（滚动、Resize 之外，如锚点随文本域内的光标移动），重新定位浮层；未打开时不处理 | - | `void` |
+| update | 组件 ref 的方法：触发节点移动而尺寸不变时（滚动、Resize 之外，如锚点随文本域内的光标移动），重新定位浮层；未打开时不处理。`MPopover` 同样可用 | - | `void` |
 
-`open` 使用独立浮层，支持上述外观属性（`animation`、`placement`、`theme`、`content`、`arrow`、`autoWidth`、`portalClass`、`portalStyle`）与 `keepFocus`、`keepEdge`，以及以下选项。声明式组件的 `trigger`、`disabled`、`outsideClickable`、`to`、`portal` 不控制静态浮层。静态浮层是独立的应用实例，不继承调用处的上下文；需要路由、状态或全局组件时，通过 Portal 的 `uses`、`components`、`install` 等配置注入，见 Portal 文档。
+`open` 使用独立浮层，支持上述外观属性（`animation`、`placement`、`theme`、`content`、`arrow`、`autoWidth`、`portalClass`、`portalStyle`）与 `scrollable`、`scrollerOptions`、`keepFocus`、`keepEdge`，以及以下选项。声明式组件的 `trigger`、`disabled`、`outsideClickable`、`always`、`to`、`portal` 不控制静态浮层。静态浮层是独立的应用实例，不继承调用处的上下文；需要路由、状态或全局组件时，通过 Portal 的 `uses`、`components`、`install` 等配置注入，见 Portal 文档。
 
 | 属性 | 说明 | 类型 | 可选值 | 默认值 |
 | --- | --- | --- | --- | --- |
@@ -645,22 +1083,6 @@ onUnmounted(() => leaf?.destroy());
 `onChange` 的 `info` 包含 `context`（浮层内部组件实例）；悬停事件另含 `visible: boolean`，外部点击时不包含 `visible`；滚动容器滚动、触发器被移除引起的关闭另含 `immediate: true`（不走 hover 的延时关闭）。`leaf.wrapper?.toggle(false)` 可执行关闭动画，`leaf.destroy()` 立即销毁。触发节点只移动、尺寸不变且不是由滚动引起时（如由调用方改变位置），可调用 `leaf.wrapper?.update()` 重新定位。其他 Portal 通用配置见 Portal 文档。
 
 `PopoverView` 是 `Popover.open` 渲染的浮层组件，需要自行管理挂载位置与显隐时（如 Tour 的气泡）可直接渲染，属性同上方 open 选项表。定位按浮层实际所在的节点计算：在 body 下按页面定位，在触发器内以触发器为原点，在其他容器内以该容器为原点（容器应包含触发器）。
-
-### 移动端
-
-`MPopover` 的属性、事件、插槽与 `Popover` 相同，区别只有两点：
-
-- `trigger` 默认为 `click`：点按触发器开关，点外部关闭；
-- 浮层带有移动端外观类 `vcm-popover-wrapper`，字号、行高、内边距、圆角写为 `calc(var(--vc-rem) * n)`（n 为 750 稿长度），随 `--vc-rem` 缩放。箭头与触发器、视口的间距保持 px。
-
-| 项 | `Popover` | `MPopover`（750 稿） | 375 宽下 |
-| --- | --- | --- | --- |
-| 字号 / 行高 | `13px` / `20px` | `28` / `40` | `14px` / `20px` |
-| 内边距 | `5px 12px` | `16 24` | `8px 12px` |
-| 圆角 | `4px` | `8` | `4px` |
-| 浅色外观的文字颜色 | `color-dark-lighter` | `color-dark-light` | - |
-
-移动端外观只覆盖 `--vc-popover-wrapper-*` 变量，结构样式与 `Popover` 共用，全局或 `portalStyle` 上的变量覆盖对两端同样生效。`MPopover.open` 与 `Popover.open` 参数相同，创建的浮层同样带有该类；直接渲染 `PopoverView` 时，在 `portalClass` 中加入 `vcm-popover-wrapper` 即可使用移动端外观。浮层内部元素的类名仍为 `.vc-popover-wrapper__*`。
 
 ### 注意事项
 

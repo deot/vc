@@ -13,14 +13,22 @@
 `span` 为跨越的轨道数，默认 `24`（超过轨道数时按整行，所以不写时在任何 `columns` 下都独占一行），`offset` 在左侧空出轨道，`span="auto"` 占满本行剩余；本行放不下时换行。`gap` 为 `[水平, 垂直]`，数字表示两个方向相同。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<Grid :gap="[12, 8]">
-		<GridItem :span="8"><div class="cell">span 8</div></GridItem>
-		<GridItem :span="8" :offset="8"><div class="cell">span 8 · offset 8</div></GridItem>
-		<GridItem :span="6"><div class="cell">span 6</div></GridItem>
-		<GridItem span="auto"><div class="cell">auto</div></GridItem>
+	<Grid :gap="[12, 8]" class="grid-demo">
+		<GridItem :span="8"><div class="grid-demo__cell">span 8</div></GridItem>
+		<GridItem :span="8" :offset="8"><div class="grid-demo__cell">span 8 · offset 8</div></GridItem>
+		<GridItem :span="6"><div class="grid-demo__cell">span 6</div></GridItem>
+		<GridItem span="auto"><div class="grid-demo__cell">auto</div></GridItem>
+		<GridItem><div class="grid-demo__cell">默认 span 24</div></GridItem>
 	</Grid>
 </template>
 
@@ -29,7 +37,7 @@ import { Grid, GridItem } from '@deot/vc';
 </script>
 
 <style scoped>
-.cell {
+.grid-demo__cell {
 	height: 40px;
 	line-height: 40px;
 	text-align: center;
@@ -45,14 +53,28 @@ import { Grid, GridItem } from '@deot/vc';
 `columns` 为数字时是等宽列数。为数组时，数字项是固定 px，字符串项原样使用；为字符串时就是完整的 `grid-template-columns`。`span`、`offset` 按轨道数计算。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<Grid :columns="[100, '1fr']" :gap="8">
-		<GridItem :span="1"><div class="cell">100px</div></GridItem>
-		<GridItem :span="1"><div class="cell">1fr</div></GridItem>
-		<GridItem :span="2"><div class="cell">span 2</div></GridItem>
-	</Grid>
+	<div class="grid-demo">
+		<Grid :columns="[100, '1fr']" :gap="8">
+			<GridItem :span="1"><div class="grid-demo__cell">100px</div></GridItem>
+			<GridItem :span="1"><div class="grid-demo__cell">1fr</div></GridItem>
+			<GridItem :span="2"><div class="grid-demo__cell">span 2</div></GridItem>
+		</Grid>
+		<Grid columns="1fr 2fr 1fr" :gap="8">
+			<GridItem :span="1"><div class="grid-demo__cell">1fr</div></GridItem>
+			<GridItem :span="1"><div class="grid-demo__cell">2fr</div></GridItem>
+			<GridItem :span="1"><div class="grid-demo__cell">1fr</div></GridItem>
+		</Grid>
+	</div>
 </template>
 
 <script setup>
@@ -60,7 +82,13 @@ import { Grid, GridItem } from '@deot/vc';
 </script>
 
 <style scoped>
-.cell {
+.grid-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.grid-demo__cell {
 	height: 40px;
 	line-height: 40px;
 	text-align: center;
@@ -76,11 +104,18 @@ import { Grid, GridItem } from '@deot/vc';
 `getSpan` 的写法同 Table：返回 `[rowspan, colspan]` 或 `{ rowspan, colspan }`。`colspan` 覆盖该项的 `span`，`rowspan` 为跨越的行数，任一为 `0` 时隐藏该项；返回 `undefined` 时使用该项自己的 `span`，占 1 行。后面的项会跳过已被占用的格子。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<Grid :gap="8" :get-span="getSpan">
-		<GridItem v-for="i in 6" :key="i" :span="6"><div class="cell">条目 {{ i }}</div></GridItem>
+	<Grid :gap="8" :get-span="getSpan" class="grid-demo">
+		<GridItem v-for="i in 6" :key="i" :span="6"><div class="grid-demo__cell">条目 {{ i }}</div></GridItem>
 	</Grid>
 </template>
 
@@ -91,14 +126,14 @@ const getSpan = ({ index }) => (index === 0 ? [2, 6] : void 0);
 </script>
 
 <style scoped>
-.cell {
+.grid-demo__cell {
 	display: flex;
+	align-items: center;
+	justify-content: center;
 	height: 100%;
 	min-height: 40px;
 	background: var(--vc-background-color-light);
 	border-radius: 4px;
-	align-items: center;
-	justify-content: center;
 }
 </style>
 ```
@@ -106,7 +141,80 @@ const getSpan = ({ index }) => (index === 0 ? [2, 6] : void 0);
 
 ### 对齐
 
-`justify`、`align` 控制每项在自己格子内的对齐（`justify-items` / `align-items`），GridItem 上的同名属性覆盖单项（`justify-self` / `align-self`）。轨道没有占满宽度时（例如全部是固定 px），用 `justifyContent` 分布轨道。
+`justify`、`align` 控制每项在自己格子内的对齐（`justify-items` / `align-items`），GridItem 上的同名属性覆盖单项（`justify-self` / `align-self`）。轨道没有占满宽度时（例如全部是固定 px），用 `justifyContent` 分布轨道。`tag` 改变外层标签。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
+```vue
+<template>
+	<div class="grid-demo">
+		<div class="grid-demo__row">
+			<RadioGroup v-model="justify">
+				<Radio v-for="item in ['start', 'center', 'end', 'stretch']" :key="item" :value="item">{{ item }}</Radio>
+			</RadioGroup>
+			<RadioGroup v-model="justifyContent">
+				<Radio v-for="item in ['start', 'center', 'end', 'space-between']" :key="item" :value="item">{{ item }}</Radio>
+			</RadioGroup>
+		</div>
+		<Grid tag="section" :columns="3" :gap="8" :justify="justify" align="center" class="grid-demo__stage">
+			<GridItem :span="1"><div class="grid-demo__cell">justify</div></GridItem>
+			<GridItem :span="1"><div class="grid-demo__cell is-tall">高一些</div></GridItem>
+			<GridItem :span="1" justify="end" align="end"><div class="grid-demo__cell">单项 end</div></GridItem>
+		</Grid>
+		<Grid :columns="[100, 100, 100]" :gap="8" :justify-content="justifyContent" class="grid-demo__stage">
+			<GridItem v-for="i in 3" :key="i" :span="1"><div class="grid-demo__cell">100px</div></GridItem>
+		</Grid>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { Grid, GridItem, Radio, RadioGroup } from '@deot/vc';
+
+const justify = ref('start');
+const justifyContent = ref('start');
+</script>
+
+<style scoped>
+.grid-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.grid-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+.grid-demo__stage {
+	padding: 8px;
+	border: 1px dashed var(--vc-color-neutral-light);
+}
+
+.grid-demo__cell {
+	padding: 0 12px;
+	line-height: 40px;
+	text-align: center;
+	background: var(--vc-background-color-light);
+	border-radius: 4px;
+}
+
+.grid-demo__cell.is-tall {
+	line-height: 80px;
+}
+</style>
+```
+:::
 
 ### 响应式
 
@@ -117,11 +225,18 @@ const getSpan = ({ index }) => (index === 0 ? [2, 6] : void 0);
 | 宽度 | < 576 | ≥ 576 | ≥ 768 | ≥ 992 | ≥ 1200 | ≥ 1600 |
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<Grid :columns="{ xs: 1, sm: 2, md: 3, lg: 4 }" :gap="8">
-		<GridItem v-for="i in 8" :key="i" :span="1"><div class="cell">条目 {{ i }}</div></GridItem>
+	<Grid :columns="{ xs: 1, sm: 2, md: 3, lg: 4 }" :gap="{ xs: 4, md: 8 }" class="grid-demo">
+		<GridItem v-for="i in 8" :key="i" :span="1"><div class="grid-demo__cell">条目 {{ i }}</div></GridItem>
 	</Grid>
 </template>
 
@@ -130,7 +245,7 @@ import { Grid, GridItem } from '@deot/vc';
 </script>
 
 <style scoped>
-.cell {
+.grid-demo__cell {
 	height: 40px;
 	line-height: 40px;
 	text-align: center;
@@ -146,14 +261,21 @@ import { Grid, GridItem } from '@deot/vc';
 `collapsed` 时只显示前 `collapsedRows` 行。`suffix` 项放在最后并靠右，折叠时预留在最后一行末尾；插槽参数 `overflow` 表示是否有项被隐藏。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<Grid :collapsed="collapsed" :columns="3" :gap="[16, 12]">
-		<GridItem v-for="i in 7" :key="i" :span="1"><Input :placeholder="`条目 ${i}`" /></GridItem>
+	<Grid :collapsed="isCollapsed" :collapsed-rows="2" :columns="3" :gap="[16, 12]" class="grid-demo">
+		<GridItem v-for="i in 8" :key="i" :span="1"><Input :placeholder="`条目 ${i}`" /></GridItem>
 		<GridItem :span="1" suffix justify="end">
 			<template #default="{ overflow }">
-				<Button @click="collapsed = !collapsed">{{ collapsed ? (overflow ? '展开' : '已全部显示') : '收起' }}</Button>
+				<Button @click="handleToggle">{{ isCollapsed ? (overflow ? '展开' : '已全部显示') : '收起' }}</Button>
 			</template>
 		</GridItem>
 	</Grid>
@@ -163,14 +285,14 @@ import { Grid, GridItem } from '@deot/vc';
 import { ref } from 'vue';
 import { Button, Grid, GridItem, Input } from '@deot/vc';
 
-const collapsed = ref(true);
+const isCollapsed = ref(true);
+
+const handleToggle = () => {
+	isCollapsed.value = !isCollapsed.value;
+};
 </script>
 ```
 :::
-
-## 主题与局部覆盖
-
-当前组件没有 CSS 主题参数，间距由 `gap` 设置。
 
 ## 移动端
 
@@ -178,6 +300,106 @@ const collapsed = ref(true);
 
 - `gap` 和 `columns` 数组中的数字按 750 稿换算，写为 `calc(var(--vc-rem) * n)`，随 `--vc-rem` 缩放。例如 `:gap="16"` 在 375 宽下为 8px，`:columns="[160, '1fr']"` 的首列为 80px。字符串原样使用。
 - 断点仍按容器的实际宽度（px）判断，手机上通常落在 `xs`。
+
+下例依次展示等分列、按 24 列的 `span`、固定首列 160（750 稿）的轨道与折叠；底栏切换 `rem` 可查看间距与固定轨道的缩放。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	mobile: true,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
+</config>
+-->
+```vue
+<template>
+	<div class="m-grid-demo">
+		<MGrid :columns="4" :gap="16">
+			<MGridItem v-for="i in 8" :key="i" :span="1">
+				<div class="m-grid-demo__cell">{{ i }}</div>
+			</MGridItem>
+		</MGrid>
+		<MGrid :gap="[16, 24]">
+			<MGridItem :span="12"><div class="m-grid-demo__cell">span 12</div></MGridItem>
+			<MGridItem :span="12"><div class="m-grid-demo__cell">span 12</div></MGridItem>
+			<MGridItem :span="8"><div class="m-grid-demo__cell">span 8</div></MGridItem>
+			<MGridItem span="auto"><div class="m-grid-demo__cell">auto</div></MGridItem>
+		</MGrid>
+		<MGrid :columns="[160, '1fr']" :gap="16">
+			<template v-for="item in rows" :key="item.label">
+				<MGridItem :span="1">
+					<div class="m-grid-demo__cell is-label">{{ item.label }}</div>
+				</MGridItem>
+				<MGridItem :span="1">
+					<div class="m-grid-demo__cell is-value">{{ item.value }}</div>
+				</MGridItem>
+			</template>
+		</MGrid>
+		<MGrid :columns="3" :gap="16" :collapsed="isCollapsed">
+			<MGridItem v-for="i in 7" :key="i" :span="1">
+				<div class="m-grid-demo__cell">项 {{ i }}</div>
+			</MGridItem>
+			<MGridItem :span="1" suffix>
+				<MButton size="small" @click="handleToggle">{{ isCollapsed ? '展开' : '收起' }}</MButton>
+			</MGridItem>
+		</MGrid>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { MButton, MGrid, MGridItem } from '@deot/vc';
+
+const isCollapsed = ref(true);
+const rows = [
+	{ label: '标签一', value: '内容较短' },
+	{ label: '标签二', value: '内容较长时在剩余宽度内换行，标签列宽度保持不变' },
+	{ label: '标签三', value: '内容' }
+];
+
+const handleToggle = () => {
+	isCollapsed.value = !isCollapsed.value;
+};
+</script>
+
+<style scoped>
+.m-grid-demo {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--vc-rem) * 32);
+	padding-inline: calc(var(--vc-rem) * 32);
+}
+
+.m-grid-demo__cell {
+	padding: calc(var(--vc-rem) * 16);
+	font-size: calc(var(--vc-rem) * 28);
+	line-height: calc(var(--vc-rem) * 40);
+	text-align: center;
+	background: var(--vc-background-color-light);
+	border-radius: calc(var(--vc-rem) * 8);
+}
+
+.m-grid-demo__cell.is-label {
+	color: var(--vc-color-dark-light);
+	text-align: left;
+}
+
+.m-grid-demo__cell.is-value {
+	text-align: left;
+}
+</style>
+```
+:::
+
+## 主题与局部覆盖
+
+当前组件没有 CSS 主题参数，间距由 `gap` 设置。
 
 ## API
 

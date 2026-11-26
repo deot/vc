@@ -2,6 +2,8 @@
 
 把区域分成多个面板，拖动面板之间的分隔条调整相邻两个面板的尺寸；支持上下排列、嵌套、折叠、键盘操作，以及松开后再应用尺寸的延迟模式。
 
+移动端入口导出的 `MSplitter`、`MSplitterPanel` 与 `Splitter`、`SplitterPanel` 是同一实现，触摸拖动的说明见 [移动端](#移动端)。
+
 ### 何时使用
 
 - 可调宽度的侧栏、目录、属性面板等布局。
@@ -10,25 +12,38 @@
 
 ### 基础用法
 
-`SplitterPanel` 的 `size` 为数字时是 px，字符串可带 `%`；不设的面板分剩余空间。拖动只改分隔条两侧的面板，`min` / `max` 限制拖动范围，格式同 `size`。
+`SplitterPanel` 的 `size` 为数字时是 px，字符串可带 `%`；不设的面板分剩余空间。拖动只改分隔条两侧的面板，`min` / `max` 限制拖动范围，格式同 `size`。拖动过程依次触发 `resize-start`、`resize`、`resize-end`，参数中的 `sizes` 为各面板的像素尺寸。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<p>size：{{ size }}</p>
 	<div class="splitter-demo">
-		<Splitter>
-			<SplitterPanel v-model:size="size" :min="120" :max="360">
-				<div class="cell">面板 A · min 120 · max 360</div>
-			</SplitterPanel>
-			<SplitterPanel>
-				<div class="cell">面板 B</div>
-			</SplitterPanel>
-			<SplitterPanel size="25%" min="10%">
-				<div class="cell">面板 C · 25%</div>
-			</SplitterPanel>
-		</Splitter>
+		<div class="splitter-demo__box">
+			<Splitter
+				@resize-start="handleResizeStart"
+				@resize="handleResize"
+				@resize-end="handleResizeEnd"
+			>
+				<SplitterPanel v-model:size="size" :min="120" :max="360">
+					<div class="splitter-demo__cell">面板 A · min 120 · max 360</div>
+				</SplitterPanel>
+				<SplitterPanel>
+					<div class="splitter-demo__cell">面板 B</div>
+				</SplitterPanel>
+				<SplitterPanel size="25%" min="10%">
+					<div class="splitter-demo__cell">面板 C · 25%</div>
+				</SplitterPanel>
+			</Splitter>
+		</div>
+		<p class="splitter-demo__result">size：{{ size }} · {{ status }} · sizes：{{ sizes || '-' }}</p>
 	</div>
 </template>
 
@@ -37,17 +52,44 @@ import { ref } from 'vue';
 import { Splitter, SplitterPanel } from '@deot/vc';
 
 const size = ref(200);
+const status = ref('未拖动');
+const sizes = ref('');
+
+const formatSizes = value => value.map(Math.round).join(' / ');
+
+const handleResizeStart = ({ index }) => {
+	status.value = `开始拖动第 ${index} 条分隔条`;
+};
+
+const handleResize = (e) => {
+	sizes.value = formatSizes(e.sizes);
+};
+
+const handleResizeEnd = (e) => {
+	status.value = '拖动结束';
+	sizes.value = formatSizes(e.sizes);
+};
 </script>
 
 <style scoped>
 .splitter-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.splitter-demo__box {
 	height: 160px;
 	border: 1px solid var(--vc-color-neutral-light);
 }
 
-.cell {
+.splitter-demo__cell {
 	padding: 16px 12px;
 	text-align: center;
+}
+
+.splitter-demo__result {
+	margin: 0;
 }
 </style>
 ```
@@ -73,16 +115,23 @@ const size = ref(200);
 `vertical` 让面板上下排列，分隔条为横线。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
 	<div class="splitter-demo">
 		<Splitter vertical>
 			<SplitterPanel size="40%" :min="60">
-				<div class="cell">面板 A</div>
+				<div class="splitter-demo__cell">面板 A</div>
 			</SplitterPanel>
 			<SplitterPanel :min="60">
-				<div class="cell">面板 B</div>
+				<div class="splitter-demo__cell">面板 B</div>
 			</SplitterPanel>
 		</Splitter>
 	</div>
@@ -98,7 +147,7 @@ import { Splitter, SplitterPanel } from '@deot/vc';
 	border: 1px solid var(--vc-color-neutral-light);
 }
 
-.cell {
+.splitter-demo__cell {
 	padding: 16px 12px;
 	text-align: center;
 }
@@ -113,27 +162,36 @@ import { Splitter, SplitterPanel } from '@deot/vc';
 - 点分隔条上的箭头折叠；再点一次恢复折叠前的尺寸（初始就是 0 的面板展开到 `min`，没有 `min` 时与相邻面板平分）。
 - 拖动越过 `min` 的一半时吸附折叠；从折叠状态拖出时直接到 `min`。
 - `true` 时两侧的分隔条上都有按钮；`{ start: true }` 只在前一条，`{ end: true }` 只在后一条。
-- `resizable` 为 `false` 的面板不能拖动，但仍可以折叠。
+- `resizable` 为 `false` 的面板不能拖动，但仍可以折叠，下例的面板 C 即是如此。
 
 折叠或展开时触发 `collapse-change`；按钮折叠不触发 `resize-*`。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<p>{{ log || '点击分隔条上的箭头' }}</p>
 	<div class="splitter-demo">
-		<Splitter @collapse-change="handleChange">
-			<SplitterPanel :size="200" :min="120" collapsible>
-				<div class="cell">面板 A · collapsible</div>
-			</SplitterPanel>
-			<SplitterPanel>
-				<div class="cell">面板 B</div>
-			</SplitterPanel>
-			<SplitterPanel :size="160" :min="100" :collapsible="{ start: true }">
-				<div class="cell">面板 C · start</div>
-			</SplitterPanel>
-		</Splitter>
+		<div class="splitter-demo__box">
+			<Splitter @collapse-change="handleCollapseChange">
+				<SplitterPanel :size="200" :min="120" collapsible>
+					<div class="splitter-demo__cell">面板 A · collapsible</div>
+				</SplitterPanel>
+				<SplitterPanel>
+					<div class="splitter-demo__cell">面板 B</div>
+				</SplitterPanel>
+				<SplitterPanel :size="160" :min="100" :resizable="false" :collapsible="{ start: true }">
+					<div class="splitter-demo__cell">面板 C · 不可拖动 · start</div>
+				</SplitterPanel>
+			</Splitter>
+		</div>
+		<p class="splitter-demo__result">{{ status }}</p>
 	</div>
 </template>
 
@@ -141,21 +199,32 @@ import { Splitter, SplitterPanel } from '@deot/vc';
 import { ref } from 'vue';
 import { Splitter, SplitterPanel } from '@deot/vc';
 
-const log = ref('');
-const handleChange = ({ index, collapsed }) => {
-	log.value = `面板 ${index} ${collapsed ? '折叠' : '展开'}`;
+const status = ref('点击分隔条上的箭头');
+
+const handleCollapseChange = ({ index, collapsed }) => {
+	status.value = `面板 ${index} ${collapsed ? '折叠' : '展开'}`;
 };
 </script>
 
 <style scoped>
 .splitter-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.splitter-demo__box {
 	height: 160px;
 	border: 1px solid var(--vc-color-neutral-light);
 }
 
-.cell {
+.splitter-demo__cell {
 	padding: 16px 12px;
 	text-align: center;
+}
+
+.splitter-demo__result {
+	margin: 0;
 }
 </style>
 ```
@@ -163,19 +232,26 @@ const handleChange = ({ index, collapsed }) => {
 
 ### 延迟应用
 
-`lazy` 时拖动只移动一条预览线，面板在松开后才改变尺寸。面板里是图表、编辑器等重新布局开销较大的内容时使用。拖动中仍触发 `resize`，参数为松开后将要应用的尺寸；手势被打断时什么都不应用。
+`lazy` 时拖动只移动一条预览线，面板在松开后才改变尺寸。面板里是图表、编辑器等重新布局开销较大的内容时使用。拖动中仍触发 `resize`，参数为松开后将要应用的尺寸；手势被打断时什么都不应用。`tag` 设置根元素的标签，下例渲染为 `section`。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
 	<div class="splitter-demo">
-		<Splitter lazy>
+		<Splitter lazy tag="section">
 			<SplitterPanel size="40%" :min="120">
-				<div class="cell">面板 A</div>
+				<div class="splitter-demo__cell">面板 A</div>
 			</SplitterPanel>
 			<SplitterPanel :min="120">
-				<div class="cell">面板 B</div>
+				<div class="splitter-demo__cell">面板 B</div>
 			</SplitterPanel>
 		</Splitter>
 	</div>
@@ -191,7 +267,7 @@ import { Splitter, SplitterPanel } from '@deot/vc';
 	border: 1px solid var(--vc-color-neutral-light);
 }
 
-.cell {
+.splitter-demo__cell {
 	padding: 16px 12px;
 	text-align: center;
 }
@@ -201,26 +277,33 @@ import { Splitter, SplitterPanel } from '@deot/vc';
 
 ### 滚动、嵌套与占满高度
 
-面板内容默认放在内置的 [Scroller](../scroller/README.md)（`native: false`）里滚动：滚动条悬浮在内容上，不占宽度，拖动挤压面板时不会闪出浏览器滚动条。`scrollerOptions` 传给这个 Scroller。
+面板内容默认放在内置的 [Scroller](../scroller/README.md)（`native: false`）里滚动：滚动条悬浮在内容上，不占宽度，拖动挤压面板时不会闪出浏览器滚动条。`scrollerOptions` 传给这个 Scroller，下例左侧面板用 `{ always: true }` 让滚动条常显。
 
 内容在 Scroller 里时，`height: 100%` 无法占满面板。嵌套 Splitter、图表、编辑器等需要占满面板的内容，给面板设 `:scrollable="false"`：面板不再滚动（溢出隐藏），内容可用 `height: 100%`，并自行处理溢出。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
 	<div class="splitter-demo">
 		<Splitter>
-			<SplitterPanel :size="180" :min="120" collapsible>
-				<p v-for="i in 20" :key="i" class="row">列表项 {{ i }}</p>
+			<SplitterPanel :size="180" :min="120" :scroller-options="{ always: true }" collapsible>
+				<p v-for="i in 20" :key="i" class="splitter-demo__row">条目 {{ i }}</p>
 			</SplitterPanel>
 			<SplitterPanel :scrollable="false">
 				<Splitter vertical>
 					<SplitterPanel :min="60">
-						<p v-for="i in 20" :key="i" class="row">第 {{ i }} 行内容</p>
+						<p v-for="i in 20" :key="i" class="splitter-demo__row">第 {{ i }} 行内容</p>
 					</SplitterPanel>
 					<SplitterPanel size="35%" :min="40" collapsible>
-						<p v-for="i in 10" :key="i" class="row">输出 {{ i }}</p>
+						<p v-for="i in 10" :key="i" class="splitter-demo__row">输出 {{ i }}</p>
 					</SplitterPanel>
 				</Splitter>
 			</SplitterPanel>
@@ -238,7 +321,7 @@ import { Splitter, SplitterPanel } from '@deot/vc';
 	border: 1px solid var(--vc-color-neutral-light);
 }
 
-.row {
+.splitter-demo__row {
 	margin: 0;
 	padding: 4px 12px;
 	white-space: nowrap;
@@ -249,22 +332,29 @@ import { Splitter, SplitterPanel } from '@deot/vc';
 
 ### 自定义分隔条
 
-`--vc-splitter-bar-size` 调整分隔条占位的厚度（`%` 尺寸会自动扣除），`#handle` 插槽替换中间的把手，参数为 `{ index, vertical, dragging }`。插槽内容居中放在分隔条上，外观由内容决定。
+`--vc-splitter-bar-size` 调整分隔条占位的厚度（`%` 尺寸会自动扣除），`handle` 插槽替换中间的把手，参数为 `{ index, vertical, dragging }`。插槽内容居中放在分隔条上，外观由内容决定。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
 	<div class="splitter-demo">
-		<Splitter class="thick-splitter">
+		<Splitter class="splitter-demo__splitter">
 			<SplitterPanel :min="80">
-				<div class="cell">面板 A</div>
+				<div class="splitter-demo__cell">面板 A</div>
 			</SplitterPanel>
 			<SplitterPanel :min="80">
-				<div class="cell">面板 B</div>
+				<div class="splitter-demo__cell">面板 B</div>
 			</SplitterPanel>
 			<template #handle="{ dragging }">
-				<span class="thick-splitter__handle" :class="{ 'is-dragging': dragging }">
+				<span class="splitter-demo__handle" :class="{ 'is-dragging': dragging }">
 					<Icon type="drag" />
 				</span>
 			</template>
@@ -282,28 +372,32 @@ import { Splitter, SplitterPanel, Icon } from '@deot/vc';
 	border: 1px solid var(--vc-color-neutral-light);
 }
 
-.thick-splitter {
+.splitter-demo__splitter {
 	--vc-splitter-bar-size: 8px;
 }
 
-.thick-splitter__handle {
+.splitter-demo__handle {
 	display: flex;
 	font-size: 12px;
 	color: var(--vc-color-dark-lightest);
 	transform: rotate(90deg);
 }
 
-.thick-splitter__handle.is-dragging {
+.splitter-demo__handle.is-dragging {
 	color: #fff;
 }
 
-.cell {
+.splitter-demo__cell {
 	padding: 16px 12px;
 	text-align: center;
 }
 </style>
 ```
 :::
+
+## 移动端
+
+移动端入口导出 `MSplitter`、`MSplitterPanel`，就是 `Splitter`、`SplitterPanel`：拖动同时支持鼠标与触摸，触屏（`pointer: coarse`）上分隔条可按住的厚度为 `24px`（不受局部变量 `hit-size` 影响），不改变布局。属性、事件、插槽与样式两端相同，不单独提供移动端示例。
 
 ## 键盘与无障碍
 
@@ -339,10 +433,6 @@ import { Splitter, SplitterPanel, Icon } from '@deot/vc';
 | hit-size | 分隔条可按住的厚度，不改变布局（触屏上为 `24px`） | `8px` |
 | handle-size | 默认把手的长度 | `24px` |
 | collapse-size | 折叠按钮的边长 | `16px` |
-
-## 移动端
-
-移动端入口导出 `MSplitter`、`MSplitterPanel`，就是 `Splitter`、`SplitterPanel`：拖动同时支持鼠标与触摸，触屏上分隔条可按住的厚度为 `24px`。
 
 ## API
 

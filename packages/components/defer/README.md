@@ -2,6 +2,8 @@
 
 延迟调度列表渲染，通过默认插槽定义每条数据的内容，自身不生成额外的容器元素。
 
+移动端入口导出的 `MDefer` 与 `Defer` 是同一实现。
+
 ### 何时使用
 
 - 需要将列表首次渲染交给异步任务调度。
@@ -23,20 +25,40 @@ Defer 最终会渲染全部数据，不是虚拟列表。**每个任务只提交
 
 ### 基础用法
 
-默认 `once` 为 `true`，首次完成后，后续数据更新直接完整渲染。下面设置 `:once="false"`，每次替换数组都会重新调度，并显示完成次数与调度耗时。
+默认 `once` 为 `true`，首次完成后，后续数据更新直接完整渲染。下面设置 `:once="false"`，每次替换数组都会重新调度；`concurrency` 设置起始步长，`disabled` 跳过调度直接渲染全部数据。`progress` 显示本轮已渲染的条数，`complete` 显示完成次数与调度耗时。
+
+`primaryKey` 指定数据项中作为 key 的字段（下例为 `uid`）。点击「追加 100 条」时，前 N 条的位置与 key 都没变，保持挂载，只调度新增部分。
 
 :::playground
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div style="max-width: 560px; padding: 20px;">
-		<div style="display: flex; gap: 8px; align-items: center; margin-bottom: 12px;">
-			<Button type="primary" size="small" @click="handleReload">重新加载</Button>
-			<Button size="small" @click="disabled = !disabled">{{ disabled ? '启用延迟' : '立即显示全部' }}</Button>
-			<span style="color: #888;">{{ data.length }} 条数据</span>
+	<div class="defer-demo">
+		<div class="defer-demo__row">
+			<Button type="primary" @click="handleReload">重新加载</Button>
+			<Button @click="handleAppend">追加 100 条</Button>
+			<Button @click="handleToggleDisabled">{{ isDisabled ? '启用延迟' : '立即显示全部' }}</Button>
 		</div>
-		<p style="margin: 0 0 12px; color: #888;">完成 {{ completed }} 次 · 最近耗时 {{ elapsed }} ms</p>
-		<ul style="height: 220px; padding: 8px 16px; margin: 0; overflow: auto; border: 1px solid #e5e7eb; border-radius: 6px;">
-			<Defer :data="data" :disabled="disabled" :once="false" :concurrency="20" @complete="handleComplete">
+		<p class="defer-demo__result">
+			共 {{ data.length }} 条 · 已渲染 {{ rendered }} 条 · 完成 {{ completed }} 次 · 最近耗时 {{ elapsed }} ms
+		</p>
+		<ul class="defer-demo__list">
+			<Defer
+				:data="data"
+				primary-key="uid"
+				:disabled="isDisabled"
+				:once="false"
+				:concurrency="20"
+				@progress="handleProgress"
+				@complete="handleComplete"
+			>
 				<template #default="{ row, index }">
 					<li>{{ index + 1 }}. {{ row.label }}</li>
 				</template>
@@ -49,22 +71,71 @@ Defer 最终会渲染全部数据，不是虚拟列表。**每个任务只提交
 import { ref } from 'vue';
 import { Button, Defer } from '@deot/vc';
 
-const createData = () => Array.from({ length: 200 }, (_, index) => ({
-	id: index,
-	label: `数据 ${index + 1}`
-}));
-const data = ref(createData());
-const disabled = ref(false);
+let seed = 0;
+const createRows = count => Array.from({ length: count }, () => {
+	seed++;
+	return { uid: seed, label: `第 ${seed} 行` };
+});
+
+const data = ref(createRows(200));
+const isDisabled = ref(false);
+const rendered = ref(0);
 const completed = ref(0);
 const elapsed = ref(0);
+
 const handleReload = () => {
-	data.value = createData();
+	data.value = createRows(200);
 };
-const handleComplete = (timestamp) => {
-	completed.value += 1;
+
+const handleAppend = () => {
+	data.value = [...data.value, ...createRows(100)];
+};
+
+const handleToggleDisabled = () => {
+	isDisabled.value = !isDisabled.value;
+};
+
+const handleProgress = (count) => {
+	rendered.value = count;
+};
+
+const handleComplete = (timestamp, rows) => {
+	completed.value++;
 	elapsed.value = timestamp;
+	rendered.value = rows.length;
 };
 </script>
+
+<style scoped>
+.defer-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	width: 560px;
+	max-width: 100%;
+}
+
+.defer-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+.defer-demo__result {
+	margin: 0;
+}
+
+.defer-demo__list {
+	height: 220px;
+	padding: 8px 16px;
+	margin: 0;
+	overflow: auto;
+	border: 1px solid var(--vc-color-neutral-light, #edeff1);
+	border-radius: 4px;
+	list-style: none;
+}
+</style>
 ```
 :::
 
@@ -100,4 +171,3 @@ const handleComplete = (timestamp) => {
 
 - 数据监听基于数组引用；需要重新调度时替换数组，不要依赖原地 `push` / `splice` 触发新一轮任务。
 - `concurrency` 当前没有运行时校验；零或负数会被当作 1 处理。
-- `MDefer` 是 `Defer` 的别名，属性、事件和插槽完全相同，可从 `@deot/vc` 导入。

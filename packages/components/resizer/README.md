@@ -2,29 +2,39 @@
 
 监听容器尺寸，通过事件和作用域插槽向内容提供可用宽高。
 
+移动端入口导出的 `MResizer` 与 `Resizer` 是同一实现。
+
 ### 何时使用
 
-需要将布局中剩余空间的尺寸传给图表、滚动区域或其他需要显式宽高的内容时使用。
+- 需要将布局中剩余空间的尺寸传给图表、滚动区域或其他需要显式宽高的内容时。
 
 只测量、不提供拖动；要让用户拖动分隔条调整面板尺寸，用 [Splitter](../splitter/README.md)。
 
 ### 基础用法
 
-调整父容器宽度，观察插槽尺寸和 `resize` 事件同步更新。父容器应具有可确定的尺寸。
+调整父容器宽高，观察插槽尺寸和 `resize` 事件同步更新。父容器应具有可确定的尺寸；Resizer 自身的 `padding` 会从测量值中扣除。
 
 :::playground
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
 	<div class="resizer-demo">
 		<div class="resizer-demo__controls">
-			<label>容器宽度：{{ containerWidth }}px</label>
+			<label class="resizer-demo__label">容器宽度：{{ containerWidth }}px</label>
 			<Slider v-model="containerWidth" :min="200" :max="360" />
-			<label>容器高度：{{ containerHeight }}px</label>
+			<label class="resizer-demo__label">容器高度：{{ containerHeight }}px</label>
 			<Slider v-model="containerHeight" :min="120" :max="240" />
 		</div>
-		<p>最近测量：{{ measured.width }} × {{ measured.height }}px</p>
+		<p class="resizer-demo__result">最近测量：{{ measured.width }} × {{ measured.height }}px</p>
 		<div :style="{ width: `${containerWidth}px`, height: `${containerHeight}px` }">
-			<Resizer style="padding: 16px;" @resize="measured = $event">
+			<Resizer class="resizer-demo__resizer" @resize="handleResize">
 				<template #default="{ width, height, style }">
 					<div class="resizer-demo__content" :style="style">
 						{{ width }} × {{ height }}px
@@ -42,21 +52,34 @@ import { Resizer, Slider } from '@deot/vc';
 const containerWidth = ref(300);
 const containerHeight = ref(180);
 const measured = ref({ width: 0, height: 0 });
+
+const handleResize = ({ width, height }) => {
+	measured.value = { width, height };
+};
 </script>
 
 <style scoped>
 .resizer-demo {
-	padding: 20px;
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
 }
 
 .resizer-demo__controls {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
 	width: 260px;
-	margin-bottom: 12px;
+	max-width: 100%;
 }
 
-.resizer-demo__controls label {
-	display: block;
-	margin: 8px 0 4px;
+.resizer-demo__result {
+	margin: 0;
+}
+
+.resizer-demo__resizer {
+	box-sizing: border-box;
+	padding: 16px;
 }
 
 .resizer-demo__content {
@@ -69,9 +92,108 @@ const measured = ref({ width: 0, height: 0 });
 ```
 :::
 
-## API
+### 填充方向与手动测量
 
-`MResizer` 与 `Resizer` 是同一组件，属性、事件、插槽和实例成员一致。
+`fill` 传数组时按 `[宽度, 高度]` 分别控制是否填充父容器，`[true, false]` 只填充宽度，高度由内容撑开；`tag` 设置根元素标签。`resize` 事件的 `inited` 在首次测量时为 `false`。通过模板 ref 调用 `refresh()` 手动测量，并读取 `offsetWidth`、`offsetHeight`。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
+```vue
+<template>
+	<div class="resizer-demo">
+		<div class="resizer-demo__row">
+			<Button @click="handleAdd">增加一行</Button>
+			<Button @click="handleRemove">减少一行</Button>
+			<Button @click="handleRefresh">refresh()</Button>
+		</div>
+		<Resizer
+			ref="resizer"
+			tag="section"
+			:fill="[true, false]"
+			class="resizer-demo__resizer"
+			@resize="handleResize"
+		>
+			<template #default="{ width, height }">
+				<div class="resizer-demo__lines">
+					<p v-for="n in lines" :key="n" class="resizer-demo__line">第 {{ n }} 行</p>
+					<p class="resizer-demo__line">插槽尺寸：{{ width }} × {{ height }}px</p>
+				</div>
+			</template>
+		</Resizer>
+		<p class="resizer-demo__result">{{ resizeText }}</p>
+		<p class="resizer-demo__result">{{ refreshText }}</p>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { Button, Resizer } from '@deot/vc';
+
+const resizer = ref();
+const lines = ref(2);
+const resizeText = ref('resize：等待测量');
+const refreshText = ref('refresh：尚未调用');
+
+const handleResize = ({ width, height, inited }) => {
+	resizeText.value = `resize：${width} × ${height}px，inited：${inited}`;
+};
+
+const handleAdd = () => {
+	lines.value++;
+};
+
+const handleRemove = () => {
+	lines.value = Math.max(1, lines.value - 1);
+};
+
+const handleRefresh = () => {
+	resizer.value.refresh();
+	refreshText.value = `refresh：${resizer.value.offsetWidth} × ${resizer.value.offsetHeight}px`;
+};
+</script>
+
+<style scoped>
+.resizer-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.resizer-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+.resizer-demo__resizer {
+	box-sizing: border-box;
+	padding: 16px;
+	background: var(--vc-background-color-light);
+}
+
+.resizer-demo__lines {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.resizer-demo__line,
+.resizer-demo__result {
+	margin: 0;
+}
+</style>
+```
+:::
+
+## API
 
 ### 属性
 

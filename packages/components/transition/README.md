@@ -2,7 +2,7 @@
 
 基于 Vue 的 `Transition` 和 `TransitionGroup` 封装进入、离开与列表位移动画，并提供淡入淡出、缩放、滑动、缩放弹出、折叠，以及从触发元素展开六种预置效果。
 
-`MTransition`、`MTransitionFade`、`MTransitionScale`、`MTransitionSlide`、`MTransitionZoom`、`MTransitionCollapse`、`MTransitionReveal` 分别是对应组件的移动端入口别名，API 与原组件一致。
+移动端入口导出的 `MTransition`、`MTransitionFade`、`MTransitionScale`、`MTransitionSlide`、`MTransitionZoom`、`MTransitionCollapse`、`MTransitionReveal` 与对应的桌面端组件是同一实现。
 
 ### 何时使用
 
@@ -12,12 +12,13 @@
 
 ### 基础用法
 
-`TransitionFade`、`TransitionScale`、`TransitionSlide`、`TransitionZoom` 和 `TransitionCollapse` 已包含对应的动画样式。`duration` 的单位为毫秒。
+`TransitionFade`、`TransitionScale`、`TransitionSlide`、`TransitionZoom` 和 `TransitionCollapse` 已包含对应的动画样式，`mode` 选择内置的动画模式。`duration` 的单位为毫秒。
 
 :::playground
 <!--
 <config lang="json5">
 {
+	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -25,9 +26,9 @@
 ```vue
 <template>
 	<div class="transition-demo">
-		<Button @click="isVisible = !isVisible">
-			{{ isVisible ? '隐藏内容' : '显示内容' }}
-		</Button>
+		<div class="transition-demo__row">
+			<Button @click="handleToggle">{{ isVisible ? '隐藏内容' : '显示内容' }}</Button>
+		</div>
 		<div class="transition-demo__grid">
 			<div class="transition-demo__item">
 				<span>Fade</span>
@@ -77,24 +78,42 @@ import {
 } from '@deot/vc';
 
 const isVisible = ref(true);
+
+const handleToggle = () => {
+	isVisible.value = !isVisible.value;
+};
 </script>
 
 <style scoped>
+.transition-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.transition-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
 .transition-demo__grid {
 	display: grid;
 	grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
-	gap: 12px;
-	margin-top: 12px;
+	gap: 16px;
 }
 
 .transition-demo__item {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
 	min-height: 88px;
 	color: var(--vc-color-dark-lightest);
 	font-size: 13px;
 }
 
 .transition-demo__panel {
-	margin-top: 8px;
 	padding: 12px;
 	border: 1px solid var(--vc-color-light-deepest);
 	border-radius: 4px;
@@ -107,27 +126,39 @@ const isVisible = ref(true);
 
 ### 自定义 Transition
 
-`Transition` 本身不提供 keyframes。通过 `prefix` 指定进入、离开的激活类前缀，组件会分别组合出 `<prefix>.is-in` 和 `<prefix>.is-out`。
+`Transition` 本身不提供 keyframes。通过 `prefix` 指定进入、离开的激活类前缀，组件会分别组合出 `<prefix>.is-in` 和 `<prefix>.is-out`。`duration`、`delay` 可分别设置进入（`enter`）和离开（`leave`），`origin` 设置动画期间的 `transform-origin`，`style` 设置进入、离开前写到子元素上的内联样式（会替换组件的默认值）。过渡事件 `before-enter`、`enter`、`after-enter`、`before-leave`、`leave`、`after-leave` 均以过渡元素为第一个参数。
 
 :::playground
 <!--
 <config lang="json5">
 {
+	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
 -->
 ```vue
 <template>
-	<div>
-		<Button @click="isVisible = !isVisible">
-			{{ isVisible ? '离开' : '进入' }}
-		</Button>
-		<Transition prefix="transition-custom" :duration="400">
-			<div v-show="isVisible" class="transition-custom__panel">
-				自定义过渡内容
-			</div>
+	<div class="transition-demo">
+		<div class="transition-demo__row">
+			<Button @click="handleToggle">{{ isVisible ? '离开' : '进入' }}</Button>
+		</div>
+		<Transition
+			prefix="transition-demo-custom"
+			:duration="{ enter: 400, leave: 200 }"
+			:delay="{ enter: 100, leave: 0 }"
+			origin="left top"
+			:style="{ animationFillMode: 'both', animationTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)' }"
+			@before-enter="handleBeforeEnter"
+			@enter="handleEnter"
+			@after-enter="handleAfterEnter"
+			@before-leave="handleBeforeLeave"
+			@leave="handleLeave"
+			@after-leave="handleAfterLeave"
+		>
+			<div v-show="isVisible" class="transition-demo__panel">自定义过渡内容</div>
 		</Transition>
+		<p class="transition-demo__result">{{ events.join(' → ') || '暂无事件' }}</p>
 	</div>
 </template>
 
@@ -136,36 +167,68 @@ import { ref } from 'vue';
 import { Button, Transition } from '@deot/vc';
 
 const isVisible = ref(true);
+const events = ref([]);
+
+const record = (name) => {
+	events.value = [...events.value, name].slice(-3);
+};
+
+const handleToggle = () => {
+	isVisible.value = !isVisible.value;
+};
+
+const handleBeforeEnter = () => record('before-enter');
+const handleEnter = () => record('enter');
+const handleAfterEnter = () => record('after-enter');
+const handleBeforeLeave = () => record('before-leave');
+const handleLeave = () => record('leave');
+const handleAfterLeave = () => record('after-leave');
 </script>
 
 <style scoped>
-.transition-custom__panel {
-	margin-top: 12px;
+.transition-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.transition-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+.transition-demo__panel {
 	padding: 12px;
 	border-radius: 4px;
 	background: var(--vc-color-primary-lighter);
 	color: var(--vc-foreground-color);
 }
 
-.transition-custom.is-in {
-	animation-name: transition-custom-in;
+.transition-demo__result {
+	margin: 0;
 }
 
-.transition-custom.is-out {
-	animation-name: transition-custom-out;
+.transition-demo-custom.is-in {
+	animation-name: transition-demo-custom-in;
 }
 
-@keyframes transition-custom-in {
+.transition-demo-custom.is-out {
+	animation-name: transition-demo-custom-out;
+}
+
+@keyframes transition-demo-custom-in {
 	from {
 		opacity: 0;
-		transform: translateY(-12px);
+		transform: scale(0.6);
 	}
 }
 
-@keyframes transition-custom-out {
+@keyframes transition-demo-custom-out {
 	to {
 		opacity: 0;
-		transform: translateY(12px);
+		transform: scale(0.6);
 	}
 }
 </style>
@@ -180,24 +243,25 @@ const isVisible = ref(true);
 <!--
 <config lang="json5">
 {
+	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
 -->
 ```vue
 <template>
-	<div>
-		<div class="transition-list__actions">
+	<div class="transition-demo">
+		<div class="transition-demo__row">
 			<Button @click="handleAdd">添加</Button>
 			<Button :disabled="items.length === 0" @click="handleRemove">删除</Button>
 		</div>
 		<TransitionSlide
-			class="transition-list"
+			class="transition-demo__list"
 			mode="top-part"
 			tag="div"
 			group
 		>
-			<div v-for="item in items" :key="item" class="transition-list__item">
+			<div v-for="item in items" :key="item" class="transition-demo__item">
 				{{ item }}
 			</div>
 		</TransitionSlide>
@@ -221,20 +285,27 @@ const handleRemove = () => {
 </script>
 
 <style scoped>
-.transition-list__actions {
+.transition-demo {
 	display: flex;
-	gap: 8px;
-	margin-bottom: 12px;
+	flex-direction: column;
+	gap: 16px;
 }
 
-.transition-list {
+.transition-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+.transition-demo__list {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 8px;
 	min-height: 40px;
 }
 
-.transition-list__item {
+.transition-demo__item {
 	display: grid;
 	place-items: center;
 	width: 40px;
@@ -263,21 +334,22 @@ const handleRemove = () => {
 <!--
 <config lang="json5">
 {
+	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
 -->
 ```vue
 <template>
-	<div class="reveal-basic">
-		<!-- 按钮默认 250ms 防抖，展开途中再点才能触发退回 -->
-		<Button :wait="0" @click="isVisible = !isVisible">
-			{{ isVisible ? '收起' : '展开' }}
-		</Button>
+	<div class="transition-demo">
+		<div class="transition-demo__row">
+			<!-- 按钮默认 250ms 防抖，展开途中再点才能触发退回 -->
+			<Button :wait="0" @click="handleToggle">{{ isVisible ? '收起' : '展开' }}</Button>
+		</div>
 		<!-- 窗口：只放这一个子元素，自身不缩放、不旋转 -->
-		<div class="reveal-basic__frame">
+		<div class="transition-demo__frame">
 			<TransitionReveal offset="auto" opacity>
-				<div v-show="isVisible" class="reveal-basic__panel">
+				<div v-show="isVisible" class="transition-demo__panel">
 					<p>标题</p>
 					<p>从点中的按钮展开，收起时缩回按钮</p>
 				</div>
@@ -291,21 +363,140 @@ import { ref } from 'vue';
 import { Button, TransitionReveal } from '@deot/vc';
 
 const isVisible = ref(false);
+
+const handleToggle = () => {
+	isVisible.value = !isVisible.value;
+};
 </script>
 
 <style scoped>
-.reveal-basic {
+.transition-demo {
 	position: relative;
 	height: 220px;
 }
 
-.reveal-basic__frame {
+.transition-demo__row {
+	position: relative;
+	z-index: 1;
+	display: flex;
+	gap: 8px;
+}
+
+.transition-demo__frame {
 	position: absolute;
 	inset: 0;
 	pointer-events: none;
 }
 
-.reveal-basic__panel {
+.transition-demo__panel {
+	position: absolute;
+	top: 60px;
+	left: 120px;
+	width: 280px;
+	padding: 12px 16px;
+	border-radius: 8px;
+	background: var(--vc-background-color);
+	box-shadow: 0 6px 24px rgb(0 0 0 / 16%);
+	color: var(--vc-foreground-color);
+	pointer-events: auto;
+}
+</style>
+```
+:::
+
+### 指定触发元素与伴随元素
+
+`trigger-element` 指定从哪个元素展开、缩回，下例总是从虚线框展开，与点了哪个按钮无关。`companion` 与画面同一段时间淡入淡出，常用于蒙层，它的显隐由使用方控制，在 `after-leave` 之后再隐藏。`delay` 让画面晚一点淡入、提前淡出；`offset` 也可以分别设置打开与关闭，例如只裁打开的一段。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
+```vue
+<template>
+	<div class="transition-demo">
+		<div class="transition-demo__row">
+			<Button :wait="0" @click="handleToggle">{{ isVisible ? '收起' : '展开' }}</Button>
+			<div ref="anchor" class="transition-demo__anchor">固定元素</div>
+		</div>
+		<div v-show="isMaskVisible" ref="mask" class="transition-demo__mask" />
+		<div class="transition-demo__frame">
+			<TransitionReveal
+				:trigger-element="anchor"
+				:companion="mask"
+				:delay="60"
+				:offset="{ enter: 80, leave: 0 }"
+				@after-leave="handleAfterLeave"
+			>
+				<div v-show="isVisible" class="transition-demo__panel">
+					<p>标题</p>
+					<p>从虚线框展开，蒙层与画面同步淡入淡出</p>
+				</div>
+			</TransitionReveal>
+		</div>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { Button, TransitionReveal } from '@deot/vc';
+
+const anchor = ref(null);
+const mask = ref(null);
+const isVisible = ref(false);
+const isMaskVisible = ref(false);
+
+const handleToggle = () => {
+	isVisible.value = !isVisible.value;
+	isVisible.value && (isMaskVisible.value = true);
+};
+
+const handleAfterLeave = () => {
+	isMaskVisible.value = false;
+};
+</script>
+
+<style scoped>
+.transition-demo {
+	position: relative;
+	height: 220px;
+}
+
+.transition-demo__row {
+	position: relative;
+	z-index: 2;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+.transition-demo__anchor {
+	padding: 4px 12px;
+	border: 1px dashed var(--vc-color-primary);
+	border-radius: 4px;
+}
+
+.transition-demo__mask {
+	position: absolute;
+	inset: 0;
+	z-index: 1;
+	background: rgb(0 0 0 / 20%);
+}
+
+.transition-demo__frame {
+	position: absolute;
+	inset: 0;
+	z-index: 1;
+	pointer-events: none;
+}
+
+.transition-demo__panel {
 	position: absolute;
 	top: 60px;
 	left: 120px;
@@ -335,8 +526,8 @@ Chrome DevTools 打开时会持有播放过动画的元素：即使手动回收�
 
 | 属性 | 说明 | 类型 | 可选值 | 默认值 |
 | --- | --- | --- | --- | --- |
-| duration | 进入和离开的持续时间，单位为毫秒 | `number \| { enter: number; leave: number }` | - | `300` |
-| delay | 进入和离开的延迟时间，单位为毫秒；`TransitionCollapse` 不使用该属性 | `number \| { enter: number; leave: number }` | - | `0` |
+| duration | 进入和离开的持续时间，单位为毫秒；对象中未给出的一项为 `0` | `number \| { enter?: number; leave?: number }` | - | `300` |
+| delay | 进入和离开的延迟时间，单位为毫秒；`TransitionCollapse` 不使用该属性 | `number \| { enter?: number; leave?: number }` | - | `0` |
 | group | 是否使用 `TransitionGroup` | `boolean` | - | `false` |
 | tag | `group` 为 `true` 时，`TransitionGroup` 渲染的根元素标签 | `string` | - | `undefined` |
 | origin | 动画期间设置到子元素的 `transform-origin` | `string` | - | `''` |
@@ -361,7 +552,7 @@ Chrome DevTools 打开时会持有播放过动画的元素：即使手动回收�
 
 | 属性 | 说明 | 类型 | 可选值 | 默认值 |
 | --- | --- | --- | --- | --- |
-| trigger-element | 打开时从它展开，关闭时缩回它当时的位置（已不在文档里时缩回打开时的位置）；可以是元素或 `VirtualElement`（只有一个盒子的替身）；传 `null` 时淡入淡出 | `Element \| VirtualElement \| null` | - | 最近一次点击的位置（`VirtualElement.fromClick()`） |
+| triggerElement | 打开时从它展开，关闭时缩回它当时的位置（已不在文档里时缩回打开时的位置）；可以是元素或 `VirtualElement`（只有一个盒子的替身）；传 `null` 时淡入淡出 | `Element \| VirtualElement \| null` | - | 最近一次点击的位置（`VirtualElement.fromClick()`） |
 | offset | 打开时间轴上靠近触发元素的一段裁掉多少毫秒：打开（`enter`）立即从这一刻的姿态开始，关闭（`leave`）停在同一个姿态结束（按缓动换算，关闭实际裁掉的毫秒数更多）；淡入淡出时同样适用。超过 333 时按 332 处理。`'auto'` 按布局取窗口刚离开触发元素（留 8px）的姿态，起点最多到路程 40%。裁掉后剩下的不足 240ms 时按比例放慢到 240ms | `number \| 'auto' \| { enter?: number; leave?: number }` | - | `0` |
 | opacity | 画面在实际播放的这一段里匀速淡入、淡出；与 `delay` 一起用时从两者中较晚的一刻开始淡入 | `boolean` | - | `false` |
 | companion | 与画面同一段时间匀速淡入淡出的元素，如蒙层；它的显示、隐藏由使用方控制，应在关闭的 `after-leave` 之后才隐藏 | `Element \| null` | - | `null` |

@@ -9,13 +9,20 @@
 
 ### 基础用法
 
-`data` 是数据源，每项通过 `prop` 路径取值；也可以用 `value` 直接传值。值为空（`null` / `undefined` / `''` / `[]`）时显示 `placeholder`，`0` 不算空。默认 24 格、每项 `span` 为 8（每行 3 项），每行最后一项补满本行。
+`data` 是数据源，每项通过 `prop` 路径取值；也可以用 `value` 直接传值。值为空（`null` / `undefined` / `''` / `[]`）时显示 `placeholder`，`0` 不算空。默认 24 格、每项 `span` 为 8（每行 3 项），每行最后一项补满本行。`prefix` / `suffix` 放在值的前后，`hidden` 的项不渲染也不占位。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<Descriptions title="基础信息" :data="data" :options="options" />
+	<Descriptions title="基础信息" placeholder="暂无" :data="data" :options="options" />
 </template>
 
 <script setup>
@@ -27,8 +34,10 @@ const options = [
 	{ label: '名称', prop: 'name' },
 	{ label: '类型', prop: 'type' },
 	{ label: '状态', prop: 'status', tooltip: '状态的说明' },
-	{ label: '数值', prop: 'value', suffix: ' 项' },
+	{ label: '数值', prop: 'value', prefix: '共 ', suffix: ' 项' },
 	{ label: '空值', prop: 'empty' },
+	{ label: '直接传值', value: '不经过 prop' },
+	{ label: '隐藏项', prop: 'code', hidden: true },
 	{ label: '说明', prop: 'desc', span: 24 }
 ];
 </script>
@@ -37,15 +46,28 @@ const options = [
 
 ### 子组件写法
 
-`options` 中每一项的字段与 DescriptionsItem 的属性同名。DescriptionsItem 的默认插槽替换值，`label` 插槽替换标签，参数见[渲染上下文](#渲染上下文)。两种写法可以同时使用，`options` 中的项排在前面。
+`options` 中每一项的字段与 DescriptionsItem 的属性同名。DescriptionsItem 的默认插槽替换值，`label` 插槽替换标签，参数见[渲染上下文](#渲染上下文)。两种写法可以同时使用，`options` 中的项排在前面。Descriptions 的 `title` 插槽替换标题，`extra` 插槽放在标题右侧。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
 	<Descriptions :data="data">
+		<template #title>子组件写法</template>
+		<template #extra>
+			<Button type="text" size="small">编辑</Button>
+		</template>
 		<DescriptionsItem label="编号" prop="code" />
-		<DescriptionsItem label="名称" prop="name" />
+		<DescriptionsItem prop="name">
+			<template #label>名称（插槽）</template>
+		</DescriptionsItem>
 		<DescriptionsItem label="类型" prop="type">
 			<template #default="{ value }">
 				<Tag>{{ value }}</Tag>
@@ -55,7 +77,7 @@ const options = [
 </template>
 
 <script setup>
-import { Descriptions, DescriptionsItem, Tag } from '@deot/vc';
+import { Button, Descriptions, DescriptionsItem, Tag } from '@deot/vc';
 
 const data = { code: 'NO-000128', name: '条目 128', type: '类型 A' };
 </script>
@@ -74,16 +96,24 @@ const data = { code: 'NO-000128', name: '条目 128', type: '类型 A' };
 `size` 可选 `mini` / `small` / `medium` / `large`，影响字号、行高、行间距和 border 主题的单元格内边距。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div>
-		<div class="toolbar">
-			<RadioGroup v-model="theme">
-				<Radio v-for="item in ['fill', 'inverted', 'plain', 'border']" :key="item" :value="item">{{ item }}</Radio>
-			</RadioGroup>
-		</div>
-		<Descriptions :theme="theme" :data="data" :options="options" />
+	<div class="descriptions-demo">
+		<RadioGroup v-model="theme">
+			<Radio v-for="item in THEMES" :key="item" :value="item">{{ item }}</Radio>
+		</RadioGroup>
+		<RadioGroup v-model="size">
+			<Radio v-for="item in SIZES" :key="item" :value="item">{{ item }}</Radio>
+		</RadioGroup>
+		<Descriptions :theme="theme" :size="size" :data="data" :options="options" />
 	</div>
 </template>
 
@@ -91,7 +121,10 @@ const data = { code: 'NO-000128', name: '条目 128', type: '类型 A' };
 import { ref } from 'vue';
 import { Descriptions, Radio, RadioGroup } from '@deot/vc';
 
+const THEMES = ['fill', 'inverted', 'plain', 'border'];
+const SIZES = ['mini', 'small', 'medium', 'large'];
 const theme = ref('fill');
+const size = ref('medium');
 const data = { code: 'NO-000128', name: '条目 128', type: '类型 A', status: '进行中' };
 const options = [
 	{ label: '编号', prop: 'code' },
@@ -102,8 +135,10 @@ const options = [
 </script>
 
 <style scoped>
-.toolbar {
-	margin-bottom: 16px;
+.descriptions-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
 }
 </style>
 ```
@@ -111,7 +146,89 @@ const options = [
 
 ### 标签位置
 
-`labelPosition` 为 `left` / `right` 时标签在左侧，并按该方向对齐；为 `top` 时标签在上方。标签宽度默认由内容决定；`labelWidth` 为数字时固定宽度，为 `'auto'` 时同一列的标签取其中最宽的，各行对齐。`inline` 时标签和值在同一单元格内按文字流排列。`colon` 控制标签后的冒号，只在 `left` / `right` 且主题不是 `border` 时显示，传字符串可自定义。
+`labelPosition` 为 `left` / `right` 时标签在左侧，并按该方向对齐；为 `top` 时标签在上方。标签宽度默认由内容决定；`labelWidth` 为数字时固定宽度，为 `'auto'` 时同一列的标签取其中最宽的，各行对齐。`inline` 时标签和值在同一单元格内按文字流排列。`colon` 控制标签后的冒号，只在 `left` / `right` 且主题不是 `border` 时显示，传字符串可自定义。`labelClass` / `labelStyle`、`contentClass` / `contentStyle` 设置所有标签格、值格的类名与样式，单项上也可单独设置。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
+```vue
+<template>
+	<div class="descriptions-demo">
+		<div class="descriptions-demo__row">
+			<RadioGroup v-model="labelPosition">
+				<Radio v-for="item in POSITIONS" :key="item" :value="item">{{ item }}</Radio>
+			</RadioGroup>
+			<RadioGroup v-model="labelWidth">
+				<Radio value="">按内容</Radio>
+				<Radio value="auto">auto</Radio>
+				<Radio :value="100">100</Radio>
+			</RadioGroup>
+			<Checkbox v-model="isInline">inline</Checkbox>
+			<Checkbox v-model="isCustomColon">冒号改为 ｜</Checkbox>
+		</div>
+		<Descriptions
+			:label-position="labelPosition"
+			:label-width="labelWidth || undefined"
+			:inline="isInline"
+			:colon="isCustomColon ? ' ｜' : true"
+			label-class="descriptions-demo__label"
+			:content-style="{ fontWeight: 500 }"
+			:data="data"
+			:options="options"
+		/>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { Checkbox, Descriptions, Radio, RadioGroup } from '@deot/vc';
+
+const POSITIONS = ['left', 'right', 'top'];
+const labelPosition = ref('left');
+const labelWidth = ref('');
+const isInline = ref(false);
+const isCustomColon = ref(false);
+const data = { code: 'NO-000128', name: '条目 128', type: '类型 A', group: '分组 B', status: '进行中', date: '2026-10-28' };
+const options = [
+	{ label: '编号', prop: 'code' },
+	{ label: '名称', prop: 'name' },
+	{ label: '类型', prop: 'type' },
+	{ label: '所属分组', prop: 'group' },
+	{ label: '状态', prop: 'status', labelStyle: { color: 'var(--vc-color-primary)' } },
+	{ label: '日期', prop: 'date', contentClass: 'descriptions-demo__muted' }
+];
+</script>
+
+<style scoped>
+.descriptions-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.descriptions-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+.descriptions-demo :deep(.descriptions-demo__label) {
+	font-style: italic;
+}
+
+.descriptions-demo :deep(.descriptions-demo__muted) {
+	color: var(--vc-color-dark-extralight);
+}
+</style>
+```
+:::
 
 ### 分列与合并
 
@@ -120,10 +237,20 @@ const options = [
 - `getSpan` 写法同 Table：返回 `[rowspan, colspan]` 或 `{ rowspan, colspan }`。`colspan` 覆盖 `span`，`rowspan` 为跨越的行数，任一为 `0` 时隐藏该项。后面的项会跳过被占用的格子。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<Descriptions theme="border" :data="data" :options="options" :get-span="getSpan" />
+	<div class="descriptions-demo">
+		<Descriptions theme="border" :data="data" :options="options" :get-span="getSpan" />
+		<Descriptions theme="border" :columns="[120, '1fr', 120, '1fr']" :span="1" :data="data" :options="tracks" />
+	</div>
 </template>
 
 <script setup>
@@ -137,8 +264,22 @@ const options = [
 	{ label: '状态', prop: 'status' },
 	{ label: '日期', prop: 'date' }
 ];
+const tracks = [
+	{ label: '编号', prop: 'code' },
+	{ label: '名称', prop: 'name' },
+	{ label: '类型', prop: 'type' },
+	{ label: '日期', prop: 'date', span: 'auto' }
+];
 const getSpan = ({ index }) => (index === 0 ? [2, 8] : void 0);
 </script>
+
+<style scoped>
+.descriptions-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+</style>
 ```
 :::
 
@@ -151,7 +292,14 @@ Descriptions 的 `columns`、`span` 和单项的 `span` 都可以写成 `{ xs, s
 | 宽度 | < 576 | ≥ 576 | ≥ 768 | ≥ 992 | ≥ 1200 | ≥ 1600 |
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
 	<Descriptions :data="data" :options="options" :span="{ xs: 24, sm: 12, lg: 8 }" />
@@ -174,28 +322,51 @@ const options = [
 
 ### 分组
 
-`options` 中写 `{ label, children }`，或使用 DescriptionsGroup。各组放在同一个面板中，组之间有分隔线；连续的、不在分组内的项会合成一个没有标题的分组。
+`options` 中写 `{ label, children }`，或使用 DescriptionsGroup（`label` 插槽替换分组标题）。各组放在同一个面板中，组之间有分隔线；连续的、不在分组内的项会合成一个没有标题的分组。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<Descriptions :data="data">
-		<DescriptionsGroup label="基础信息">
-			<DescriptionsItem label="编号" prop="code" />
-			<DescriptionsItem label="名称" prop="name" />
-		</DescriptionsGroup>
-		<DescriptionsGroup label="其他信息">
-			<DescriptionsItem label="状态" prop="status" />
-		</DescriptionsGroup>
-	</Descriptions>
+	<div class="descriptions-demo">
+		<Descriptions :data="data">
+			<DescriptionsGroup label="分组一">
+				<DescriptionsItem label="编号" prop="code" />
+				<DescriptionsItem label="名称" prop="name" />
+			</DescriptionsGroup>
+			<DescriptionsGroup>
+				<template #label>分组二（插槽）</template>
+				<DescriptionsItem label="状态" prop="status" />
+			</DescriptionsGroup>
+		</Descriptions>
+		<Descriptions :data="data" :options="groups" />
+	</div>
 </template>
 
 <script setup>
 import { Descriptions, DescriptionsGroup, DescriptionsItem } from '@deot/vc';
 
 const data = { code: 'NO-000128', name: '条目 128', status: '进行中' };
+const groups = [
+	{ label: '配置分组一', children: [{ label: '编号', prop: 'code' }, { label: '名称', prop: 'name' }] },
+	{ label: '配置分组二', children: [{ label: '状态', prop: 'status' }] }
+];
 </script>
+
+<style scoped>
+.descriptions-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+</style>
 ```
 :::
 
@@ -207,6 +378,42 @@ const data = { code: 'NO-000128', name: '条目 128', status: '进行中' };
 - `row`：当前项，对应 `options` 中的一项（子组件写法时为该项的属性），已补上默认值：`type` 默认为 `'text'`，`span` 为当前断点下解析后的值。
 - `index`：该项在全部项中的下标（含 `hidden` 的项，与 `options` 的顺序一致）。
 - `data`：Descriptions 的 `data`。
+
+下例中 Descriptions 的 `label`、`value` 插槽作用于所有项，函数形式的 `value`、`tooltip` 读取同一上下文。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
+```vue
+<template>
+	<Descriptions :data="data" :options="options">
+		<template #label="{ row, index }">{{ index + 1 }}. {{ row.label }}</template>
+		<template #value="{ value, row }">
+			<Tag v-if="row.prop === 'status'">{{ value }}</Tag>
+			<span v-else>{{ value }}</span>
+		</template>
+	</Descriptions>
+</template>
+
+<script setup>
+import { h } from 'vue';
+import { Descriptions, Tag } from '@deot/vc';
+
+const data = { code: 'NO-000128', status: '进行中', count: 3 };
+const options = [
+	{ label: '编号', prop: 'code' },
+	{ label: '状态', prop: 'status', tooltip: ({ value }) => `当前值：${value}` },
+	{ label: '合计', value: ({ data: source }) => h('strong', String(source.count * 2)) }
+];
+</script>
+```
+:::
 
 ### 值的类型
 
@@ -222,6 +429,49 @@ const data = { code: 'NO-000128', name: '条目 128', status: '进行中' };
 | select | 用 `options.data` 把值映射为 label，多个值用 `,` 连接，没有对应项时显示原值 | `data`：`[{ label, value }]`（同 Select 的 `data`）或 `{ [value]: label }` |
 
 image 的数据可以是逗号分隔的字符串、地址数组，或 `{ source | src | url }` 数组；未写 `type` 的项都按图片预览，文件名等仍经过 FilePreview 的全局配置。统一调整图片尺寸时，在 Descriptions 或其祖先上设置 `--vc-descriptions-image-size`；单项的 `options.size` 优先。需要卡片或大方格展示时，使用 `file` 类型。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
+```vue
+<template>
+	<Descriptions :span="12" :data="data" :options="options" />
+</template>
+
+<script setup>
+import { Descriptions } from '@deot/vc';
+
+const image = (text, color) => `data:image/svg+xml,${encodeURIComponent(
+	`<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240"><rect width="240" height="240" fill="${color}"/>`
+	+ `<text x="120" y="132" font-size="40" text-anchor="middle" fill="#fff">${text}</text></svg>`
+)}`;
+
+const data = {
+	code: 'NO-000128',
+	status: 2,
+	desc: '说明文字说明文字说明文字说明文字说明文字说明文字说明文字说明文字说明文字说明文字',
+	images: [image('1', '#456CF6'), image('2', '#2BB57B'), image('3', '#F2A33A')],
+	files: [{ source: image('A', '#456CF6'), name: '图片 A.svg' }],
+	link: 'https://example.com/path/to/page'
+};
+const options = [
+	{ label: '编号', prop: 'code', type: 'copy' },
+	{ label: '状态', prop: 'status', type: 'select', options: { data: [{ label: '选项 A', value: 1 }, { label: '选项 B', value: 2 }] } },
+	{ label: '说明', prop: 'desc', options: { line: 1 } },
+	{ label: '链接', prop: 'link', type: 'link' },
+	{ label: '图片', prop: 'images', type: 'image' },
+	{ label: '大图', prop: 'images', type: 'image', options: { size: 48 } },
+	{ label: '附件', prop: 'files', type: 'file', span: 24 }
+];
+</script>
+```
+:::
 
 ### 自定义类型
 
@@ -241,6 +491,155 @@ VcInstance.configure({
 ```
 
 值的渲染顺序：DescriptionsItem 的默认插槽 → Descriptions 的 `value` 插槽 → 函数形式的 `value` → 全局 `renderValue` → 内置类型。值为空（`null`、`undefined`、`''`、`[]`，`0` 不算空）时，插槽和函数照常渲染，其余显示 `placeholder`，不调用 `renderValue`。`prefix` / `suffix` 放在值的前后，显示 `placeholder` 时不显示它们。
+
+## 移动端
+
+`MDescriptions` 的属性、插槽、结构与 `Descriptions` 相同，根节点另有标记类 `.vcm-descriptions`，结构样式、颜色与主题参数共用。尺寸按 750 稿设计，写为 `calc(var(--vc-rem) * n)`，随 `--vc-rem` 缩放；底栏切换 `rem` 可查看不同屏宽下的效果。下例依次展示默认占满一行的基础用法（可切换 `size`）、每行 2 项且标签在上方、`border` 主题配合 750 稿的 `labelWidth`、值的类型（image 点击用移动端查看器预览、copy 用 Toast 提示）与分组；预览中的图片查看器为全屏弹层。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	mobile: true,
+	local: false,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
+</config>
+-->
+```vue
+<template>
+	<div class="m-descriptions-demo">
+		<MDescriptions theme="inverted" :size="size" :data="data" :options="options" title="基础信息">
+			<template #extra>
+				<span class="m-descriptions-demo__link">编辑</span>
+			</template>
+		</MDescriptions>
+		<div class="m-descriptions-demo__row">
+			<MButton
+				v-for="item in SIZES"
+				:key="item"
+				size="small"
+				:type="size === item ? 'primary' : 'default'"
+				@click="handleSize(item)"
+			>
+				{{ item }}
+			</MButton>
+		</div>
+		<MDescriptions theme="inverted" :span="12" label-position="top" :data="data" :options="options.slice(0, 6)" />
+		<MDescriptions theme="border" :label-width="160" :data="data" :options="options.slice(0, 4)" />
+		<MDescriptions theme="inverted" :data="data" :options="typed" />
+		<MDescriptions theme="inverted" :data="data" :options="groups" />
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { MButton, MDescriptions } from '@deot/vc';
+
+const SIZES = ['mini', 'small', 'medium', 'large'];
+const size = ref('medium');
+
+const image = (text, color) => `data:image/svg+xml,${encodeURIComponent(
+	`<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240"><rect width="240" height="240" fill="${color}"/>`
+	+ `<text x="120" y="132" font-size="40" text-anchor="middle" fill="#fff">${text}</text></svg>`
+)}`;
+
+const data = {
+	code: 'NO-000128',
+	name: '条目 128',
+	type: '类型 A',
+	group: '分组 B',
+	status: '进行中',
+	value: 0,
+	date: '2026-10-28',
+	desc: '说明文字说明文字说明文字说明文字说明文字说明文字说明文字说明文字说明文字说明文字',
+	images: [image('1', '#456CF6'), image('2', '#2BB57B'), image('3', '#F2A33A')],
+	link: 'https://example.com/path/to/page'
+};
+
+const options = [
+	{ label: '编号', prop: 'code' },
+	{ label: '名称', prop: 'name' },
+	{ label: '类型', prop: 'type' },
+	{ label: '分组', prop: 'group' },
+	{ label: '状态', prop: 'status' },
+	{ label: '日期', prop: 'date' },
+	{ label: '数值', prop: 'value', suffix: ' 项', tooltip: '提示内容' },
+	{ label: '空值', prop: 'empty' },
+	{ label: '说明', prop: 'desc' }
+];
+
+const typed = [
+	{ label: '图片', prop: 'images', type: 'image', options: { size: 96 } },
+	{ label: '编号', prop: 'code', type: 'copy' },
+	{ label: '链接', prop: 'link', type: 'link' }
+];
+
+const groups = [
+	{ label: '分组一', children: options.slice(0, 3) },
+	{ label: '分组二', children: options.slice(4, 7) }
+];
+
+const handleSize = (value) => {
+	size.value = value;
+};
+</script>
+
+<style scoped>
+.m-descriptions-demo {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--vc-rem) * 32);
+	padding-inline: calc(var(--vc-rem) * 32);
+}
+
+.m-descriptions-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: calc(var(--vc-rem) * 16);
+}
+
+.m-descriptions-demo__link {
+	font-size: calc(var(--vc-rem) * 28);
+	color: var(--vc-color-primary);
+}
+</style>
+```
+:::
+
+尺寸如下（括号内为 375 宽下的 px）：
+
+| 参数 | mini / small / medium / large |
+| --- | --- |
+| font-size | 24（12） / 26（13） / 28（14） / 30（15） |
+| line-height | 36（18） / 40（20） / 40（20） / 44（22） |
+| row-gap | 8（4） / 16（8） / 24（12） / 32（16） |
+| cell-padding-y | 6（3） / 10（5） / 16（8） / 20（10） |
+| cell-padding-x | 16（8） / 24（12） / 24（12） / 32（16） |
+
+| 项 | 值 |
+| --- | --- |
+| 标题栏 | 标题字号 32（16）加粗，行高 44（22），与内容间距 24（12），与附加内容间距 24（12） |
+| 分组标题 | 字号 28（14），行高 40（20），与内容间距 16（8） |
+| 列间距 | 24（12） |
+| 面板（fill / inverted） | 内边距 32（16），圆角 16（8）；border 主题的外框圆角相同 |
+| 标签 | 与值间距 8（4，冒号之后另有冒号的右间距）；`top` 时与值间距 8（4）；提示图标间距 4（2）；冒号左右 8（4） |
+| image 类型 | 小图间距 8（4），圆角 4（2） |
+| copy 类型 | 图标 24（12），与文字间距 8（4） |
+
+与桌面端的差异：
+
+- 未设置 `span` 时每项占满一行（桌面端为轨道数的 1/3）。
+- 数字长度按 750 稿：`labelWidth`（`'auto'` 量出的宽度仍为 px）、image 类型的 `options.size`。
+- copy 类型的复制提示使用 Toast；image、file 类型使用 `MFilePreview`（移动端查看器）。
+- 标签提示（`tooltip`）点按打开 `MPopover`，再点同一处或点别处关闭；桌面端为悬停打开。
+
+两端的尺寸都写成局部变量 `--vc-descriptions-<键>`，桌面端的默认值为 px，移动端在 `.vcm-descriptions` 上覆盖，与样式的加载顺序无关。`columns` 数组中的数字（固定宽度的轨道）在移动端同样按 750 稿换算。各尺寸的键为 `<size>-<参数>`（如 `medium-font-size`）；其余键为 `header-margin`、`extra-gap`、`title-font-size`、`title-line-height`、`group-label-margin`、`group-label-font-size`、`group-label-line-height`、`column-gap`、`value-gap`（标签与值的间距，桌面端为 0）、`label-gap`、`tooltip-gap`、`colon-gap`、`image-gap`、`image-radius`、`copy-icon-gap`、`copy-icon-size`、`content-padding`、`radius`。边框保持 1px，不随 `--vc-rem` 缩放。
 
 ## 主题与局部覆盖
 
@@ -271,37 +670,6 @@ VcInstance.configure({
 | cell-padding-x | border 主题单元格的左右内边距 | `12px` / `16px` / `16px` / `20px` |
 
 另有 `image-size`：image 类型的小图边长，默认等于 `line-height`，不随 `size` 设置。
-
-## 移动端
-
-`MDescriptions` 的属性、插槽、结构与 `Descriptions` 相同，根节点另有标记类 `.vcm-descriptions`，结构样式、颜色与主题参数共用。尺寸按 750 稿设计，写为 `calc(var(--vc-rem) * n)`，随 `--vc-rem` 缩放（括号内为 375 宽下的 px）：
-
-| 参数 | mini / small / medium / large |
-| --- | --- |
-| font-size | 24（12） / 26（13） / 28（14） / 30（15） |
-| line-height | 36（18） / 40（20） / 40（20） / 44（22） |
-| row-gap | 8（4） / 16（8） / 24（12） / 32（16） |
-| cell-padding-y | 6（3） / 10（5） / 16（8） / 20（10） |
-| cell-padding-x | 16（8） / 24（12） / 24（12） / 32（16） |
-
-| 项 | 值 |
-| --- | --- |
-| 标题栏 | 标题字号 32（16）加粗，行高 44（22），与内容间距 24（12），与附加内容间距 24（12） |
-| 分组标题 | 字号 28（14），行高 40（20），与内容间距 16（8） |
-| 列间距 | 24（12） |
-| 面板（fill / inverted） | 内边距 32（16），圆角 16（8）；border 主题的外框圆角相同 |
-| 标签 | 与值间距 8（4，冒号之后另有冒号的右间距）；`top` 时与值间距 8（4）；提示图标间距 4（2）；冒号左右 8（4） |
-| image 类型 | 小图间距 8（4），圆角 4（2） |
-| copy 类型 | 图标 24（12），与文字间距 8（4） |
-
-与桌面端的差异：
-
-- 未设置 `span` 时每项占满一行（桌面端为轨道数的 1/3）。
-- 数字长度按 750 稿：`labelWidth`（`'auto'` 量出的宽度仍为 px）、image 类型的 `options.size`。
-- copy 类型的复制提示使用 Toast；image、file 类型使用 `MFilePreview`（移动端查看器）。
-- 标签提示（`tooltip`）点按打开 `MPopover`，再点同一处或点别处关闭；桌面端为悬停打开。
-
-两端的尺寸都写成局部变量 `--vc-descriptions-<键>`，桌面端的默认值为 px，移动端在 `.vcm-descriptions` 上覆盖，与样式的加载顺序无关。`columns` 数组中的数字（固定宽度的轨道）在移动端同样按 750 稿换算。各尺寸的键为 `<size>-<参数>`（如 `medium-font-size`）；其余键为 `header-margin`、`extra-gap`、`title-font-size`、`title-line-height`、`group-label-margin`、`group-label-font-size`、`group-label-line-height`、`column-gap`、`value-gap`（标签与值的间距，桌面端为 0）、`label-gap`、`tooltip-gap`、`colon-gap`、`image-gap`、`image-radius`、`copy-icon-gap`、`copy-icon-size`、`content-padding`、`radius`。边框保持 1px，不随 `--vc-rem` 缩放。
 
 ## API
 

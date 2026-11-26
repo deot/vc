@@ -9,21 +9,28 @@
 
 ### 基础用法
 
-`label` 设置标签文本，默认显示在内容下方。`inverted` 倒序展示，DOM 顺序同步反转。
+`label` 设置标签文本，默认显示在内容下方。`inverted` 倒序展示，DOM 顺序同步反转。`tag` 改变外层标签。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div>
-		<div class="toolbar">
-			<span>倒序</span>
+	<div class="timeline-demo">
+		<div class="timeline-demo__row">
 			<Switch v-model="isInverted" />
+			<span>倒序</span>
 		</div>
-		<Timeline :inverted="isInverted">
-			<TimelineItem label="2017-03-10">创建项目</TimelineItem>
-			<TimelineItem label="2018-05-12">发布第一个版本</TimelineItem>
-			<TimelineItem label="2020-09-30">发布第二个版本</TimelineItem>
+		<Timeline :inverted="isInverted" tag="section">
+			<TimelineItem label="2017-03-10">事件一</TimelineItem>
+			<TimelineItem label="2018-05-12">事件二</TimelineItem>
+			<TimelineItem label="2020-09-30">事件三</TimelineItem>
 		</Timeline>
 	</div>
 </template>
@@ -36,12 +43,17 @@ const isInverted = ref(false);
 </script>
 
 <style scoped>
-.toolbar {
+.timeline-demo {
 	display: flex;
-	align-items: center;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.timeline-demo__row {
+	display: flex;
 	flex-wrap: wrap;
+	align-items: center;
 	gap: 8px;
-	margin-bottom: 24px;
 }
 </style>
 ```
@@ -52,13 +64,22 @@ const isInverted = ref(false);
 `vertical` 为 `false` 时横向展示。`align` 设置轴线位置：纵向时 `start` 在左、`end` 在右；横向时 `start` 在上、`end` 在下；`center` 居中。`alternate` 使节点在轴线两侧交替展示，此时轴线始终居中，`align` 不生效。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div>
-		<div class="toolbar">
-			<label><span>纵向</span><Switch v-model="isVertical" /></label>
-			<label><span>交替</span><Switch v-model="isAlternate" /></label>
+	<div class="timeline-demo">
+		<div class="timeline-demo__row">
+			<Switch v-model="isVertical" />
+			<span>纵向</span>
+			<Switch v-model="isAlternate" />
+			<span>交替</span>
 			<RadioGroup v-model="align" :disabled="isAlternate">
 				<Radio value="start">start</Radio>
 				<Radio value="center">center</Radio>
@@ -66,10 +87,10 @@ const isInverted = ref(false);
 			</RadioGroup>
 		</div>
 		<Timeline :vertical="isVertical" :align="align" :alternate="isAlternate">
-			<TimelineItem label="2017-03-10">创建项目</TimelineItem>
-			<TimelineItem label="2018-05-12">发布第一个版本</TimelineItem>
-			<TimelineItem label="2020-09-30">发布第二个版本</TimelineItem>
-			<TimelineItem label="2021-11-11">发布第三个版本</TimelineItem>
+			<TimelineItem label="2017-03-10">事件一</TimelineItem>
+			<TimelineItem label="2018-05-12">事件二</TimelineItem>
+			<TimelineItem label="2020-09-30">事件三</TimelineItem>
+			<TimelineItem label="2021-11-11">事件四</TimelineItem>
 		</Timeline>
 	</div>
 </template>
@@ -84,15 +105,15 @@ const align = ref('start');
 </script>
 
 <style scoped>
-.toolbar {
+.timeline-demo {
 	display: flex;
-	align-items: center;
-	flex-wrap: wrap;
-	gap: 24px;
-	margin-bottom: 24px;
+	flex-direction: column;
+	gap: 16px;
 }
-.toolbar label {
-	display: inline-flex;
+
+.timeline-demo__row {
+	display: flex;
+	flex-wrap: wrap;
 	align-items: center;
 	gap: 8px;
 }
@@ -105,20 +126,29 @@ const align = ref('start');
 `opposite` 使标签显示在轴线的另一侧。TimelineItem 也可以单独设置 `opposite`，未设置时继承 Timeline。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div>
-		<div class="toolbar">
-			<label><span>另一侧</span><Switch v-model="isOpposite" /></label>
-			<label><span>交替</span><Switch v-model="isAlternate" /></label>
+	<div class="timeline-demo">
+		<div class="timeline-demo__row">
+			<Switch v-model="isOpposite" />
+			<span>另一侧</span>
+			<Switch v-model="isAlternate" />
+			<span>交替</span>
 		</div>
 		<Timeline :opposite="isOpposite" :alternate="isAlternate">
-			<TimelineItem label="2017-03-10" dot-color="#1DB88C">创建项目</TimelineItem>
+			<TimelineItem label="2017-03-10" dot-color="#1DB88C">事件一</TimelineItem>
 			<TimelineItem label="2018-05-12" dot-color="#f04134" :opposite="!isOpposite">
 				该项单独设置 opposite
 			</TimelineItem>
-			<TimelineItem label="2020-09-30">发布第二个版本</TimelineItem>
+			<TimelineItem label="2020-09-30">事件三</TimelineItem>
 		</Timeline>
 	</div>
 </template>
@@ -132,15 +162,15 @@ const isAlternate = ref(false);
 </script>
 
 <style scoped>
-.toolbar {
+.timeline-demo {
 	display: flex;
-	align-items: center;
-	flex-wrap: wrap;
-	gap: 24px;
-	margin-bottom: 24px;
+	flex-direction: column;
+	gap: 16px;
 }
-.toolbar label {
-	display: inline-flex;
+
+.timeline-demo__row {
+	display: flex;
+	flex-wrap: wrap;
 	align-items: center;
 	gap: 8px;
 }
@@ -153,25 +183,32 @@ const isAlternate = ref(false);
 `showPending` 在末尾追加一个幽灵节点，表示记录仍在进行中，与之相连的轴线显示为虚线。`inverted` 开启后幽灵节点移到最前。`pending` 插槽设置内容，`pending-dot` 插槽替换默认的加载图标。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div>
-		<div class="toolbar">
-			<label><span>幽灵节点</span><Switch v-model="isPendingVisible" /></label>
-			<label><span>倒序</span><Switch v-model="isInverted" /></label>
+	<div class="timeline-demo">
+		<div class="timeline-demo__row">
+			<Switch v-model="isPendingVisible" />
+			<span>幽灵节点</span>
+			<Switch v-model="isInverted" />
+			<span>倒序</span>
 		</div>
 		<Timeline :show-pending="isPendingVisible" :inverted="isInverted">
-			<TimelineItem label="2017-03-10">开始处理</TimelineItem>
-			<TimelineItem label="2017-03-11">完成准备</TimelineItem>
-			<template #pending>
-				处理中
-			</template>
+			<TimelineItem label="2017-03-10">事件一</TimelineItem>
+			<TimelineItem label="2017-03-11">事件二</TimelineItem>
+			<template #pending>进行中</template>
 		</Timeline>
-		<Timeline show-pending class="custom">
-			<TimelineItem label="2017-03-10">开始处理</TimelineItem>
+		<Timeline show-pending>
+			<TimelineItem label="2017-03-10">事件一</TimelineItem>
 			<template #pending-dot>
-				<span class="pending-dot" />
+				<span class="timeline-demo__pending-dot" />
 			</template>
 		</Timeline>
 	</div>
@@ -186,27 +223,25 @@ const isInverted = ref(false);
 </script>
 
 <style scoped>
-.toolbar {
+.timeline-demo {
 	display: flex;
-	align-items: center;
-	flex-wrap: wrap;
-	gap: 24px;
-	margin-bottom: 24px;
+	flex-direction: column;
+	gap: 16px;
 }
-.toolbar label {
-	display: inline-flex;
+
+.timeline-demo__row {
+	display: flex;
+	flex-wrap: wrap;
 	align-items: center;
 	gap: 8px;
 }
-.custom {
-	margin-top: 24px;
-}
-.pending-dot {
+
+.timeline-demo__pending-dot {
+	box-sizing: border-box;
 	width: 10px;
 	height: 10px;
 	border: 2px solid #e6a23c;
 	border-radius: 50%;
-	box-sizing: border-box;
 }
 </style>
 ```
@@ -214,21 +249,31 @@ const isInverted = ref(false);
 
 ### 自定义节点与轴线
 
-`dotColor`、`dotType` 设置默认圆点的颜色与样式。`dot` 属性或 `dot` 插槽可替换默认圆点，此时 `dotColor`、`dotType` 不生效；自定义节点的尺寸由调用方控制。`lineType`、`lineColor` 设置该节点之后那段轴线的样式与颜色。
+`dotColor`、`dotType` 设置默认圆点的颜色与样式。`dot` 属性或 `dot` 插槽可替换默认圆点，此时 `dotColor`、`dotType` 不生效；自定义节点的尺寸由调用方控制。`lineType`、`lineColor` 设置该节点之后那段轴线的样式与颜色。`label` 插槽优先于 `label` 属性。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="dot-demo">
+	<div class="timeline-demo">
 		<Timeline>
 			<TimelineItem label="dotColor" dot-color="#1DB88C">绿色圆点</TimelineItem>
 			<TimelineItem label="dotType" dot-type="hollow">空心圆点</TimelineItem>
 			<TimelineItem label="dot 属性" :dot="renderDot">函数渲染的节点</TimelineItem>
-			<TimelineItem label="dot 插槽">
+			<TimelineItem>
 				插槽渲染的节点
+				<template #label>
+					<strong>dot、label 插槽</strong>
+				</template>
 				<template #dot>
-					<Icon type="warning" class="warning" />
+					<Icon type="warning" class="timeline-demo__warning" />
 				</template>
 			</TimelineItem>
 		</Timeline>
@@ -245,21 +290,23 @@ const isInverted = ref(false);
 import { h } from 'vue';
 import { Icon, Timeline, TimelineItem } from '@deot/vc';
 
-const renderDot = () => h('span', { class: 'check' }, '✓');
+const renderDot = () => h('span', { class: 'timeline-demo__check' }, '✓');
 </script>
 
 <style scoped>
-.dot-demo {
+.timeline-demo {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 48px;
 }
-.dot-demo :deep(.check) {
+
+.timeline-demo :deep(.timeline-demo__check) {
 	font-size: 12px;
 	line-height: 1;
 	color: #1DB88C;
 }
-.warning {
+
+.timeline-demo__warning {
 	font-size: 12px;
 	color: #f04134;
 }
@@ -269,7 +316,87 @@ const renderDot = () => h('span', { class: 'check' }, '✓');
 
 ## 移动端
 
-`MTimeline` 的属性、插槽、结构与 `Timeline` 相同，根节点另有标记类 `.vcm-timeline`，结构样式、颜色与主题参数共用；`MTimelineItem` 即 `TimelineItem`。尺寸按 750 稿设计，与 `MSteps` 纵向圆点一致，写为 `calc(var(--vc-rem) * n)`，随 `--vc-rem` 缩放（括号内为 375 宽下的 px）：
+`MTimeline` 的属性、插槽、结构与 `Timeline` 相同，根节点另有标记类 `.vcm-timeline`，结构样式、颜色与主题参数共用；`MTimelineItem` 即 `TimelineItem`。尺寸按 750 稿设计，与 `MSteps` 纵向圆点一致，写为 `calc(var(--vc-rem) * n)`，随 `--vc-rem` 缩放；底栏切换 `rem` 可查看不同屏宽下的效果。下例依次展示基础用法、节点颜色与自定义节点、幽灵节点、`opposite`、`alternate` 与横向。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	mobile: true,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
+</config>
+-->
+```vue
+<template>
+	<div class="m-timeline-demo">
+		<MTimeline>
+			<MTimelineItem label="09-01 10:00">事件一</MTimelineItem>
+			<MTimelineItem label="09-01 18:30">{{ text }}</MTimelineItem>
+			<MTimelineItem label="09-02 08:00">事件三</MTimelineItem>
+		</MTimeline>
+		<MTimeline>
+			<MTimelineItem label="09-01" dot-color="var(--vc-color-success)">已完成</MTimelineItem>
+			<MTimelineItem label="09-02" dot-type="hollow">空心节点</MTimelineItem>
+			<MTimelineItem label="09-03">
+				自定义节点
+				<template #dot>
+					<MIcon type="warning" class="m-timeline-demo__warning" />
+				</template>
+			</MTimelineItem>
+			<MTimelineItem label="09-04" dot-color="var(--vc-color-light-deepest)">未开始</MTimelineItem>
+		</MTimeline>
+		<MTimeline show-pending>
+			<MTimelineItem label="09-01">事件一</MTimelineItem>
+			<MTimelineItem label="09-02">事件二</MTimelineItem>
+			<template #pending>进行中</template>
+		</MTimeline>
+		<MTimeline opposite>
+			<MTimelineItem label="09-01">事件一</MTimelineItem>
+			<MTimelineItem label="09-02">事件二</MTimelineItem>
+			<MTimelineItem label="09-03">事件三</MTimelineItem>
+		</MTimeline>
+		<MTimeline alternate>
+			<MTimelineItem label="09-01">事件一</MTimelineItem>
+			<MTimelineItem label="09-02">事件二</MTimelineItem>
+			<MTimelineItem label="09-03">事件三</MTimelineItem>
+		</MTimeline>
+		<MTimeline :vertical="false">
+			<MTimelineItem label="09-01">事件一</MTimelineItem>
+			<MTimelineItem label="09-02">事件二</MTimelineItem>
+			<MTimelineItem label="09-03">事件三</MTimelineItem>
+		</MTimeline>
+	</div>
+</template>
+
+<script setup>
+import { MIcon, MTimeline, MTimelineItem } from '@deot/vc';
+
+const text = '内容较长时自动换行，与下一项之间保持间距，这里是一段较长的说明文字。';
+</script>
+
+<style scoped>
+.m-timeline-demo {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--vc-rem) * 32);
+	padding-inline: calc(var(--vc-rem) * 32);
+}
+
+.m-timeline-demo__warning {
+	font-size: calc(var(--vc-rem) * 24);
+	color: var(--vc-color-error);
+}
+</style>
+```
+:::
+
+尺寸如下（括号内为 375 宽下的 px）：
 
 | 项 | 值 |
 | --- | --- |
@@ -282,23 +409,6 @@ const renderDot = () => h('span', { class: 'check' }, '✓');
 | 横向居中 | 最小高度 400（200） |
 
 两端的尺寸都写成局部变量 `--vc-timeline-<键>`（见“主题与局部覆盖”），移动端在 `.vcm-timeline` 上覆盖，与样式的加载顺序无关。
-
-```vue
-<template>
-	<MTimeline>
-		<MTimelineItem label="09-01 10:00">
-			已下单
-		</MTimelineItem>
-		<MTimelineItem label="09-02 08:00">
-			派送中
-		</MTimelineItem>
-	</MTimeline>
-</template>
-
-<script setup>
-import { MTimeline, MTimelineItem } from '@deot/vc';
-</script>
-```
 
 ## 主题与局部覆盖
 

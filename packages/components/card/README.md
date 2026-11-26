@@ -15,6 +15,7 @@ Card 默认显示边框，主体区域的内边距为 `16px`。
 <!--
 <config lang="json5">
 {
+	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -53,22 +54,23 @@ import { Card } from '@deot/vc';
 
 ### 标题与额外内容
 
-通过 `title` 设置文字标题，或使用 `title` 插槽完全自定义标题；`extra` 插槽显示在右上角：有标题时位于标题栏内、排在标题右侧，与标题行垂直居中，标题过长时省略而不被遮挡；较高的内容（如按钮）占用标题栏的内边距，不撑高标题栏。`icon` 与标题文字间距 `8px`。提供 `title` 插槽时，不再渲染 `title` 和 `icon`。
+通过 `title` 设置文字标题，`icon` 在文字标题前添加图标，或使用 `title` 插槽完全自定义标题；`extra` 插槽显示在右上角：有标题时位于标题栏内、排在标题右侧，与标题行垂直居中，标题过长时省略而不被遮挡；较高的内容（如按钮）占用标题栏的内边距，不撑高标题栏。`icon` 与标题文字间距 `8px`。提供 `title` 插槽时，不再渲染 `title` 和 `icon`。
 
 :::playground
 <!--
 <config lang="json5">
 {
+	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
 -->
 ```vue
 <template>
-	<div class="card-demo-list">
-		<Card title="条目信息">
+	<div class="card-demo">
+		<Card title="条目信息" icon="search">
 			<template #extra>
-				<a class="card-demo-link" href="#">查看全部</a>
+				<a class="card-demo__link" href="#">查看全部</a>
 			</template>
 			<div>条目编号：ITEM-2026</div>
 			<div>条目状态：已完成</div>
@@ -77,28 +79,31 @@ import { Card } from '@deot/vc';
 			<template #title>
 				<strong>自定义标题</strong>
 			</template>
+			<template #extra>
+				<Button size="small">操作</Button>
+			</template>
 			<div>标题插槽可以承载任意内容。</div>
 		</Card>
 	</div>
 </template>
 
 <script setup>
-import { Card } from '@deot/vc';
+import { Button, Card } from '@deot/vc';
 </script>
 
 <style scoped>
-.card-demo-list {
+.card-demo {
 	display: grid;
 	max-width: 360px;
-	gap: 12px;
+	gap: 16px;
 }
 
-.card-demo-link {
+.card-demo__link {
 	color: var(--vc-color-primary);
 	text-decoration: none;
 }
 
-.card-demo-link:hover {
+.card-demo__link:hover {
 	color: var(--vc-color-primary-light);
 	text-decoration: underline;
 }
@@ -114,14 +119,15 @@ import { Card } from '@deot/vc';
 <!--
 <config lang="json5">
 {
+	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
 -->
 ```vue
 <template>
-	<div class="card-demo-controls">
-		<div class="card-demo-actions">
+	<div class="card-demo">
+		<div class="card-demo__actions">
 			<Button @click="handleToggleBorder">
 				{{ isBorder ? '隐藏边框' : '显示边框' }}
 			</Button>
@@ -130,7 +136,7 @@ import { Card } from '@deot/vc';
 			</Button>
 		</div>
 		<Card :border="isBorder" :shadow="isShadow">
-			<div class="card-demo-status">
+			<div class="card-demo__status">
 				<span>边框：{{ isBorder ? '开启' : '关闭' }}</span>
 				<span>阴影：{{ isShadow ? '开启' : '关闭' }}</span>
 			</div>
@@ -155,19 +161,19 @@ const handleToggleShadow = () => {
 </script>
 
 <style scoped>
-.card-demo-controls {
+.card-demo {
 	display: grid;
 	max-width: 360px;
-	gap: 12px;
+	gap: 16px;
 }
 
-.card-demo-actions {
-	display: grid;
-	grid-template-columns: repeat(2, minmax(0, 1fr));
+.card-demo__actions {
+	display: flex;
+	flex-wrap: wrap;
 	gap: 8px;
 }
 
-.card-demo-status {
+.card-demo__status {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 8px 16px;
@@ -178,25 +184,29 @@ const handleToggleShadow = () => {
 
 ### 主体间距
 
-通过 `padding` 设置主体区域的内边距，单位为 `px`。
+通过 `padding` 设置主体区域的内边距：数字单位为 `px`，字符串为 CSS 长度。
 
 :::playground
 <!--
 <config lang="json5">
 {
+	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
 -->
 ```vue
 <template>
-	<div class="card-demo-controls">
-		<div class="card-demo-actions">
-			<Button @click="handleDecreasePadding" :disabled="padding <= 8">缩小间距</Button>
-			<Button @click="handleIncreasePadding" :disabled="padding >= 40">增大间距</Button>
+	<div class="card-demo">
+		<div class="card-demo__actions">
+			<Button :disabled="padding <= 8" @click="handleDecreasePadding">缩小间距</Button>
+			<Button :disabled="padding >= 40" @click="handleIncreasePadding">增大间距</Button>
 		</div>
 		<Card title="可调节间距" :padding="padding">
 			当前主体内边距：{{ padding }}px
+		</Card>
+		<Card title="字符串间距" padding="8px 24px">
+			主体内边距：8px 24px
 		</Card>
 	</div>
 </template>
@@ -217,15 +227,15 @@ const handleIncreasePadding = () => {
 </script>
 
 <style scoped>
-.card-demo-controls {
+.card-demo {
 	display: grid;
 	max-width: 360px;
-	gap: 12px;
+	gap: 16px;
 }
 
-.card-demo-actions {
-	display: grid;
-	grid-template-columns: repeat(2, minmax(0, 1fr));
+.card-demo__actions {
+	display: flex;
+	flex-wrap: wrap;
 	gap: 8px;
 }
 </style>
@@ -234,7 +244,102 @@ const handleIncreasePadding = () => {
 
 ## 移动端
 
-`MCard` 的属性、插槽、结构与 `Card` 相同，根节点另有标记类 `.vcm-card`，结构样式、颜色与主题参数共用。尺寸按 750 稿设计，写为 `calc(var(--vc-rem) * n)`，随 `--vc-rem` 缩放（括号内为 375 宽下的 px）：
+`MCard` 的属性、插槽、结构与 `Card` 相同，根节点另有标记类 `.vcm-card`，结构样式、颜色与主题参数共用。尺寸按 750 稿设计，写为 `calc(var(--vc-rem) * n)`，随 `--vc-rem` 缩放；`padding` 的数字按 750 稿长度计算，默认 `32`。底栏切换 `rem` 可查看不同屏宽下的效果。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	mobile: true,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
+</config>
+-->
+```vue
+<template>
+	<div class="m-card-demo">
+		<MCard title="条目信息" icon="search">
+			<template #extra>
+				<span class="m-card-demo__link">查看全部</span>
+			</template>
+			<p>条目编号：ITEM-2026</p>
+			<p>条目状态：已完成</p>
+		</MCard>
+		<MCard>
+			主体内边距默认 32（375 宽下 16px），内容较长时自动换行显示，字号与行高随屏幕宽度等比缩放。
+		</MCard>
+		<MCard :border="false" shadow>
+			<template #title>
+				<p class="m-card-demo__custom">自定义标题</p>
+			</template>
+			标题插槽、无边框、静态阴影。
+		</MCard>
+		<MCard title="可调节间距" :padding="padding">
+			<div class="m-card-demo__body">
+				<p>当前主体内边距：{{ padding }}</p>
+				<div class="m-card-demo__actions">
+					<MButton size="small" :disabled="padding <= 16" @click="handleDecrease">缩小</MButton>
+					<MButton size="small" :disabled="padding >= 64" @click="handleIncrease">增大</MButton>
+				</div>
+			</div>
+		</MCard>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { MButton, MCard } from '@deot/vc';
+
+const padding = ref(32);
+
+const handleDecrease = () => {
+	padding.value -= 8;
+};
+
+const handleIncrease = () => {
+	padding.value += 8;
+};
+</script>
+
+<style scoped>
+.m-card-demo {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--vc-rem) * 32);
+	padding-inline: calc(var(--vc-rem) * 32);
+}
+
+.m-card-demo__link {
+	color: var(--vc-color-primary);
+}
+
+.m-card-demo__custom {
+	font-size: calc(var(--vc-rem) * 32);
+	font-weight: 700;
+	color: var(--vc-color-primary);
+}
+
+.m-card-demo__body {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--vc-rem) * 16);
+}
+
+.m-card-demo__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: calc(var(--vc-rem) * 16);
+}
+</style>
+```
+:::
+
+尺寸如下（括号内为 375 宽下的 px）：
 
 | 项 | 值 |
 | --- | --- |
@@ -252,21 +357,6 @@ const handleIncreasePadding = () => {
 
 两端的尺寸都写成局部变量 `--vc-card-<键>`，桌面端的默认值为 px，移动端在 `.vcm-card` 上覆盖，与样式的加载顺序无关。键为 `font-size`、`radius`、`header-padding`、`title-font-size`、`title-line-height`、`icon-gap`、`extra-gap`、`extra-top`、`extra-right`、`transition`；`MCard` 另把主题参数 `--vc-card-box-shadow-floating` 设为 `none`。
 
-```vue
-<template>
-	<MCard title="条目信息">
-		<template #extra>
-			<span>查看全部</span>
-		</template>
-		条目状态：已完成
-	</MCard>
-</template>
-
-<script setup>
-import { MCard } from '@deot/vc';
-</script>
-```
-
 ## 主题与局部覆盖
 
 全局参数通过 `--vc-<参数>` 配置，单个组件通过 `--vc-card-<参数>` 覆盖。同一参数可能作用于多个状态；多命名空间时在使用位置中标明。
@@ -283,7 +373,20 @@ import { MCard } from '@deot/vc';
 
 ### 局部
 
-当前组件没有额外的局部 CSS 主题参数。
+尺寸写成局部变量 `--vc-card-<键>`，桌面端的默认值在括号内，设在卡片或其祖先上；`MCard` 的取值见 [移动端](#移动端)：
+
+| 键 | 说明 |
+| --- | --- |
+| font-size | 根节点字号（14px） |
+| radius | 圆角（4px） |
+| header-padding | 标题栏内边距（14px 16px） |
+| title-font-size | 标题字号（14px） |
+| title-line-height | 标题行高（20px） |
+| icon-gap | 标题图标与文字的间距（8px） |
+| extra-gap | 附加内容与标题的间距（8px） |
+| extra-top | 无标题时附加内容距顶部（14px） |
+| extra-right | 无标题时附加内容距右侧（16px） |
+| transition | 悬停浮起阴影的过渡（all .2s ease-in-out） |
 
 ## API
 

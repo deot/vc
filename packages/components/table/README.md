@@ -1,393 +1,387 @@
 ## 表格（Table）
-展示行列数据
+
+展示行列数据。移动端入口导出的 `MTable`、`MTableColumn` 与 `Table`、`TableColumn` 的属性、事件、插槽和方法相同，尺寸按 750 稿随 `--vc-rem` 缩放，见 [移动端](#移动端)。
 
 ### 何时使用
+
 - 当有大量结构化的数据需要展现时。
 - 当需要对数据进行排序、筛选、分页、自定义操作等复杂行为时。
 
 ### 基础用法
-基础的表格展示用法。
-通过 `Table` 的 `data` 传入对象数组，在 `TableColumn` 中用 `prop` 对应对象中的字段，用 `label` 定义列名。使用 `width` 定义固定列宽，或使用 `min-width` 分配剩余宽度。
+
+通过 `Table` 的 `data` 传入对象数组，在 `TableColumn` 中用 `prop` 对应对象中的字段，用 `label` 定义列名。使用 `width` 定义固定列宽，或使用 `min-width` 分配剩余宽度。点击行时触发 `row-click`。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<p>当前点击：{{ selectedName }}</p>
-	<Table :data="tableData1" @row-click="handleClick">
-		<TableColumn
-			prop="date"
-			label="日期"
-			width="180"
-		/>
-		<TableColumn
-			prop="name"
-			label="名称"
-		/>
-		<TableColumn
-			prop="desc"
-			label="说明"
-			min-width="200"
-		/>
-	</Table>
+	<div class="table-demo">
+		<Table :data="tableData" @row-click="handleClick">
+			<TableColumn prop="date" label="日期" width="180" />
+			<TableColumn prop="name" label="名称" />
+			<TableColumn prop="desc" label="说明" min-width="200" />
+		</Table>
+		<p class="table-demo__result">当前点击：{{ selectedName }}</p>
+	</div>
 </template>
+
 <script setup>
 import { ref } from 'vue';
 import { Table, TableColumn } from '@deot/vc';
 
-const tableData1 = ref([
-	{
-		date: '2011-11-02',
-		name: '条目 1',
-		desc: '这是条目 1 的说明文字，用于展示较长内容的换行与截断。'
-	},
-	{
-		date: '2011-11-04',
-		name: '条目 2',
-		desc: '这是条目 2 的说明文字，用于展示较长内容的换行与截断。'
-	},
-	{
-		date: '2011-11-01',
-		name: '条目 3',
-		desc: '这是条目 3 的说明文字，用于展示较长内容的换行与截断。'
-	},
-	{
-		date: '2011-11-03',
-		name: '条目 4',
-		desc: '这是条目 4 的说明文字，用于展示较长内容的换行与截断。'
-	}
+const tableData = ref([
+	{ date: '2011-11-02', name: '条目 1', desc: '这是条目 1 的说明文字，用于展示较长内容的换行与截断。' },
+	{ date: '2011-11-04', name: '条目 2', desc: '这是条目 2 的说明文字，用于展示较长内容的换行与截断。' },
+	{ date: '2011-11-01', name: '条目 3', desc: '这是条目 3 的说明文字，用于展示较长内容的换行与截断。' },
+	{ date: '2011-11-03', name: '条目 4', desc: '这是条目 4 的说明文字，用于展示较长内容的换行与截断。' }
 ]);
+const selectedName = ref('尚未点击');
 
 // row：点击的行；rowIndex：行号；column：点击的列
 const handleClick = ({ row }) => {
 	selectedName.value = row.name;
 };
-const selectedName = ref('尚未点击');
-
 </script>
+
+<style scoped>
+.table-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.table-demo__result {
+	margin: 0;
+}
+</style>
 ```
 :::
 
 ### 带斑马纹表格
-设置属性 `stripe` ，表格会间隔显示不同颜色，用于区分不同行数据。
+
+设置属性 `stripe`，表格会间隔显示不同颜色，用于区分不同行数据。`show-header` 为 `false` 时隐藏表头。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<Table :data="tableData2" stripe >
-		<TableColumn
-			prop="date"
-			label="日期"
-			width="180"
-		/>
-		<TableColumn
-			prop="name"
-			label="名称"
-		/>
-		<TableColumn
-			prop="desc"
-			label="说明"
-		/>
-	</Table>
+	<div class="table-demo">
+		<Checkbox v-model="isHeaderVisible">显示表头</Checkbox>
+		<Table :data="tableData" stripe :show-header="isHeaderVisible">
+			<TableColumn prop="date" label="日期" width="180" />
+			<TableColumn prop="name" label="名称" />
+			<TableColumn prop="desc" label="说明" />
+		</Table>
+	</div>
 </template>
+
 <script setup>
 import { ref } from 'vue';
-import { Table, TableColumn } from '@deot/vc';
+import { Checkbox, Table, TableColumn } from '@deot/vc';
 
-const tableData2 = ref([
-	{
-		date: '2011-11-02',
-		name: '条目 1',
-		desc: '这是条目 1 的说明文字，用于展示较长内容的换行与截断。'
-	},
-	{
-		date: '2011-11-04',
-		name: '条目 2',
-		desc: '这是条目 2 的说明文字，用于展示较长内容的换行与截断。'
-	},
-	{
-		date: '2011-11-01',
-		name: '条目 3',
-		desc: '这是条目 3 的说明文字，用于展示较长内容的换行与截断。'
-	},
-	{
-		date: '2011-11-03',
-		name: '条目 4',
-		desc: '这是条目 4 的说明文字，用于展示较长内容的换行与截断。'
-	}
+const isHeaderVisible = ref(true);
+const tableData = ref([
+	{ date: '2011-11-02', name: '条目 1', desc: '这是条目 1 的说明文字，用于展示较长内容的换行与截断。' },
+	{ date: '2011-11-04', name: '条目 2', desc: '这是条目 2 的说明文字，用于展示较长内容的换行与截断。' },
+	{ date: '2011-11-01', name: '条目 3', desc: '这是条目 3 的说明文字，用于展示较长内容的换行与截断。' },
+	{ date: '2011-11-03', name: '条目 4', desc: '这是条目 4 的说明文字，用于展示较长内容的换行与截断。' }
 ]);
 </script>
+
+<style scoped>
+.table-demo {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 16px;
+}
+
+.table-demo > .vc-table {
+	align-self: stretch;
+}
+</style>
 ```
 :::
 
 ### 带边框表格
-默认情况下，`Table` 组件是不具有竖直方向的边框的，如果需要，可以使用`border`属性，
+
+默认情况下，`Table` 组件不具有竖直方向的边框，需要时使用 `border` 属性；`divider` 只显示横向分割线（`border` 也会启用分割线）。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<Table :data="tableData3" border >
-		<TableColumn
-			prop="date"
-			label="日期"
-			width="180"
-		/>
-		<TableColumn
-			prop="name"
-			label="名称"
-		/>
-		<TableColumn
-			prop="desc"
-			label="说明"
-		/>
-	</Table>
+	<div class="table-demo">
+		<Table :data="tableData" border>
+			<TableColumn prop="date" label="日期" width="180" />
+			<TableColumn prop="name" label="名称" />
+			<TableColumn prop="desc" label="说明" />
+		</Table>
+		<Table :data="tableData" divider>
+			<TableColumn prop="date" label="日期" width="180" />
+			<TableColumn prop="name" label="名称" />
+			<TableColumn prop="desc" label="说明（divider）" />
+		</Table>
+	</div>
 </template>
+
 <script setup>
 import { ref } from 'vue';
 import { Table, TableColumn } from '@deot/vc';
 
-const tableData3 = ref([
-	{
-		date: '2011-11-02',
-		name: '条目 1',
-		desc: '这是条目 1 的说明文字，用于展示较长内容的换行与截断。'
-	},
-	{
-		date: '2011-11-04',
-		name: '条目 2',
-		desc: '这是条目 2 的说明文字，用于展示较长内容的换行与截断。'
-	},
-	{
-		date: '2011-11-01',
-		name: '条目 3',
-		desc: '这是条目 3 的说明文字，用于展示较长内容的换行与截断。'
-	},
-	{
-		date: '2011-11-03',
-		name: '条目 4',
-		desc: '这是条目 4 的说明文字，用于展示较长内容的换行与截断。'
-	}
+const tableData = ref([
+	{ date: '2011-11-02', name: '条目 1', desc: '这是条目 1 的说明文字，用于展示较长内容的换行与截断。' },
+	{ date: '2011-11-04', name: '条目 2', desc: '这是条目 2 的说明文字，用于展示较长内容的换行与截断。' },
+	{ date: '2011-11-01', name: '条目 3', desc: '这是条目 3 的说明文字，用于展示较长内容的换行与截断。' }
 ]);
 </script>
+
+<style scoped>
+.table-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+</style>
 ```
 :::
 
 ### 尺寸
-通过 `size` 调整字号与单元格的上下内边距，可选 `large`、`medium`、`small`、`mini`，默认为 `medium`。首末列的左右内边距不受影响；`medium` 的合计行最小高度为 44px，其余尺寸的合计行高度由内边距决定。嵌套在展开行等位置的表格只按自身的 `size`、`border` 等显示，不受外层表格影响。
+
+通过 `size` 调整字号与单元格的上下内边距，可选 `large`、`medium`、`small`、`mini`，默认为 `medium`。首末列的左右内边距不受影响；`medium` 的合计行最小高度为 44px，其余尺寸的合计行高度由内边距决定。嵌套在展开行等位置的表格只按自身的 `size`、`border` 等显示，不受外层表格影响。`sum-text` 设置默认合计行第一列的文案。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<Table :data="tableDataSize" size="small" border show-summary>
-		<TableColumn
-			prop="date"
-			label="日期"
-			width="180"
-		/>
-		<TableColumn
-			prop="name"
-			label="名称"
-		/>
-		<TableColumn
-			prop="value"
-			label="数值"
-		/>
-	</Table>
+	<div class="table-demo">
+		<RadioGroup v-model="size">
+			<Radio v-for="item in SIZES" :key="item" :value="item">{{ item }}</Radio>
+		</RadioGroup>
+		<Table :data="tableData" :size="size" border show-summary sum-text="总计">
+			<TableColumn prop="date" label="日期" width="180" />
+			<TableColumn prop="name" label="名称" />
+			<TableColumn prop="value" label="数值" />
+		</Table>
+	</div>
 </template>
+
 <script setup>
 import { ref } from 'vue';
-import { Table, TableColumn } from '@deot/vc';
+import { Radio, RadioGroup, Table, TableColumn } from '@deot/vc';
 
-const tableDataSize = ref([
+const SIZES = ['large', 'medium', 'small', 'mini'];
+const size = ref('small');
+const tableData = ref([
 	{ date: '2011-11-02', name: '条目 1', value: 100 },
 	{ date: '2011-11-04', name: '条目 2', value: 200 },
 	{ date: '2011-11-01', name: '条目 3', value: 300 }
 ]);
 </script>
+
+<style scoped>
+.table-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+</style>
 ```
 :::
 
 完整示例（切换各尺寸对比）：[尺寸](./examples/size.vue)
 
 ### 带状态表格
-通过 `rowClass` 给普通行添加状态类，并在示例的局部样式中定义视觉效果。`highlight` 用于当前行高亮，与业务状态配色无关。
+
+通过 `rowClass` 给普通行添加状态类，并在示例的局部样式中定义视觉效果；`rowStyle`、`cellClass`、`cellStyle` 分别设置行样式、单元格类名与样式，`headerRowClass`、`headerRowStyle`、`headerCellClass`、`headerCellStyle` 作用于表头。`highlight` 用于当前行高亮，与状态配色无关。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<Table :data="tableData4" :row-class="tableRowClass">
-		<TableColumn
-			prop="date"
-			label="日期"
-			width="180"
-		/>
-		<TableColumn
-			prop="name"
-			label="名称"
-		/>
-		<TableColumn
-			prop="desc"
-			label="说明"
-		/>
+	<Table
+		class="table-demo"
+		:data="tableData"
+		:row-class="rowClass"
+		:row-style="rowStyle"
+		:cell-class="cellClass"
+		:cell-style="cellStyle"
+		header-row-class="table-demo__header-row"
+		:header-row-style="{ letterSpacing: '1px' }"
+		:header-cell-class="headerCellClass"
+		:header-cell-style="headerCellStyle"
+	>
+		<TableColumn prop="date" label="日期" width="180" />
+		<TableColumn prop="name" label="名称" />
+		<TableColumn prop="desc" label="说明" />
 	</Table>
 </template>
+
 <script setup>
 import { ref } from 'vue';
 import { Table, TableColumn } from '@deot/vc';
 
-const tableData4 = ref([
-	{
-		date: '2011-11-02',
-		name: '条目 1',
-		desc: '这是条目 1 的说明文字，用于展示较长内容的换行与截断。'
-	},
-	{
-		date: '2011-11-04',
-		name: '条目 2',
-		desc: '这是条目 2 的说明文字，用于展示较长内容的换行与截断。'
-	},
-	{
-		date: '2011-11-01',
-		name: '条目 3',
-		desc: '这是条目 3 的说明文字，用于展示较长内容的换行与截断。'
-	},
-	{
-		date: '2011-11-03',
-		name: '条目 4',
-		desc: '这是条目 4 的说明文字，用于展示较长内容的换行与截断。'
-	}
+const tableData = ref([
+	{ date: '2011-11-02', name: '条目 1', desc: '这是条目 1 的说明文字，用于展示较长内容的换行与截断。' },
+	{ date: '2011-11-04', name: '条目 2', desc: '这是条目 2 的说明文字，用于展示较长内容的换行与截断。' },
+	{ date: '2011-11-01', name: '条目 3', desc: '这是条目 3 的说明文字，用于展示较长内容的换行与截断。' },
+	{ date: '2011-11-03', name: '条目 4', desc: '这是条目 4 的说明文字，用于展示较长内容的换行与截断。' }
 ]);
 
-const tableRowClass = ({ row, rowIndex }) => {
-	if (rowIndex === 1) {
-		return 'warning';
-	} else if (rowIndex === 3) {
-		return 'success';
-	}
+const rowClass = ({ rowIndex }) => {
+	if (rowIndex === 1) return 'is-warning';
+	if (rowIndex === 3) return 'is-success';
 };
+const rowStyle = ({ rowIndex }) => (rowIndex === 0 ? { fontWeight: 500 } : {});
+const cellClass = ({ columnIndex }) => (columnIndex === 0 ? 'table-demo__muted' : '');
+const cellStyle = ({ columnIndex }) => (columnIndex === 1 ? { color: 'var(--vc-color-primary)' } : {});
+const headerCellClass = ({ columnIndex }) => (columnIndex === 2 ? 'table-demo__header-cell' : '');
+const headerCellStyle = ({ columnIndex }) => (columnIndex === 1 ? { color: 'var(--vc-color-primary)' } : {});
 </script>
+
 <style scoped>
-:deep(.vc-table .warning) {
-	background: oldlace!important;
+.table-demo :deep(.is-warning) {
+	background: oldlace !important;
 }
-:deep(.vc-table .success) {
-	background: #f0f9eb!important;
+
+.table-demo :deep(.is-success) {
+	background: #f0f9eb !important;
+}
+
+.table-demo :deep(.table-demo__muted) {
+	color: var(--vc-color-dark-extralight);
+}
+
+.table-demo :deep(.table-demo__header-cell) {
+	font-style: italic;
 }
 </style>
 ```
 :::
 
 ### 固定表头
-纵向内容过多时，可选择固定表头。只要在 `Table` 元素中定义了 `height` 属性，即可实现固定表头的表格，而不需要额外的代码。
+
+纵向内容过多时，可选择固定表头。只要在 `Table` 元素中定义了 `height` 属性，即可实现固定表头的表格，而不需要额外的代码；`max-height` 时表格随内容撑高，超过最大高度后固定表头滚动。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<Table :data="tableData5" border stripe height="250">
-		<TableColumn
-			prop="date"
-			label="日期"
-			width="180"
-		/>
-		<TableColumn
-			prop="name"
-			label="名称"
-			width="180"
-		/>
-		<TableColumn
-			prop="desc"
-			label="说明"
-		/>
-	</Table>
+	<div class="table-demo">
+		<RadioGroup v-model="mode">
+			<Radio value="height">height 250</Radio>
+			<Radio value="max">max-height 250</Radio>
+		</RadioGroup>
+		<Table
+			:key="mode"
+			:data="tableData"
+			:height="mode === 'height' ? 250 : undefined"
+			:max-height="mode === 'max' ? 250 : undefined"
+			border
+			stripe
+		>
+			<TableColumn prop="date" label="日期" width="180" />
+			<TableColumn prop="name" label="名称" width="180" />
+			<TableColumn prop="desc" label="说明" />
+		</Table>
+	</div>
 </template>
+
 <script setup>
 import { ref } from 'vue';
-import { Table, TableColumn } from '@deot/vc';
+import { Radio, RadioGroup, Table, TableColumn } from '@deot/vc';
 
-const tableData5 = ref([{
-	date: '2011-11-03',
-	name: '条目 1',
-	desc: '这是条目 1 的说明文字，用于展示较长内容的换行与截断。'
-}, {
-	date: '2011-11-02',
-	name: '条目 2',
-	desc: '这是条目 2 的说明文字，用于展示较长内容的换行与截断。'
-}, {
-	date: '2011-11-04',
-	name: '条目 3',
-	desc: '这是条目 3 的说明文字，用于展示较长内容的换行与截断。'
-}, {
-	date: '2011-11-01',
-	name: '条目 4',
-	desc: '这是条目 4 的说明文字，用于展示较长内容的换行与截断。'
-}, {
-	date: '2011-11-08',
-	name: '条目 5',
-	desc: '这是条目 5 的说明文字，用于展示较长内容的换行与截断。'
-}, {
-	date: '2011-11-06',
-	name: '条目 6',
-	desc: '这是条目 6 的说明文字，用于展示较长内容的换行与截断。'
-}, {
-	date: '2011-11-07',
-	name: '条目 7',
-	desc: '这是条目 7 的说明文字，用于展示较长内容的换行与截断。'
-}]);
+const mode = ref('height');
+const tableData = ref(Array.from({ length: 7 }, (_, index) => ({
+	date: `2011-11-0${index + 1}`,
+	name: `条目 ${index + 1}`,
+	desc: `这是条目 ${index + 1} 的说明文字，用于展示较长内容的换行与截断。`
+})));
 </script>
+
+<style scoped>
+.table-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+</style>
 ```
 :::
 
 ### 固定列
-横向内容过多时，可选择固定列。固定列需要使用 `fixed` 属性，它接受 `boolean` 值或者`left`、`right`，表示左边固定还是右边固定。
+
+横向内容过多时，可选择固定列。固定列需要使用 `fixed` 属性，它接受 `boolean` 值或者 `left`、`right`，表示左边固定还是右边固定。`align`、`header-align` 设置单元格与表头的对齐方式，`class`、`label-class` 设置列与列标题的类名。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<Table :data="tableData5" border stripe height="250">
-		<TableColumn
-			prop="date"
-			label="日期"
-			width="180"
-			fixed
-		/>
-		<TableColumn
-			prop="name"
-			label="名称"
-			width="180"
-
-		/>
-		<TableColumn
-			prop="group"
-			label="分组"
-			width="180"
-
-		/>
-		<TableColumn
-			prop="subgroup"
-			label="子分组"
-			width="180"
-		/>
-		<TableColumn
-			prop="desc"
-			label="说明"
-			width="180"
-		/>
+	<Table :data="tableData" border stripe height="250" class="table-demo">
+		<TableColumn prop="date" label="日期" width="180" fixed />
+		<TableColumn prop="name" label="名称" width="180" />
+		<TableColumn prop="group" label="分组" width="180" />
+		<TableColumn prop="subgroup" label="子分组" width="180" />
+		<TableColumn prop="desc" label="说明" width="180" />
 		<TableColumn
 			prop="code"
 			label="编码"
 			width="180"
+			align="right"
+			header-align="center"
+			class="table-demo__code"
+			label-class="table-demo__code-label"
 		/>
-		<TableColumn
-			label="操作"
-			width="180"
-			fixed="right"
-		>
+		<TableColumn label="操作" width="180" fixed="right">
 			<template #default>
 				<Button type="text">编辑</Button>
 				<Button type="text">查看</Button>
@@ -395,157 +389,280 @@ const tableData5 = ref([{
 		</TableColumn>
 	</Table>
 </template>
+
 <script setup>
 import { ref } from 'vue';
-import { Table, Button, TableColumn } from '@deot/vc';
+import { Button, Table, TableColumn } from '@deot/vc';
 
-const tableData5 = ref([{
-	date: '2011-11-02',
-	name: '条目 1',
+const tableData = ref(Array.from({ length: 4 }, (_, index) => ({
+	date: `2011-11-0${index + 1}`,
+	name: `条目 ${index + 1}`,
 	group: '分组 A',
 	subgroup: '子分组 A-1',
-	desc: '这是条目 1 的说明文字，用于展示较长内容的换行与截断。',
-	code: 'NO100001'
-}, {
-	date: '2011-11-04',
-	name: '条目 2',
-	group: '分组 A',
-	subgroup: '子分组 A-1',
-	desc: '这是条目 2 的说明文字，用于展示较长内容的换行与截断。',
-	code: 'NO100001'
-}, {
-	date: '2011-11-01',
-	name: '条目 3',
-	group: '分组 A',
-	subgroup: '子分组 A-1',
-	desc: '这是条目 3 的说明文字，用于展示较长内容的换行与截断。',
-	code: 'NO100001'
-}, {
-	date: '2011-11-03',
-	name: '条目 4',
-	group: '分组 A',
-	subgroup: '子分组 A-1',
-	desc: '这是条目 4 的说明文字，用于展示较长内容的换行与截断。',
-	code: 'NO100001'
-}]);
+	desc: `这是条目 ${index + 1} 的说明文字，用于展示较长内容的换行与截断。`,
+	code: `NO10000${index + 1}`
+})));
 </script>
+
+<style scoped>
+.table-demo :deep(.table-demo__code) {
+	font-family: monospace;
+}
+
+.table-demo :deep(.table-demo__code-label) {
+	color: var(--vc-color-primary);
+}
+</style>
 ```
 :::
 
 ### 多选
-选择多行数据时使用 `Checkbox`。非常简单: 手动添加一个  `TableColumn` ，设 `type` 属性为 `selection` 即可。
+
+选择多行数据时，添加一个 `type="selection"` 的 `TableColumn` 即可；`type="index"` 显示行号，`index` 可自定义起始值或计算方式。`selectable` 决定某行能否勾选，`reserve-selection`（需 `primary-key`）在数据更新后保留选中项；`indeterminate` 设置部分选中时点击表头复选框是全选（`true`）还是取消全选（`false`）。`select`、`select-all`、`selection-change` 在勾选时触发；实例方法 `toggleRowSelection`、`toggleAllSelection`、`clearSelection` 从外部控制选中。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<Table :data="tableData" border stripe>
-		<TableColumn
-			type="selection"
-			width="65"
-		/>
-		<TableColumn
-			prop="date"
-			label="日期"
-			width="180"
-		/>
-		<TableColumn
-			prop="name"
-			label="名称"
-		/>
-		<TableColumn
-			prop="desc"
-			label="说明"
-		/>
-	</Table>
+	<div class="table-demo">
+		<div class="table-demo__row">
+			<Button size="small" @click="handleToggleSecond">切换第 2 行</Button>
+			<Button size="small" @click="handleToggleAll">toggleAllSelection</Button>
+			<Button size="small" @click="handleClear">clearSelection</Button>
+			<Checkbox v-model="isIndeterminate">indeterminate</Checkbox>
+		</div>
+		<Table
+			ref="table"
+			:data="tableData"
+			:indeterminate="isIndeterminate"
+			primary-key="id"
+			border
+			stripe
+			@select="handleSelect"
+			@select-all="handleSelectAll"
+			@selection-change="handleSelectionChange"
+		>
+			<TableColumn type="selection" width="65" :selectable="selectable" reserve-selection />
+			<TableColumn type="index" label="序号" width="70" :index="index => index + 1" />
+			<TableColumn prop="date" label="日期" width="180" />
+			<TableColumn prop="name" label="名称" />
+			<TableColumn prop="desc" label="说明" />
+		</Table>
+		<p class="table-demo__result">{{ log }}；已选：{{ selected.join('、') || '无' }}</p>
+	</div>
 </template>
+
 <script setup>
 import { ref } from 'vue';
-import { Table, TableColumn } from '@deot/vc';
+import { Button, Checkbox, Table, TableColumn } from '@deot/vc';
 
-const tableData = ref([
-	{
-		date: '2011-11-02',
-		name: '条目 1',
-		desc: '这是条目 1 的说明文字，用于展示较长内容的换行与截断。'
-	},
-	{
-		date: '2011-11-04',
-		name: '条目 2',
-		desc: '这是条目 2 的说明文字，用于展示较长内容的换行与截断。'
-	},
-	{
-		date: '2011-11-01',
-		name: '条目 3',
-		desc: '这是条目 3 的说明文字，用于展示较长内容的换行与截断。'
-	},
-	{
-		date: '2011-11-03',
-		name: '条目 4',
-		desc: '这是条目 4 的说明文字，用于展示较长内容的换行与截断。'
-	}
-]);
+const table = ref();
+const isIndeterminate = ref(true);
+const log = ref('等待操作');
+const selected = ref([]);
+const tableData = ref(Array.from({ length: 4 }, (_, index) => ({
+	id: index + 1,
+	date: `2011-11-0${index + 1}`,
+	name: index === 3 ? '条目 4（不可选）' : `条目 ${index + 1}`,
+	desc: `这是条目 ${index + 1} 的说明文字，用于展示较长内容的换行与截断。`
+})));
+
+const selectable = row => row.id !== 4;
+
+const handleSelect = ({ row, selected: isSelected }) => {
+	log.value = `select：${row.name} → ${isSelected}`;
+};
+
+const handleSelectAll = ({ selected: isSelected }) => {
+	log.value = `select-all：${isSelected}`;
+};
+
+const handleSelectionChange = ({ selection }) => {
+	selected.value = selection.map(row => row.name);
+};
+
+const handleToggleSecond = () => {
+	table.value.toggleRowSelection(tableData.value[1]);
+};
+
+const handleToggleAll = () => {
+	table.value.toggleAllSelection();
+};
+
+const handleClear = () => {
+	table.value.clearSelection();
+};
 </script>
+
+<style scoped>
+.table-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.table-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+.table-demo__result {
+	margin: 0;
+}
+</style>
+```
+:::
+
+### 当前行与单元格事件
+
+`highlight` 高亮当前行，点击行或调用 `setCurrentRow(row)` 切换，不传参数时取消；`current-row-value` 按 `primary-key` 指定当前行（只写）。当前行变化时触发 `current-change`。单元格与行的鼠标事件（`cell-mouseenter`、`cell-mouseleave`、`cell-click`、`cell-dblclick`、`cell-contextmenu`、`row-dblclick`、`row-contextmenu`）以及表头的 `header-click`、`header-contextmenu` 都以单对象参数回调。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
+```vue
+<template>
+	<div class="table-demo">
+		<div class="table-demo__row">
+			<Button size="small" @click="handleSetCurrent">setCurrentRow(第 3 行)</Button>
+			<Button size="small" @click="handleClearCurrent">取消当前行</Button>
+		</div>
+		<Table
+			ref="table"
+			:data="tableData"
+			:current-row-value="2"
+			primary-key="id"
+			highlight
+			@current-change="handleCurrentChange"
+			@cell-mouseenter="handleEvent('cell-mouseenter', $event)"
+			@cell-mouseleave="handleEvent('cell-mouseleave', $event)"
+			@cell-click="handleEvent('cell-click', $event)"
+			@cell-dblclick="handleEvent('cell-dblclick', $event)"
+			@cell-contextmenu="handleContextmenu('cell-contextmenu', $event)"
+			@row-dblclick="handleEvent('row-dblclick', $event)"
+			@row-contextmenu="handleContextmenu('row-contextmenu', $event)"
+			@header-click="handleHeader('header-click', $event)"
+			@header-contextmenu="handleHeader('header-contextmenu', $event)"
+		>
+			<TableColumn prop="name" label="名称" width="180" />
+			<TableColumn prop="desc" label="说明（右键单元格或表头试试）" />
+		</Table>
+		<p class="table-demo__result">当前行：{{ current }}；最近事件：{{ last }}</p>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { Button, Table, TableColumn } from '@deot/vc';
+
+const table = ref();
+const current = ref('-');
+const last = ref('-');
+const tableData = ref(Array.from({ length: 4 }, (_, index) => ({
+	id: index + 1,
+	name: `条目 ${index + 1}`,
+	desc: `条目 ${index + 1} 的说明`
+})));
+
+const handleCurrentChange = ({ row }) => {
+	current.value = row ? row.name : '无';
+};
+
+const handleEvent = (name, { row }) => {
+	last.value = `${name}（${row.name}）`;
+};
+
+const handleContextmenu = (name, payload) => {
+	payload.event?.preventDefault();
+	handleEvent(name, payload);
+};
+
+const handleHeader = (name, { column, event }) => {
+	name === 'header-contextmenu' && event.preventDefault();
+	last.value = `${name}（${column.label}）`;
+};
+
+const handleSetCurrent = () => {
+	table.value.setCurrentRow(tableData.value[2]);
+};
+
+const handleClearCurrent = () => {
+	table.value.setCurrentRow();
+};
+</script>
+
+<style scoped>
+.table-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.table-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+.table-demo__result {
+	margin: 0;
+}
+</style>
 ```
 :::
 
 ### 排序
 
-Table 只维护排序交互，数据排序由调用方处理。下面通过 `v-model:sort` 和计算属性完成本地排序，取消排序后恢复原顺序。
+Table 只维护排序交互，数据排序由调用方处理。下面通过 `v-model:sort` 和计算属性完成本地排序，取消排序后恢复原顺序；排序条件变化时同时触发 `sort-change`。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<Table
-		:data="sortedData"
-		v-model:sort="sort"
-	>
-		<TableColumn
-			prop="date"
-			label="日期"
-			sortable
-			min-width="180"
-		/>
-		<TableColumn
-			prop="name"
-			label="名称"
-			width="180"
-			sortable
-		/>
-		<TableColumn
-			prop="desc"
-			label="说明"
-			width="880"
-		/>
-	</Table>
+	<div class="table-demo">
+		<Table v-model:sort="sort" :data="sortedData" @sort-change="handleSortChange">
+			<TableColumn prop="date" label="日期" sortable min-width="180" />
+			<TableColumn prop="name" label="名称" width="180" sortable />
+			<TableColumn prop="desc" label="说明" width="880" />
+		</Table>
+		<p class="table-demo__result">sort-change：{{ log }}</p>
+	</div>
 </template>
+
 <script setup>
-import { ref, computed } from 'vue';
+import { computed, ref } from 'vue';
 import { Table, TableColumn } from '@deot/vc';
 
 const sort = ref({ prop: 'date', order: 'descending' });
+const log = ref('-');
 const tableData = ref([
-	{
-		date: '2011-11-02',
-		name: '条目 1',
-		desc: '这是条目 1 的说明文字，用于展示较长内容的换行与截断。'
-	},
-	{
-		date: '2011-11-04',
-		name: '条目 2',
-		desc: '这是条目 2 的说明文字，用于展示较长内容的换行与截断。'
-	},
-	{
-		date: '2011-11-01',
-		name: '条目 3',
-		desc: '这是条目 3 的说明文字，用于展示较长内容的换行与截断。'
-	},
-	{
-		date: '2011-11-03',
-		name: '条目 4',
-		desc: '这是条目 4 的说明文字，用于展示较长内容的换行与截断。'
-	}
+	{ date: '2011-11-02', name: '条目 1', desc: '这是条目 1 的说明文字，用于展示较长内容的换行与截断。' },
+	{ date: '2011-11-04', name: '条目 2', desc: '这是条目 2 的说明文字，用于展示较长内容的换行与截断。' },
+	{ date: '2011-11-01', name: '条目 3', desc: '这是条目 3 的说明文字，用于展示较长内容的换行与截断。' },
+	{ date: '2011-11-03', name: '条目 4', desc: '这是条目 4 的说明文字，用于展示较长内容的换行与截断。' }
 ]);
 
 const sortedData = computed(() => {
@@ -554,11 +671,28 @@ const sortedData = computed(() => {
 	const direction = order === 'ascending' ? 1 : -1;
 	return [...tableData.value].sort((a, b) => String(a[prop]).localeCompare(String(b[prop])) * direction);
 });
+
+const handleSortChange = ({ prop, order }) => {
+	log.value = `${prop || '-'} / ${order || '取消'}`;
+};
 </script>
+
+<style scoped>
+.table-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.table-demo__result {
+	margin: 0;
+}
+</style>
 ```
 :::
 
 ### 动态列与列显隐
+
 通过 `v-model:columns` 拿到 Table 内部收集到的全部列，可用于"列管理"：勾选切换 `hidden` 控制某列是否渲染（不影响数据收集），也可以调整数组顺序按 `id` 重排列。
 
 - 列可以用 `v-if`、`v-for`（含多级表头的子列）动态增删与移动，列顺序始终跟随模板。
@@ -568,72 +702,68 @@ const sortedData = computed(() => {
 - 写回与模板一致的顺序（或只修改 `hidden`、不调整顺序）时，恢复跟随模板。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div>
-		<label
-			v-for="col in columns"
-			:key="col.id"
-			style="margin-right: 12px;"
-		>
-			<input
-				type="checkbox"
-				:checked="!col.hidden"
-				@change="handleToggle(col)"
+	<div class="table-demo">
+		<div class="table-demo__row">
+			<Checkbox
+				v-for="column in columns"
+				:key="column.id"
+				:model-value="!column.hidden"
+				@change="handleToggle(column)"
 			>
-			{{ col.label || col.type }}
-		</label>
+				{{ column.label || column.type }}
+			</Checkbox>
+		</div>
+		<Table v-model:columns="columns" :data="tableData">
+			<TableColumn type="selection" width="55" />
+			<TableColumn prop="date" label="日期" width="180" />
+			<TableColumn prop="name" label="名称" />
+			<TableColumn prop="desc" label="说明" />
+		</Table>
 	</div>
-	<Table v-model:columns="columns" :data="tableData">
-		<TableColumn
-			type="selection"
-			width="55"
-		/>
-		<TableColumn
-			prop="date"
-			label="日期"
-			width="180"
-		/>
-		<TableColumn
-			prop="name"
-			label="名称"
-		/>
-		<TableColumn
-			prop="desc"
-			label="说明"
-		/>
-	</Table>
 </template>
+
 <script setup>
 import { ref } from 'vue';
-import { Table, TableColumn } from '@deot/vc';
+import { Checkbox, Table, TableColumn } from '@deot/vc';
 
 const columns = ref([]);
 const tableData = ref([
-	{
-		date: '2011-11-02',
-		name: '条目 1',
-		desc: '这是条目 1 的说明文字，用于展示较长内容的换行与截断。'
-	},
-	{
-		date: '2011-11-04',
-		name: '条目 2',
-		desc: '这是条目 2 的说明文字，用于展示较长内容的换行与截断。'
-	},
-	{
-		date: '2011-11-01',
-		name: '条目 3',
-		desc: '这是条目 3 的说明文字，用于展示较长内容的换行与截断。'
-	}
+	{ date: '2011-11-02', name: '条目 1', desc: '这是条目 1 的说明文字，用于展示较长内容的换行与截断。' },
+	{ date: '2011-11-04', name: '条目 2', desc: '这是条目 2 的说明文字，用于展示较长内容的换行与截断。' },
+	{ date: '2011-11-01', name: '条目 3', desc: '这是条目 3 的说明文字，用于展示较长内容的换行与截断。' }
 ]);
 
-const handleToggle = (col) => {
+const handleToggle = (column) => {
 	columns.value = columns.value.map(item => (
-		item.id === col.id ? { ...item, hidden: !item.hidden } : item
+		item.id === column.id ? { ...item, hidden: !item.hidden } : item
 	));
 };
 </script>
+
+<style scoped>
+.table-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.table-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+</style>
 ```
 :::
 
@@ -649,7 +779,14 @@ const handleToggle = (col) => {
 - 不写 `modelValue` 时由组件自己记录确认结果，只用 `onChange` 即可；此时多选收到数组，单选收到单个值。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
 	<Table :data="filteredData">
@@ -661,22 +798,16 @@ const handleToggle = (col) => {
 				data: types,
 				max: 2,
 				modelValue: typeFilter,
-				'onUpdate:modelValue': v => (typeFilter = v)
+				'onUpdate:modelValue': handleFilter
 			}"
 		/>
-		<TableColumn
-			prop="name"
-			label="名称"
-			width="180"
-		/>
-		<TableColumn
-			prop="desc"
-			label="说明"
-		/>
+		<TableColumn prop="name" label="名称" width="180" />
+		<TableColumn prop="desc" label="说明" />
 	</Table>
 </template>
+
 <script setup>
-import { ref, computed } from 'vue';
+import { computed, ref } from 'vue';
 import { Table, TableColumn } from '@deot/vc';
 
 const types = [
@@ -686,32 +817,20 @@ const types = [
 ];
 const typeFilter = ref([]);
 const tableData = ref([
-	{
-		type: 1,
-		name: '条目 1',
-		desc: '这是条目 1 的说明文字，用于展示较长内容的换行与截断。'
-	},
-	{
-		type: 2,
-		name: '条目 2',
-		desc: '这是条目 2 的说明文字，用于展示较长内容的换行与截断。'
-	},
-	{
-		type: 1,
-		name: '条目 3',
-		desc: '这是条目 3 的说明文字，用于展示较长内容的换行与截断。'
-	},
-	{
-		type: 2,
-		name: '条目 4',
-		desc: '这是条目 4 的说明文字，用于展示较长内容的换行与截断。'
-	}
+	{ type: 1, name: '条目 1', desc: '这是条目 1 的说明文字，用于展示较长内容的换行与截断。' },
+	{ type: 2, name: '条目 2', desc: '这是条目 2 的说明文字，用于展示较长内容的换行与截断。' },
+	{ type: 1, name: '条目 3', desc: '这是条目 3 的说明文字，用于展示较长内容的换行与截断。' },
+	{ type: 2, name: '条目 4', desc: '这是条目 4 的说明文字，用于展示较长内容的换行与截断。' }
 ]);
 
 const filteredData = computed(() => {
 	if (!typeFilter.value.length) return tableData.value;
 	return tableData.value.filter(row => typeFilter.value.includes(row.type));
 });
+
+const handleFilter = (value) => {
+	typeFilter.value = value;
+};
 </script>
 ```
 :::
@@ -721,7 +840,14 @@ const filteredData = computed(() => {
 单选点击选项即生效，“全部”清空条件。此例只传 `onChange`，由筛选器保存当前选项，外部据此过滤数据。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
 	<Table :data="filteredRows">
@@ -729,21 +855,25 @@ const filteredData = computed(() => {
 		<TableColumn prop="status" label="状态" :filter-options="{ data: options, onChange: handleFilter }" />
 	</Table>
 </template>
+
 <script setup>
-import { ref, computed } from 'vue';
+import { computed, ref } from 'vue';
 import { Table, TableColumn } from '@deot/vc';
 
 const status = ref();
 const options = [
-	{ label: '进行中', value: '进行中' },
-	{ label: '已完成', value: '已完成' }
+	{ label: '状态 A', value: 'A' },
+	{ label: '状态 B', value: 'B' }
 ];
 const rows = [
-	{ name: '条目 1', status: '进行中' },
-	{ name: '条目 2', status: '已完成' }
+	{ name: '条目 1', status: 'A' },
+	{ name: '条目 2', status: 'B' }
 ];
-const filteredRows = computed(() => status.value ? rows.filter(row => row.status === status.value) : rows);
-const handleFilter = (value) => { status.value = value; };
+const filteredRows = computed(() => (status.value ? rows.filter(row => row.status === status.value) : rows));
+
+const handleFilter = (value) => {
+	status.value = value;
+};
 </script>
 ```
 :::
@@ -751,6 +881,7 @@ const handleFilter = (value) => { status.value = value; };
 进阶示例（单选受控 / 多选 `max: 2` / 只用 `onChange`）：[筛选](./examples/filter.vue)
 
 ### 树形数据与懒加载
+
 支持树类型的数据的显示。当 `row` 中包含 `children` 字段时，被视为树形数据。渲染树形数据时，必须要指定 `primary-key`，且其值在整棵树（含懒加载得到的子行）中唯一；重复出现的值只有首次出现的行可展开。支持子节点数据异步加载：设置 `Table` 的 `lazy-tree` 属性为 `true` 与加载函数 `load-expand`，并通过 `row` 中的 `hasChildren` 字段标记可加载子节点的行（仅 `lazy-tree` 时生效）。`children` 与 `hasChildren` 都可以通过 `key-value` 配置。
 
 - 展开的子行铺平后逐行渲染，普通表格、`height` 与 `virtualized` 虚拟化表格都适用；缩进与展开图标显示在第一个普通列（非 `selection` / `index` / `expand`）中，缩进宽度由 `indent` 控制；每个单元格带有 `vc-table__row--level-{level}` 类名，便于按层级定制样式。
@@ -761,60 +892,58 @@ const handleFilter = (value) => { status.value = value; };
 - `expand-change` 的参数为 `{ type: 'tree', row, expanded, maxLevel }`，`maxLevel` 为当前可见行的最大层级（根为 `0`），可用于调整树形列的宽度。
 - `load-expand(row, treeNode)` 可以返回数组或 `Promise`，`treeNode.level` 为该节点的层级；加载失败时节点恢复为待加载。展开尚未加载的节点（点击或 `toggleRowExpansion`）会先触发加载。
 - 嵌套的 `children` 可以原地增删（如 `row.children.splice(index, 1)`），表格会同步更新，被移除的行同时移出选中项；若之后还要增删懒加载得到的子行，`load-expand` 请返回响应式数组（如 `reactive([...])`）。
+- `expand-selectable` 为 `false` 时子行的勾选框隐藏，全选只作用于根行。
+
+下例用 `key-value` 把子行字段改为 `items`，`indent` 设为 24。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<Table
-		:data="dataSource"
-		:load-expand="loadExpand"
-		lazy-tree
-		primary-key="id"
-		@expand-change="handleExpandChange"
-	>
-		<TableColumn
-			type="selection"
-			width="55"
-		/>
-		<TableColumn
-			:width="treeWidth"
-			prop="date"
-			label="日期"
-		/>
-		<TableColumn
-			prop="name"
-			label="名称"
-			min-width="180"
-		/>
-		<TableColumn
-			prop="desc"
-			label="说明"
-		/>
-	</Table>
+	<div class="table-demo">
+		<Checkbox v-model="isChildSelectable">子行可选择（expand-selectable）</Checkbox>
+		<Table
+			:data="dataSource"
+			:load-expand="loadExpand"
+			:key-value="{ children: 'items', hasChildren: 'hasChildren' }"
+			:indent="24"
+			:expand-selectable="isChildSelectable"
+			lazy-tree
+			primary-key="id"
+			@expand-change="handleExpandChange"
+		>
+			<TableColumn type="selection" width="55" />
+			<TableColumn :width="treeWidth" prop="date" label="日期" />
+			<TableColumn prop="name" label="名称" min-width="180" />
+			<TableColumn prop="desc" label="说明" />
+		</Table>
+	</div>
 </template>
-<script setup>
-import { ref, reactive } from 'vue';
-import { Table, TableColumn } from '@deot/vc';
 
-const random = () => Math.ceil(Math.random() * 1000);
+<script setup>
+import { reactive, ref } from 'vue';
+import { Checkbox, Table, TableColumn } from '@deot/vc';
+
 const createRow = (id, extra = {}) => ({
 	id,
 	date: '2011-11-02',
-	name: `条目 ${random()}`,
-	desc: `条目说明 ${random()}`,
+	name: `条目 ${id}`,
+	desc: `条目 ${id} 的说明`,
 	...extra
 });
 
+const isChildSelectable = ref(true);
 const dataSource = ref([
 	createRow(1, { hasChildren: true }),
 	createRow(2, { hasChildren: true }),
-	createRow(3, {
-		children: [
-			createRow(31),
-			createRow(32)
-		]
-	}),
+	createRow(3, { items: [createRow(31), createRow(32)] }),
 	createRow(4)
 ]);
 const treeWidth = ref(180);
@@ -833,9 +962,22 @@ const loadExpand = (row, treeNode) => {
 };
 
 const handleExpandChange = ({ maxLevel }) => {
-	treeWidth.value = 180 + maxLevel * 16;
+	treeWidth.value = 180 + maxLevel * 24;
 };
 </script>
+
+<style scoped>
+.table-demo {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 16px;
+}
+
+.table-demo > .vc-table {
+	align-self: stretch;
+}
+</style>
 ```
 :::
 
@@ -844,20 +986,23 @@ const handleExpandChange = ({ maxLevel }) => {
 下面同时包含已有子节点与懒加载子节点。编辑直接更新响应式行对象；删除从该行所属数组移除。懒加载数组由调用方保存，便于后续增删。切换渲染模式后仍可继续操作。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="tree-demo">
-		<div class="toolbar">
-			<label>渲染模式：
-				<select v-model="mode">
-					<option value="normal">普通</option>
-					<option value="height">固定高度虚拟化</option>
-					<option value="virtualized">外部视口虚拟化</option>
-				</select>
-			</label>
-			<span>展开“待加载的条目”后也可编辑、删除子节点。</span>
-		</div>
+	<div class="table-demo">
+		<RadioGroup v-model="mode">
+			<Radio value="normal">普通</Radio>
+			<Radio value="height">固定高度虚拟化</Radio>
+			<Radio value="virtualized">外部视口虚拟化</Radio>
+		</RadioGroup>
+		<p class="table-demo__result">展开“待加载的条目”后也可编辑、删除子节点。</p>
 		<Table
 			:data="rows"
 			:height="mode === 'height' ? 280 : undefined"
@@ -870,7 +1015,7 @@ const handleExpandChange = ({ maxLevel }) => {
 			<TableColumn prop="name" label="名称" min-width="200" />
 			<TableColumn label="编辑名称" min-width="180">
 				<template #default="{ row }">
-					<input v-model="row.name" :aria-label="`编辑条目 ${row.id}`">
+					<Input v-model="row.name" :aria-label="`编辑条目 ${row.id}`" />
 				</template>
 			</TableColumn>
 			<TableColumn label="操作" width="90">
@@ -881,22 +1026,25 @@ const handleExpandChange = ({ maxLevel }) => {
 		</Table>
 	</div>
 </template>
+
 <script setup>
-import { ref, reactive } from 'vue';
-import { Button, Table, TableColumn } from '@deot/vc';
+import { reactive, ref } from 'vue';
+import { Button, Input, Radio, RadioGroup, Table, TableColumn } from '@deot/vc';
 
 const mode = ref('normal');
 const rows = ref([
-	{ id: 'project', name: '已有条目', children: [{ id: 'task', name: '已有子条目' }] },
+	{ id: 'first', name: '已有条目', children: [{ id: 'child', name: '已有子条目' }] },
 	{ id: 'lazy', name: '待加载的条目', hasChildren: true }
 ]);
 const loaded = new Map();
+
 const loadExpand = async (row) => {
 	await new Promise(resolve => setTimeout(resolve, 400));
 	const children = reactive([{ id: `${row.id}-child`, name: '异步加载的子条目' }]);
 	loaded.set(row.id, children);
 	return children;
 };
+
 const removeRow = (list, row) => {
 	const index = list.findIndex(item => item.id === row.id);
 	if (index >= 0) {
@@ -905,6 +1053,7 @@ const removeRow = (list, row) => {
 	}
 	return list.some(item => item.children && removeRow(item.children, row));
 };
+
 const handleDelete = (row) => {
 	if (removeRow(rows.value, row)) return;
 	for (const children of loaded.values()) {
@@ -912,14 +1061,23 @@ const handleDelete = (row) => {
 	}
 };
 </script>
+
 <style scoped>
-.toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 12px; }
-input { width: 100%; box-sizing: border-box; }
+.table-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.table-demo__result {
+	margin: 0;
+}
 </style>
 ```
 :::
 
 ### 展开行
+
 当行内容过多并且不想显示横向滚动条时，可以使用展开行功能。添加 `type="expand"` 的 `TableColumn`，其默认插槽即为展开行的内容，参数为 `{ row, rowIndex, store }`。
 
 - 通过 `expanded-values`（需设置 `primary-key`）指定展开的行，或调用 `toggleRowExpansion(row, expanded)` 切换。
@@ -930,92 +1088,110 @@ input { width: 100%; box-sizing: border-box; }
 - 展开行仅对单行渲染块生效：被 `get-span` 纵向合并在一起的行不渲染展开内容。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<Table
-		:data="tableData"
-		:expanded-values="[2]"
-		primary-key="id"
-	>
-		<TableColumn type="expand">
-			<template #default="{ row }">
-				<p>名称：{{ row.name }}</p>
-				<p>说明：{{ row.desc }}</p>
-			</template>
-		</TableColumn>
-		<TableColumn
-			prop="date"
-			label="日期"
-			width="180"
-		/>
-		<TableColumn
-			prop="name"
-			label="名称"
-		/>
-	</Table>
+	<div class="table-demo">
+		<Table :data="tableData" :expanded-values="[2]" primary-key="id" @expand-change="handleExpandChange">
+			<TableColumn type="expand">
+				<template #default="{ row }">
+					<div class="table-demo__detail">
+						<p class="table-demo__line">名称：{{ row.name }}</p>
+						<p class="table-demo__line">说明：{{ row.desc }}</p>
+					</div>
+				</template>
+			</TableColumn>
+			<TableColumn prop="date" label="日期" width="180" />
+			<TableColumn prop="name" label="名称" />
+		</Table>
+		<p class="table-demo__result">已展开：{{ expanded }}</p>
+	</div>
 </template>
+
 <script setup>
 import { ref } from 'vue';
 import { Table, TableColumn } from '@deot/vc';
 
-const tableData = ref([
-	{
-		id: 1,
-		date: '2011-11-02',
-		name: '条目 1',
-		desc: '这是条目 1 的说明文字，用于展示较长内容的换行与截断。'
-	},
-	{
-		id: 2,
-		date: '2011-11-04',
-		name: '条目 2',
-		desc: '这是条目 2 的说明文字，用于展示较长内容的换行与截断。'
-	},
-	{
-		id: 3,
-		date: '2011-11-01',
-		name: '条目 3',
-		desc: '这是条目 3 的说明文字，用于展示较长内容的换行与截断。'
-	}
-]);
+const expanded = ref('条目 2');
+const tableData = ref(Array.from({ length: 3 }, (_, index) => ({
+	id: index + 1,
+	date: `2011-11-0${index + 1}`,
+	name: `条目 ${index + 1}`,
+	desc: `这是条目 ${index + 1} 的说明文字，用于展示较长内容的换行与截断。`
+})));
+
+const handleExpandChange = ({ expandedRows }) => {
+	expanded.value = expandedRows.map(row => row.name).join('、') || '无';
+};
 </script>
+
+<style scoped>
+.table-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.table-demo__detail {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 12px 0;
+}
+
+.table-demo__line,
+.table-demo__result {
+	margin: 0;
+}
+</style>
 ```
 :::
 
 #### 编辑展开内容与切换渲染模式
 
-展开区使用普通表单编辑行对象，表格名称同步更新。增加备注会改变展开区高度，可在三种模式下观察布局；删除行直接更新 `data`。
+展开区使用普通表单编辑行对象，表格名称同步更新。增加备注会改变展开区高度，可在三种模式下观察布局；删除行直接更新 `data`。`default-expand-all` 让未操作过的行默认展开。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div>
-		<div class="toolbar">
-			<label>渲染模式：
-				<select v-model="mode">
-					<option value="normal">普通</option>
-					<option value="height">固定高度虚拟化</option>
-					<option value="virtualized">外部视口虚拟化</option>
-				</select>
-			</label>
+	<div class="table-demo">
+		<div class="table-demo__row">
+			<RadioGroup v-model="mode">
+				<Radio value="normal">普通</Radio>
+				<Radio value="height">固定高度虚拟化</Radio>
+				<Radio value="virtualized">外部视口虚拟化</Radio>
+			</RadioGroup>
 			<Button :disabled="!rows.length" @click="handleToggle">展开 / 收起首行</Button>
 		</div>
 		<Table
-			ref="tableRef"
+			ref="table"
 			:data="rows"
 			:height="mode === 'height' ? 300 : undefined"
 			:virtualized="mode === 'virtualized'"
-			:expanded-values="[1]"
+			default-expand-all
 			primary-key="id"
 			border
 		>
 			<TableColumn type="expand">
 				<template #default="{ row }">
-					<div class="detail">
-						<label>名称：<input v-model="row.name"></label>
-						<p v-for="(remark, index) in row.remarks" :key="index">{{ remark }}</p>
+					<div class="table-demo__detail">
+						<Input v-model="row.name" class="table-demo__input" />
+						<p v-for="(remark, index) in row.remarks" :key="index" class="table-demo__line">{{ remark }}</p>
 						<Button @click="handleAddRemark(row)">增加备注</Button>
 					</div>
 				</template>
@@ -1029,27 +1205,60 @@ const tableData = ref([
 		</Table>
 	</div>
 </template>
+
 <script setup>
 import { ref } from 'vue';
-import { Button, Table, TableColumn } from '@deot/vc';
+import { Button, Input, Radio, RadioGroup, Table, TableColumn } from '@deot/vc';
 
 const mode = ref('normal');
-const tableRef = ref();
+const table = ref();
 const rows = ref([
 	{ id: 1, name: '条目 1', remarks: ['展开内容可编辑，行高随内容变化。'] },
 	{ id: 2, name: '条目 2', remarks: ['点击左侧箭头查看详情。'] }
 ]);
-const handleToggle = () => tableRef.value.toggleRowExpansion(rows.value[0]);
-const handleAddRemark = row => row.remarks.push(`新增备注 ${row.remarks.length + 1}`);
+
+const handleToggle = () => {
+	table.value.toggleRowExpansion(rows.value[0]);
+};
+
+const handleAddRemark = (row) => {
+	row.remarks.push(`新增备注 ${row.remarks.length + 1}`);
+};
+
 const handleDelete = (row) => {
 	rows.value = rows.value.filter(item => item.id !== row.id);
 };
 </script>
+
 <style scoped>
-.toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 12px; }
-.detail { padding: 12px 0; }
-.detail p { margin: 8px 0; }
-input { max-width: 100%; box-sizing: border-box; }
+.table-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.table-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+.table-demo__detail {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 8px;
+	padding: 12px 0;
+}
+
+.table-demo__input {
+	max-width: 240px;
+}
+
+.table-demo__line {
+	margin: 0;
+}
 </style>
 ```
 :::
@@ -1067,6 +1276,8 @@ input { max-width: 100%; box-sizing: border-box; }
 - 两者同时开启时，整行不显示 `move` 光标，由把手提示可拖动；按住行内其它位置仍可拖动。
 - 与展开列（`type="expand"`）、树形列同时使用时，把 `drag` 列放在它们之前。
 
+`allow-drag` 决定能否拖动，`allow-drop` 决定能否放到落点；拖动开始、结束时分别触发 `block-dragstart`、`block-dragend`（`dropped` 表示是否按新顺序放下）。
+
 拖拽以**块**为单位。普通表格一行一块；`get-span` 纵向合并在一起的几行是一块，会整体移动，落点只在块与块之间。
 
 - 移动超过 4px 才开始拖拽，单纯的点击、勾选不受影响。按 Esc 取消。
@@ -1082,39 +1293,41 @@ input { max-width: 100%; box-sizing: border-box; }
 - 写回拖拽得到的新顺序（包括它的副本）时，选中项、当前行、展开状态都会保留；其它情况下传入新数组，仍按原有规则清空选中项。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div style="margin-bottom: 8px;">{{ message }}</div>
-	<Table
-		v-model:data="tableData"
-		primary-key="id"
-		draggable
-		:allow-drag="({ rows }) => !rows[0].locked"
-		@block-drop="handleDrop"
-	>
-		<TableColumn type="drag" />
-		<TableColumn
-			prop="name"
-			label="名称"
-			width="180"
-		/>
-		<TableColumn
-			prop="date"
-			label="日期"
-			width="180"
-		/>
-		<TableColumn
-			prop="desc"
-			label="说明"
-		/>
-	</Table>
+	<div class="table-demo">
+		<p class="table-demo__result">{{ message }}</p>
+		<Table
+			v-model:data="tableData"
+			primary-key="id"
+			draggable
+			:allow-drag="allowDrag"
+			:allow-drop="allowDrop"
+			@block-dragstart="handleDragstart"
+			@block-drop="handleDrop"
+			@block-dragend="handleDragend"
+		>
+			<TableColumn type="drag" />
+			<TableColumn prop="name" label="名称" width="180" />
+			<TableColumn prop="date" label="日期" width="180" />
+			<TableColumn prop="desc" label="说明" />
+		</Table>
+	</div>
 </template>
+
 <script setup>
 import { ref } from 'vue';
 import { Table, TableColumn } from '@deot/vc';
 
-const message = ref('按住行内任意位置或左侧把手拖动；「锁定」的行不可拖动');
+const message = ref('按住行内任意位置或左侧把手拖动；「锁定」的行不可拖动，也不能放到最前');
 const tableData = ref([
 	{ id: 1, name: '条目 1', date: '2011-11-01', desc: '条目 1 的说明' },
 	{ id: 2, name: '条目 2', date: '2011-11-02', desc: '条目 2 的说明' },
@@ -1122,10 +1335,33 @@ const tableData = ref([
 	{ id: 4, name: '条目 4', date: '2011-11-04', desc: '条目 4 的说明' }
 ]);
 
+const allowDrag = ({ rows }) => !rows[0].locked;
+const allowDrop = ({ to }) => to.index !== 0;
+
+const handleDragstart = ({ rows }) => {
+	message.value = `开始拖动：${rows[0].name}`;
+};
+
 const handleDrop = ({ rows, from, to }) => {
 	message.value = `${rows[0].name}：${from.index} → ${to.index}`;
 };
+
+const handleDragend = ({ dropped }) => {
+	!dropped && (message.value = '已取消或顺序未变');
+};
 </script>
+
+<style scoped>
+.table-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.table-demo__result {
+	margin: 0;
+}
+</style>
 ```
 :::
 
@@ -1148,29 +1384,32 @@ const handleDrop = ({ rows, from, to }) => {
 - 需要限制落点时使用 `allow-drop`，例如只允许同级：`({ from, to }) => from.parent === to.parent`。[Tree](../tree) 的 `allow-drop` 同样带 `position` / `from` / `to`（`parent` 为 TreeNode），这类判断两个组件通用。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div style="margin-bottom: 8px;">{{ message }}</div>
-	<Table
-		v-model:data="tableData"
-		primary-key="id"
-		draggable
-		default-expand-all
-		@block-drop="handleDrop"
-	>
-		<TableColumn type="drag" />
-		<TableColumn
-			prop="name"
-			label="名称"
-			width="240"
-		/>
-		<TableColumn
-			prop="date"
-			label="日期"
-		/>
-	</Table>
+	<div class="table-demo">
+		<p class="table-demo__result">{{ message }}</p>
+		<Table
+			v-model:data="tableData"
+			primary-key="id"
+			draggable
+			default-expand-all
+			@block-drop="handleDrop"
+		>
+			<TableColumn type="drag" />
+			<TableColumn prop="name" label="名称" width="240" />
+			<TableColumn prop="date" label="日期" />
+		</Table>
+	</div>
 </template>
+
 <script setup>
 import { ref } from 'vue';
 import { Table, TableColumn } from '@deot/vc';
@@ -1196,6 +1435,18 @@ const handleDrop = ({ rows, from, to }) => {
 	message.value = `${rows[0].name}：${place(from)} → ${place(to)}`;
 };
 </script>
+
+<style scoped>
+.table-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.table-demo__result {
+	margin: 0;
+}
+</style>
 ```
 :::
 
@@ -1212,45 +1463,75 @@ const handleDrop = ({ rows, from, to }) => {
 - 树形表格的缩进与展开图标显示在第一个普通列；把别的列拖到它之前后，缩进与展开图标会移到新的第一个普通列。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div style="margin-bottom: 8px;">顺序：{{ columns.map(item => item.label || item.type).join(' / ') }}</div>
-	<Table
-		v-model:columns="columns"
-		:data="tableData"
-		:draggable="[false, true]"
-		:allow-drag="({ type, column }) => type !== 'column' || column.prop !== 'name'"
-		border
-	>
-		<TableColumn type="selection" />
-		<TableColumn
-			prop="name"
-			label="名称（锁定）"
-			width="140"
-		/>
-		<TableColumn
-			prop="date"
-			label="日期"
-			width="140"
-		/>
-		<TableColumn
-			prop="desc"
-			label="说明"
-		/>
-	</Table>
+	<div class="table-demo">
+		<p class="table-demo__result">顺序：{{ columns.map(item => item.label || item.type).join(' / ') }}</p>
+		<Table
+			v-model:columns="columns"
+			:data="tableData"
+			:draggable="[false, true]"
+			:allow-drag="allowDrag"
+			border
+			@column-dragstart="handleDragstart"
+			@column-drop="handleDrop"
+			@column-dragend="handleDragend"
+		>
+			<TableColumn type="selection" />
+			<TableColumn prop="name" label="名称（锁定）" width="140" />
+			<TableColumn prop="date" label="日期" width="140" />
+			<TableColumn prop="desc" label="说明" />
+		</Table>
+		<p class="table-demo__result">事件：{{ message }}</p>
+	</div>
 </template>
+
 <script setup>
 import { ref } from 'vue';
 import { Table, TableColumn } from '@deot/vc';
 
 // v-model:columns 回填为 { id, prop, label, type, hidden } 的列表，可以保存下来恢复列顺序
 const columns = ref([]);
+const message = ref('-');
 const tableData = ref([
 	{ id: 1, name: '条目 1', date: '2011-11-01', desc: '条目 1 的说明' },
 	{ id: 2, name: '条目 2', date: '2011-11-02', desc: '条目 2 的说明' }
 ]);
+
+const allowDrag = ({ type, column }) => type !== 'column' || column.prop !== 'name';
+
+const handleDragstart = ({ column }) => {
+	message.value = `column-dragstart（${column.label}）`;
+};
+
+const handleDrop = ({ column, position, targetColumn }) => {
+	message.value = `column-drop（${column.label} → ${targetColumn.label} ${position}）`;
+};
+
+const handleDragend = ({ dropped }) => {
+	message.value += `，column-dragend（dropped: ${dropped}）`;
+};
 </script>
+
+<style scoped>
+.table-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.table-demo__result {
+	margin: 0;
+}
+</style>
 ```
 :::
 
@@ -1262,23 +1543,42 @@ const tableData = ref([
 
 ### 外部视口虚拟化
 
-当 Table 位于页面或已有 Scroller 的正常文档流中，又需要渲染大量数据时，可以在不设置 `height`/`max-height` 的前提下启用 `virtualized`：
+当 Table 位于页面或已有 Scroller 的正常文档流中，又需要渲染大量数据时，可以在不设置 `height`/`max-height` 的前提下启用 `virtualized`；`recycle-list-options` 透传给内部虚拟列表，例如调大 `overscan`（见「快速滚动时的露白」）：
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<p>已构建 {{ loadState.loaded }} / {{ tableData.length }} 行</p>
-	<div class="viewport">
-		<p>外部容器的前置内容：向下滚动查看 300 行数据。</p>
-		<Table virtualized lazy-tail primary-key="id" :data="tableData" @load-change="handleLoadChange">
-			<TableColumn prop="name" label="名称" width="150" />
-			<TableColumn prop="description" label="说明" min-width="200" />
-			<template #append><p>所有行已构建。</p></template>
-		</Table>
-		<p v-if="loadState.isEnd">外部容器的后置内容</p>
+	<div class="table-demo">
+		<p class="table-demo__result">已构建 {{ loadState.loaded }} / {{ tableData.length }} 行</p>
+		<div class="table-demo__viewport">
+			<p class="table-demo__result">外部容器的前置内容：向下滚动查看 300 行数据。</p>
+			<Table
+				virtualized
+				lazy-tail
+				primary-key="id"
+				:data="tableData"
+				:recycle-list-options="{ overscan: 300 }"
+				@load-change="handleLoadChange"
+			>
+				<TableColumn prop="name" label="名称" width="150" />
+				<TableColumn prop="description" label="说明" min-width="200" />
+				<template #append>
+					<p class="table-demo__result">所有行已构建。</p>
+				</template>
+			</Table>
+			<p v-if="loadState.isEnd" class="table-demo__result">外部容器的后置内容</p>
+		</div>
 	</div>
 </template>
+
 <script setup>
 import { ref } from 'vue';
 import { Table, TableColumn } from '@deot/vc';
@@ -1289,12 +1589,30 @@ const tableData = Array.from({ length: 300 }, (_, index) => ({
 	name: `条目 ${index + 1}`,
 	description: 'Table 未设置高度，滚动由外层容器承载。'
 }));
+
 const handleLoadChange = (state) => {
 	loadState.value = state;
 };
 </script>
+
 <style scoped>
-.viewport { height: 320px; overflow: auto; }
+.table-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.table-demo__viewport {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	height: 320px;
+	overflow: auto;
+}
+
+.table-demo__result {
+	margin: 0;
+}
 </style>
 ```
 :::
@@ -1352,17 +1670,28 @@ Window / Scroller
 下面在预览窗口内滚动页面，表头吸顶，合计行和横向滚动条吸底。Table 本身未设置 `height`，因此吸附与外部视口虚拟化可以同时生效。
 
 :::playground
-<!-- <config lang="json5">{ viewport: [800, 360], previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	viewport: [800, 360],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<p>向下滚动：表头与合计行保持可见。</p>
-	<Table :data="rows" virtualized affix show-summary primary-key="id" border>
-		<TableColumn prop="name" label="名称" width="180" fixed="left" />
-		<TableColumn prop="description" label="说明" min-width="500" />
-		<TableColumn prop="value" label="数值" width="140" />
-	</Table>
-	<p>表格结束，吸附范围也随之结束。</p>
+	<div class="table-demo">
+		<p class="table-demo__result">向下滚动：表头与合计行保持可见。</p>
+		<Table :data="rows" virtualized affix show-summary primary-key="id" border>
+			<TableColumn prop="name" label="名称" width="180" fixed="left" />
+			<TableColumn prop="description" label="说明" min-width="500" />
+			<TableColumn prop="value" label="数值" width="140" />
+		</Table>
+		<p class="table-demo__result">表格结束，吸附范围也随之结束。</p>
+	</div>
 </template>
+
 <script setup>
 import { Table, TableColumn } from '@deot/vc';
 
@@ -1373,6 +1702,18 @@ const rows = Array.from({ length: 60 }, (_, index) => ({
 	value: index + 1
 }));
 </script>
+
+<style scoped>
+.table-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.table-demo__result {
+	margin: 0;
+}
+</style>
 ```
 :::
 
@@ -1440,19 +1781,29 @@ const updateOffsets = () => {
 `show-summary` 默认对第一列之后的数字求和。`get-summary` 返回与叶子列顺序对应的数组，可以自定义每一列的统计内容；树形表格只统计根行。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<label><input v-model="isCustom" type="checkbox"> 使用自定义合计</label>
-	<Table :data="rows" :get-summary="isCustom ? getSummary : undefined" show-summary border>
-		<TableColumn prop="name" label="名称" />
-		<TableColumn prop="quantity" label="数量" />
-		<TableColumn prop="value" label="数值" />
-	</Table>
+	<div class="table-demo">
+		<Checkbox v-model="isCustom">使用自定义合计</Checkbox>
+		<Table :data="rows" :get-summary="isCustom ? getSummary : undefined" show-summary border>
+			<TableColumn prop="name" label="名称" />
+			<TableColumn prop="quantity" label="数量" />
+			<TableColumn prop="value" label="数值" />
+		</Table>
+	</div>
 </template>
+
 <script setup>
 import { ref } from 'vue';
-import { Table, TableColumn } from '@deot/vc';
+import { Checkbox, Table, TableColumn } from '@deot/vc';
 
 const isCustom = ref(false);
 const rows = [
@@ -1465,26 +1816,44 @@ const getSummary = ({ data }) => [
 	`${data.reduce((sum, row) => sum + row.value, 0).toFixed(2)}`
 ];
 </script>
+
 <style scoped>
-label { display: block; margin-bottom: 12px; }
+.table-demo {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 16px;
+}
+
+.table-demo > .vc-table {
+	align-self: stretch;
+}
 </style>
 ```
 :::
 
 ### 合并单元格
 
-`get-span` 返回 `[rowspan, colspan]` 或 `{ rowspan, colspan }`。此例将相邻两行的分组列合并；设置 `height` 后，合并块作为整体参与虚拟滚动。
+`get-span` 返回 `[rowspan, colspan]` 或 `{ rowspan, colspan }`。此例将相邻两行的分组列合并；设置 `height` 后，合并块作为整体参与虚拟滚动。`row-height` 给出固定行高，虚拟化表格按行高直接算出尺寸，跳过逐行测量。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<Table :data="rows" :get-span="getSpan" :height="280" primary-key="id" border>
+	<Table :data="rows" :get-span="getSpan" :height="280" :row-height="44" primary-key="id" border>
 		<TableColumn prop="group" label="分组" width="120" fixed="left" />
 		<TableColumn prop="name" label="名称" min-width="180" />
 		<TableColumn prop="status" label="状态" width="120" />
 	</Table>
 </template>
+
 <script setup>
 import { Table, TableColumn } from '@deot/vc';
 
@@ -1492,8 +1861,9 @@ const rows = Array.from({ length: 40 }, (_, index) => ({
 	id: index + 1,
 	group: `分组 ${Math.floor(index / 2) + 1}`,
 	name: `条目 ${index + 1}`,
-	status: index % 2 ? '进行中' : '已完成'
+	status: index % 2 ? '状态 A' : '状态 B'
 }));
+
 const getSpan = ({ rowIndex, columnIndex }) => {
 	if (columnIndex === 0) return rowIndex % 2 === 0 ? [2, 1] : [0, 0];
 	return [1, 1];
@@ -1504,28 +1874,64 @@ const getSpan = ({ rowIndex, columnIndex }) => {
 
 ### 多级表头与文本截断
 
-嵌套 `TableColumn` 形成分组表头。`header-line` 控制默认标题行数，`line` 控制默认单元格内容行数，截断后悬停可查看完整文本。自定义插槽和 `formatter` 的排版由调用方负责。
+嵌套 `TableColumn` 形成分组表头。`header-line` 控制默认标题行数，`line` 控制默认单元格内容行数，截断后悬停可查看完整文本。`tooltip` 在表头显示帮助图标；`render-header` 与 `header` 插槽自定义表头，`formatter` 自定义单元格内容，它们的排版由调用方负责。`resizable` 时拖动表头右缘调整列宽，松开后触发 `column-resize`。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<Table :data="rows" border resizable>
-		<TableColumn prop="name" label="名称" width="100" fixed="left" />
-		<TableColumn label="详细信息">
-			<TableColumn prop="group" label="分组" width="120" />
-			<TableColumn prop="desc" label="详细说明（拖动列边缘调整宽度）" :header-line="2" :line="2" min-width="180" />
-		</TableColumn>
-	</Table>
+	<div class="table-demo">
+		<Table :data="rows" border resizable @column-resize="handleResize">
+			<TableColumn prop="name" label="名称" width="100" fixed="left" />
+			<TableColumn label="详细信息">
+				<TableColumn prop="group" label="分组" width="120" tooltip="分组的说明" />
+				<TableColumn prop="desc" label="详细说明（拖动列边缘调整宽度）" :header-line="2" :line="2" min-width="180" />
+			</TableColumn>
+			<TableColumn prop="value" width="120" :render-header="renderHeader" :formatter="formatter" />
+			<TableColumn prop="name" width="120">
+				<template #header="{ columnIndex }">插槽表头 {{ columnIndex }}</template>
+			</TableColumn>
+		</Table>
+		<p class="table-demo__result">column-resize：{{ log }}</p>
+	</div>
 </template>
+
 <script setup>
+import { h, ref } from 'vue';
 import { Table, TableColumn } from '@deot/vc';
 
+const log = ref('-');
 const rows = [
-	{ name: '条目 1', group: '分组 A', desc: '这是一段较长的说明文字，用于展示两行截断与悬停提示；调整列宽后会重新判断是否需要提示。' },
-	{ name: '条目 2', group: '分组 B', desc: '较短的说明' }
+	{ name: '条目 1', group: '分组 A', value: 12, desc: '这是一段较长的说明文字，用于展示两行截断与悬停提示；调整列宽后会重新判断是否需要提示。' },
+	{ name: '条目 2', group: '分组 B', value: 3, desc: '较短的说明' }
 ];
+
+const renderHeader = () => h('strong', 'renderHeader');
+const formatter = ({ row }) => `${row.value} 项`;
+
+const handleResize = ({ column, width, oldWidth }) => {
+	log.value = `${column.label || column.prop}：${oldWidth} → ${width}`;
+};
 </script>
+
+<style scoped>
+.table-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.table-demo__result {
+	margin: 0;
+}
+</style>
 ```
 :::
 
@@ -1534,34 +1940,203 @@ const rows = [
 `empty` 插槽优先于 `empty-text`；`append` 插槽位于表体之后、合计行之前。空状态容器不接收指针事件，需要交互时可将操作按钮放在表格外。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="toolbar">
-		<Button @click="handleToggle">{{ isEmpty ? '载入数据' : '清空数据' }}</Button>
-		<label><input v-model="isCustom" type="checkbox"> 自定义空状态</label>
+	<div class="table-demo">
+		<div class="table-demo__row">
+			<Button @click="handleToggle">{{ isEmpty ? '载入数据' : '清空数据' }}</Button>
+			<Checkbox v-model="isCustom">自定义空状态</Checkbox>
+		</div>
+		<Table :data="isEmpty ? [] : rows" empty-text="暂无条目">
+			<TableColumn prop="name" label="名称" />
+			<TableColumn prop="remark" label="备注" />
+			<template v-if="isCustom" #empty>
+				<span>没有匹配结果，请调整条件。</span>
+			</template>
+			<template v-if="!isEmpty" #append>
+				<p class="table-demo__append">共 {{ rows.length }} 条，尾部可放说明或加载入口。</p>
+			</template>
+		</Table>
 	</div>
-	<Table :data="isEmpty ? [] : rows" empty-text="暂无条目">
-		<TableColumn prop="name" label="名称" />
-		<TableColumn prop="remark" label="备注" />
-		<template v-if="isCustom" #empty><span>没有匹配结果，请调整条件。</span></template>
-		<template v-if="!isEmpty" #append><p>共 {{ rows.length }} 条，尾部可放说明或加载入口。</p></template>
-	</Table>
 </template>
+
 <script setup>
 import { ref } from 'vue';
-import { Button, Table, TableColumn } from '@deot/vc';
+import { Button, Checkbox, Table, TableColumn } from '@deot/vc';
 
 const isEmpty = ref(true);
 const isCustom = ref(false);
 const rows = [{ name: '条目 1', remark: '备注内容' }];
-const handleToggle = () => { isEmpty.value = !isEmpty.value; };
+
+const handleToggle = () => {
+	isEmpty.value = !isEmpty.value;
+};
 </script>
+
 <style scoped>
-.toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 12px; }
+.table-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.table-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+.table-demo__append {
+	padding: 12px 16px;
+	margin: 0;
+}
 </style>
 ```
 :::
+
+## 移动端
+
+`MTable` 与 `Table` 结构相同，根节点另有标记类 `.vcm-table`（`.vc-table.vcm-table`），属性、事件、插槽和方法一致；`MTableColumn` 即 `TableColumn`。固定列、合并单元格、树形、展开行、虚拟滚动、合计行两端通用，不同之处见下文。数字长度按 750 稿，随 `--vc-rem` 缩放；底栏切换 `rem` 可查看不同屏宽下的效果。
+
+下例可切换 `size`，排序点整个表头单元格循环切换，`divider` 显示横向分割线，被截断的备注点按查看全文。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	mobile: true,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
+</config>
+-->
+```vue
+<template>
+	<div class="m-table-demo">
+		<div class="m-table-demo__row">
+			<MButton
+				v-for="item in SIZES"
+				:key="item"
+				size="small"
+				:type="size === item ? 'primary' : 'default'"
+				@click="handleSize(item)"
+			>
+				{{ item }}
+			</MButton>
+		</div>
+		<MTable v-model:sort="sort" :data="rows" :size="size" primary-key="id" divider>
+			<MTableColumn type="selection" fixed="left" />
+			<MTableColumn prop="name" label="名称" :width="160" fixed="left" />
+			<MTableColumn prop="count" label="数量" :width="180" align="right" sortable />
+			<MTableColumn prop="remark" label="备注" :width="320" :line="1" />
+			<MTableColumn prop="date" label="日期" :min-width="240" />
+		</MTable>
+	</div>
+</template>
+
+<script setup>
+import { computed, ref } from 'vue';
+import { MButton, MTable, MTableColumn } from '@deot/vc';
+
+const SIZES = ['mini', 'small', 'medium', 'large'];
+const size = ref('medium');
+const data = Array.from({ length: 8 }).map((_, index) => ({
+	id: index + 1,
+	name: `条目 ${index + 1}`,
+	count: (index * 37) % 200,
+	remark: `这是第 ${index + 1} 条的备注，内容较长时按行数截断并省略`,
+	date: `2026-01-${String(index + 1).padStart(2, '0')}`
+}));
+const sort = ref({});
+// 排序只给出状态，数据由外部处理
+const rows = computed(() => {
+	const { prop, order } = sort.value;
+	if (!prop || !order) return data;
+	return [...data].sort((a, b) => (a[prop] - b[prop]) * (order === 'ascending' ? 1 : -1));
+});
+
+const handleSize = (value) => {
+	size.value = value;
+};
+</script>
+
+<style scoped>
+.m-table-demo {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--vc-rem) * 32);
+}
+
+.m-table-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: calc(var(--vc-rem) * 16);
+	padding-inline: calc(var(--vc-rem) * 32);
+}
+</style>
+```
+:::
+
+### 单位
+
+- 数字长度是 750 稿，按 `--vc-rem` 当前的 px 换算并取整（375 宽下 `width=200` 即 100px）：Table 的 `height`、`maxHeight`、`rowHeight`（含函数的返回值）、`indent`，TableColumn 的 `width`、`minWidth`。字符串（如 `'120px'`）两端都原样处理。
+- `--vc-rem` 变化（旋转屏幕、视口跨过 480px、业务调整 `--rem`）时自动重新换算并重排。
+- 默认值按 750 稿给出：未设置宽度的列最小宽度 `160`（桌面端 `80px`），`selection` / `index` / `expand` / `drag` 列宽 `96`（桌面端 `60px`），`indent` 为 `32`（桌面端 `16px`）。
+- 事件与方法里的尺寸仍是实测的 px；`recycleListOptions` 的 `overscan`、`threshold` 两端都以 px 为单位。
+
+### 交互
+
+| 功能 | `Table` | `MTable` |
+| --- | --- | --- |
+| 滚动 | 滚轮 + 自绘滚动条 | 原生滚动与系统滚动条（内部为 `MScroller` / `MRecycleList`） |
+| 排序 | 点上、下三角 | 点整个表头单元格，按 升序 → 降序 → 取消 循环；三角只作指示。点筛选图标、说明图标不排序，`header-click` 照常触发 |
+| 筛选 | 图标下方的下拉面板 | 点图标从底部弹出（[MSelect](../select#移动端选择) 的弹层），标题为列的 `label`。单选第一项为「全部」，点选即生效；多选由底部的「确定」生效，「清空」后确定即取消筛选，选满 `max` 后其余选项置灰 |
+| 截断提示（`line` / `header-line`） | 悬停弹出 | 点被截断的单元格或表头文字弹出；再点同一处、点别处、开始滚动时关闭 |
+| 表头说明（`tooltip`） | 悬停图标弹出 | 点图标弹出；再点图标或点别处关闭 |
+| 行悬停高亮 | 有 | 无；`cell-mouseenter` 等事件照常 |
+| 调整列宽 | 拖动表头右缘 | 不支持，`resizable` 不生效 |
+| 拖拽排序 | 鼠标按下后拖动 | 把手（`type="drag"`）直接拖动；整行拖拽、列拖拽（表头）长按约 300ms 后拖动，未长按的滑动照常滚动，拖完不触发排序 |
+| 吸顶 / 吸底（`affix`） | `Affix` | `MAffix`，配置对象里的数字 `offset` 为 750 稿 |
+
+- `filter-options` 的 `data`、`max`、`modelValue`、`separator`、`numerable`、`icon`、`onChange`、`onUpdate:modelValue` 含义不变；`portalClass` 在移动端不生效。
+- 表头与表体是两个横向滚动容器，表头跟随表体的滚动事件。触屏的原生滚动先于事件发生，快速横滑时表头会比表体滞后一帧（375 宽下以 1500px/s 滑动约差 25px），停下后对齐。
+
+### 尺寸与局部变量
+
+`size` 同时调整字号、行高与上下内边距（桌面端行高固定为 `20px`）。下表为 750 稿，375 宽下单行 medium 为 44px：
+
+| `size` | 字号 | 行高 | 表头、单元格上下内边距 | 单行高度 |
+| --- | --- | --- | --- | --- |
+| `medium` | 28 | 40 | 24 | 88 |
+| `large` | 30 | 44 | 28 | 100 |
+| `small` | 26 | 36 | 18 | 72 |
+| `mini` | 24 | 32 | 12 | 56 |
+
+其余局部变量在 `.vcm-table` 上改写，可在外层或表格上用 `--vc-table-<参数>` 继续覆盖：
+
+| 参数 | `MTable` 的值（750 稿） |
+| --- | --- |
+| cell-padding-x / edge-padding-x | `16` / `16`（文字离表格边缘 16px @375，与 MList 一致） |
+| expand-icon-size / expand-icon-font-size / expand-icon-gap | `40` / `24` / `8` |
+| expanded-padding | `24 32` |
+| drag-handle-size / drag-handle-font-size | `40` / `32` |
+| empty-height / empty-padding | `160` / `40` |
+| footer-min-height | medium：`88`；其他尺寸：`auto` |
+
+排序三角、筛选图标随行高缩放（与行等高），展开图标、拖拽把手、筛选图标的可点区域向外扩到整格。
 
 ## 主题与局部覆盖
 
@@ -1662,7 +2237,7 @@ const handleToggle = () => { isEmpty.value = !isEmpty.value; };
 | allowDrop | 能否放到落点；返回 `false` 时插入线显示为不可放置，松手不生效。`type` 为 `'block'`（行）或 `'column'`（列）。行：`targetRows` 为落点行（树形表格 `inner` 时为新的父行）；`position` 为相对落点行的位置，`before`、`after`，或 `inner`（成为子行，仅树形表格）；`from` / `to` 为移动前后的位置 `{ parent, index }`，`parent` 为 `null` 表示根级。列：`targetColumn` 为落点列（与被拖列同一父级）；`position` 为 `before` 或 `after`；`from` / `to` 的 `parent` 为父分组，顶层为 `null`，`index` 为兄弟列（含隐藏列）中的下标 | `(payload: any) => boolean` | - | - |
 | width | 保留属性，当前实现未读取；控制表格宽度请使用外层布局或 style | `string \| number` | - | - |
 | divider | 显示横向分割线；`border` 也会启用 | `boolean` | - | `false` |
-| placeholder | 保留属性，当前单元格渲染未读取；空值占位请通过 formatter 或默认插槽实现 | `string \| Function` | - | `'-'` |
+| placeholder | 单元格内容（默认插槽、`formatter` 或字段值）为 `undefined`、`null` 或空字符串时显示的占位；传函数时无参数调用，返回值作为占位 | `string \| (() => any)` | - | `'-'` |
 
 ### Table 事件
 
@@ -1799,92 +2374,6 @@ VcInstance.configure({
 | portalClass | 弹层的自定义类名 | `string` | - |
 | onUpdate:modelValue | 生效值变化时触发，受控时在这里写回 | `(value) => void` | - |
 | onChange | 生效值变化时触发 | `(value) => void` | - |
-
-### 移动端
-
-`MTable` 与 `Table` 结构相同，根节点另有标记类 `.vcm-table`（`.vc-table.vcm-table`），属性、事件、插槽和方法一致；`MTableColumn` 即 `TableColumn`。固定列、合并单元格、树形、展开行、虚拟滚动、合计行两端通用，不同之处如下。
-
-:::playground
-<!-- <config lang="json5">{ viewport: 375, previewInset: 0 }</config> -->
-```vue
-<template>
-	<MTable v-model:sort="sort" :data="rows" primary-key="id" divider>
-		<MTableColumn type="selection" fixed="left" />
-		<MTableColumn prop="name" label="名称" :width="160" fixed="left" />
-		<MTableColumn prop="count" label="数量" :width="180" align="right" sortable />
-		<MTableColumn prop="remark" label="备注" :width="320" :line="1" />
-		<MTableColumn prop="date" label="日期" :min-width="240" />
-	</MTable>
-</template>
-<script setup>
-import { ref, computed } from 'vue';
-import { MTable, MTableColumn } from '@deot/vc';
-
-const data = Array.from({ length: 8 }).map((_, index) => ({
-	id: index + 1,
-	name: `条目 ${index + 1}`,
-	count: (index * 37) % 200,
-	remark: `这是第 ${index + 1} 条的备注，内容较长时按行数截断并省略`,
-	date: `2026-01-${String(index + 1).padStart(2, '0')}`
-}));
-const sort = ref({});
-// 排序只给出状态，数据由外部处理
-const rows = computed(() => {
-	const { prop, order } = sort.value;
-	if (!prop || !order) return data;
-	return [...data].sort((a, b) => (a[prop] - b[prop]) * (order === 'ascending' ? 1 : -1));
-});
-</script>
-```
-:::
-
-#### 单位
-
-- 数字长度是 750 稿，按 `--vc-rem` 当前的 px 换算并取整（375 宽下 `width=200` 即 100px）：Table 的 `height`、`maxHeight`、`rowHeight`（含函数的返回值）、`indent`，TableColumn 的 `width`、`minWidth`。字符串（如 `'120px'`）两端都原样处理。
-- `--vc-rem` 变化（旋转屏幕、视口跨过 480px、业务调整 `--rem`）时自动重新换算并重排。
-- 默认值按 750 稿给出：未设置宽度的列最小宽度 `160`（桌面端 `80px`），`selection` / `index` / `expand` / `drag` 列宽 `96`（桌面端 `60px`），`indent` 为 `32`（桌面端 `16px`）。
-- 事件与方法里的尺寸仍是实测的 px；`recycleListOptions` 的 `overscan`、`threshold` 两端都以 px 为单位。
-
-#### 交互
-
-| 功能 | `Table` | `MTable` |
-| --- | --- | --- |
-| 滚动 | 滚轮 + 自绘滚动条 | 原生滚动与系统滚动条（内部为 `MScroller` / `MRecycleList`） |
-| 排序 | 点上、下三角 | 点整个表头单元格，按 升序 → 降序 → 取消 循环；三角只作指示。点筛选图标、说明图标不排序，`header-click` 照常触发 |
-| 筛选 | 图标下方的下拉面板 | 点图标从底部弹出（[MSelect](../select#移动端选择) 的弹层），标题为列的 `label`。单选第一项为「全部」，点选即生效；多选由底部的「确定」生效，「清空」后确定即取消筛选，选满 `max` 后其余选项置灰 |
-| 截断提示（`line` / `header-line`） | 悬停弹出 | 点被截断的单元格或表头文字弹出；再点同一处、点别处、开始滚动时关闭 |
-| 表头说明（`tooltip`） | 悬停图标弹出 | 点图标弹出；再点图标或点别处关闭 |
-| 行悬停高亮 | 有 | 无；`cell-mouseenter` 等事件照常 |
-| 调整列宽 | 拖动表头右缘 | 不支持，`resizable` 不生效 |
-| 拖拽排序 | 鼠标按下后拖动 | 把手（`type="drag"`）直接拖动；整行拖拽、列拖拽（表头）长按约 300ms 后拖动，未长按的滑动照常滚动，拖完不触发排序 |
-| 吸顶 / 吸底（`affix`） | `Affix` | `MAffix`，配置对象里的数字 `offset` 为 750 稿 |
-
-- `filter-options` 的 `data`、`max`、`modelValue`、`separator`、`numerable`、`icon`、`onChange`、`onUpdate:modelValue` 含义不变；`portalClass` 在移动端不生效。
-- 表头与表体是两个横向滚动容器，表头跟随表体的滚动事件。触屏的原生滚动先于事件发生，快速横滑时表头会比表体滞后一帧（375 宽下以 1500px/s 滑动约差 25px），停下后对齐。
-
-#### 尺寸
-
-`size` 同时调整字号、行高与上下内边距（桌面端行高固定为 `20px`）。下表为 750 稿，375 宽下单行 medium 为 44px：
-
-| `size` | 字号 | 行高 | 表头、单元格上下内边距 | 单行高度 |
-| --- | --- | --- | --- | --- |
-| `medium` | 28 | 40 | 24 | 88 |
-| `large` | 30 | 44 | 28 | 100 |
-| `small` | 26 | 36 | 18 | 72 |
-| `mini` | 24 | 32 | 12 | 56 |
-
-其余局部变量在 `.vcm-table` 上改写，可在外层或表格上用 `--vc-table-<参数>` 继续覆盖：
-
-| 参数 | `MTable` 的值（750 稿） |
-| --- | --- |
-| cell-padding-x / edge-padding-x | `16` / `16`（文字离表格边缘 16px @375，与 MList 一致） |
-| expand-icon-size / expand-icon-font-size / expand-icon-gap | `40` / `24` / `8` |
-| expanded-padding | `24 32` |
-| drag-handle-size / drag-handle-font-size | `40` / `32` |
-| empty-height / empty-padding | `160` / `40` |
-| footer-min-height | medium：`88`；其他尺寸：`auto` |
-
-排序三角、筛选图标随行高缩放（与行等高），展开图标、拖拽把手、筛选图标的可点区域向外扩到整格。
 
 ### 布局注意事项
 

@@ -1,6 +1,8 @@
 ## 滚动容器（Scroller）
 
-为受限高度或宽度的内容提供滚动容器，可使用浏览器滚动条或可拖动的自定义滚动条。`MScroller` 为移动端版本，属性、事件、插槽、方法与 `Scroller` 相同，差异见[移动端](#移动端)。
+为受限高度或宽度的内容提供滚动容器，可使用浏览器滚动条或可拖动的自定义滚动条。
+
+移动端入口导出的 `MScroller` 与 `Scroller` 的属性、事件、插槽、方法相同，数字尺寸按 750 稿缩放，滚动条显示规则不同，见 [移动端](#移动端)。
 
 ### 何时使用
 
@@ -28,17 +30,35 @@
 
 ### 基础用法
 
-设置 `height` 或 `maxHeight` 限制可视区域；内容超出后才能滚动。数字尺寸按 px 处理，字符串应包含 CSS 单位。`tag` 指定内部内容元素。
+设置 `height` 或 `maxHeight` 限制可视区域；内容超出后才能滚动。数字尺寸按 px 处理，字符串应包含 CSS 单位。`tag` 指定内部内容元素，`contentClass`、`contentStyle` 作用于内容元素，`wrapperClass`、`wrapperStyle` 与 `class`、`style` 一样作用于根节点（滚动容器）。
 
 `native` 的默认值取决于浏览器滚动条是否占宽。需要稳定展示自定义滚动条时，显式设置 `:native="false"`。`always` 在内容溢出时让自定义滚动条常显；设置后不再使用原生滚动条（等同于 `native=false`，即使显式传了 `native`），各系统下表现一致。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<Scroller :height="220" :native="false" always tag="ul" :content-style="{ margin: 0, padding: '0 16px', listStyle: 'none' }">
-		<li v-for="item in 20" :key="item" class="row">列表项目 {{ item }}</li>
-	</Scroller>
+	<div class="scroller-demo">
+		<Scroller
+			:height="220"
+			:native="false"
+			always
+			tag="ul"
+			wrapper-class="scroller-demo__box"
+			:wrapper-style="{ borderRadius: '8px' }"
+			content-class="scroller-demo__list"
+			:content-style="{ padding: '0 16px' }"
+		>
+			<li v-for="item in 20" :key="item" class="scroller-demo__item">列表项目 {{ item }}</li>
+		</Scroller>
+	</div>
 </template>
 
 <script setup>
@@ -46,7 +66,16 @@ import { Scroller } from '@deot/vc';
 </script>
 
 <style scoped>
-.row {
+.scroller-demo :deep(.scroller-demo__box) {
+	border: 1px solid var(--vc-color-light-deeper);
+}
+
+.scroller-demo :deep(.scroller-demo__list) {
+	margin: 0;
+	list-style: none;
+}
+
+.scroller-demo__item {
 	padding: 12px 0;
 	border-bottom: 1px solid var(--vc-color-light-deeper);
 }
@@ -56,58 +85,102 @@ import { Scroller } from '@deot/vc';
 
 ### 动态内容与滚动定位
 
-默认通过尺寸监听更新滚动条。关闭 `autoResize` 后，应在 DOM 更新后调用 `refresh()`，首次挂载时也需要手动刷新。这里使用滚轮驱动（`wheel`）展示追加日志、定位和 `scroll` 事件。
+默认通过尺寸监听更新滚动条。关闭 `autoResize` 后，应在 DOM 更新后调用 `refresh()`，首次挂载时也需要手动刷新。这里使用滚轮驱动（`wheel`）展示追加日志、`setScrollTop()` 定位和 `scroll` 事件；`on()` 注册的监听器与 `scroll` 事件参数相同，卸载前用 `off()` 移除。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="demo">
-		<div class="actions">
+	<div class="scroller-demo">
+		<div class="scroller-demo__row">
 			<Button @click="handleAppend">追加日志并到底部</Button>
 			<Button @click="handleTop">回到顶部</Button>
 		</div>
-		<Scroller ref="scroller" wheel :height="200" :native="false" always @scroll="handleScroll">
-			<div v-for="item in count" :key="item" class="log">日志 {{ item }}：任务已完成</div>
+		<Scroller
+			ref="scroller"
+			wheel
+			:height="200"
+			:native="false"
+			:auto-resize="false"
+			always
+			@scroll="handleScroll"
+		>
+			<div v-for="item in count" :key="item" class="scroller-demo__item">日志 {{ item }}：任务已完成</div>
 		</Scroller>
-		<div>共 {{ count }} 条，距顶部 {{ scrollTop }} px</div>
+		<p class="scroller-demo__result">共 {{ count }} 条，距顶部 {{ scrollTop }} px，到底 {{ bottomCount }} 次</p>
 	</div>
 </template>
 
 <script setup>
-import { nextTick, ref } from 'vue';
+import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
 import { Button, Scroller } from '@deot/vc';
 
 const scroller = ref();
 const count = ref(12);
 const scrollTop = ref(0);
+const bottomCount = ref(0);
+let isBottom = false;
+
 const handleScroll = (event) => {
 	scrollTop.value = Math.round(event.target.scrollTop);
 };
+
+const handleListener = (event) => {
+	const { scrollTop: top, scrollHeight, clientHeight } = event.target;
+	const next = top + clientHeight >= scrollHeight - 1;
+	if (next && !isBottom) bottomCount.value++;
+	isBottom = next;
+};
+
 const handleAppend = async () => {
 	count.value += 5;
 	await nextTick();
 	await scroller.value.refresh();
 	scroller.value.setScrollTop(scroller.value.scrollHeight - scroller.value.clientHeight);
 };
+
 const handleTop = () => {
 	scroller.value.setScrollTop(0);
 };
+
+onMounted(() => {
+	scroller.value.refresh();
+	scroller.value.on(handleListener);
+});
+
+onBeforeUnmount(() => {
+	scroller.value.off(handleListener);
+});
 </script>
 
 <style scoped>
-.demo {
-	display: grid;
-	gap: 12px;
+.scroller-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
 }
-.actions {
+
+.scroller-demo__row {
 	display: flex;
 	flex-wrap: wrap;
+	align-items: center;
 	gap: 8px;
 }
-.log {
+
+.scroller-demo__item {
 	padding: 10px 12px;
 	border-bottom: 1px solid var(--vc-color-light-deeper);
+}
+
+.scroller-demo__result {
+	margin: 0;
 }
 </style>
 ```
@@ -115,22 +188,29 @@ const handleTop = () => {
 
 ### 横向滚动与定位
 
-内容宽度超过容器时出现横向滚动条。可拖动底部滑块，也可使用 `scrollTo()` 定位；传入 `duration`（毫秒）时平滑滚动，新的 `scrollTo`、滚轮、拖动滚动条或卸载都会取消进行中的动画。
+内容宽度超过容器时出现横向滚动条。可拖动底部滑块，也可使用 `setScrollLeft()` 或 `scrollTo()` 定位；`scrollTo()` 传入 `duration`（毫秒）时平滑滚动，新的 `scrollTo`、滚轮、拖动滚动条或卸载都会取消进行中的动画。
 
 `axis="x"`（或 `"y"`）只在该方向滚动：另一方向不可滚动，滚轮的纵横增量都用于该方向，鼠标滚轮也能滚动横向内容；触摸设备上为原生滚动。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="demo">
-		<div class="actions">
+	<div class="scroller-demo">
+		<div class="scroller-demo__row">
 			<Button @click="handleStart">回到起点</Button>
-			<Button @click="handleEnd">查看最后一项</Button>
+			<Button @click="handleEnd">平滑到最后一项</Button>
 		</div>
 		<Scroller ref="scroller" axis="x" :native="false" always>
-			<div class="cards">
-				<div v-for="item in 8" :key="item" class="card">任务 {{ item }}</div>
+			<div class="scroller-demo__cards">
+				<div v-for="item in 8" :key="item" class="scroller-demo__card">任务 {{ item }}</div>
 			</div>
 		</Scroller>
 	</div>
@@ -141,7 +221,11 @@ import { ref } from 'vue';
 import { Button, Scroller } from '@deot/vc';
 
 const scroller = ref();
-const handleStart = () => scroller.value.scrollTo({ x: 0, duration: 300 });
+
+const handleStart = () => {
+	scroller.value.setScrollLeft(0);
+};
+
 const handleEnd = async () => {
 	await scroller.value.refresh();
 	scroller.value.scrollTo({ x: scroller.value.scrollWidth - scroller.value.clientWidth, duration: 300 });
@@ -149,10 +233,27 @@ const handleEnd = async () => {
 </script>
 
 <style scoped>
-.demo { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
-.actions { display: flex; flex-wrap: wrap; gap: 8px; }
-.cards { display: flex; gap: 12px; width: max-content; padding-bottom: 16px; }
-.card {
+.scroller-demo {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: 16px;
+}
+
+.scroller-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+.scroller-demo__cards {
+	display: flex;
+	gap: 12px;
+	width: max-content;
+	padding-bottom: 16px;
+}
+
+.scroller-demo__card {
 	display: grid;
 	place-items: center;
 	width: 150px;
@@ -169,58 +270,175 @@ const handleEnd = async () => {
 切换原生、自定义滚动条和常显状态。`maxHeight` 让少量内容自然撑开，内容增加后再限制高度；关闭 `showBar` 仅隐藏自定义滚动条，内容仍可滚动。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="demo">
-		<div class="actions">
-			<label><input v-model="isNative" type="checkbox"> 原生滚动条</label>
-			<label><input v-model="isAlways" type="checkbox" :disabled="isNative"> 常显</label>
-			<label><input v-model="isBarVisible" type="checkbox" :disabled="isNative"> 显示自定义滚动条</label>
+	<div class="scroller-demo">
+		<div class="scroller-demo__row">
+			<Checkbox v-model="isNative">原生滚动条</Checkbox>
+			<Checkbox v-model="isAlways" :disabled="isNative">常显</Checkbox>
+			<Checkbox v-model="isBarVisible" :disabled="isNative">显示自定义滚动条</Checkbox>
 		</div>
-		<div class="actions">
+		<div class="scroller-demo__row">
 			<Button @click="handleMore">增加内容</Button>
 			<Button @click="handleReset">恢复两项</Button>
-			<span>当前 {{ count }} 项</span>
 		</div>
+		<p class="scroller-demo__result">当前 {{ count }} 项</p>
 		<Scroller :max-height="200" :native="isNative" :always="isAlways" :show-bar="isBarVisible">
-			<div v-for="item in count" :key="item" class="row">内容项目 {{ item }}</div>
+			<div v-for="item in count" :key="item" class="scroller-demo__item">内容项目 {{ item }}</div>
 		</Scroller>
 	</div>
 </template>
 
 <script setup>
 import { ref } from 'vue';
-import { Button, Scroller } from '@deot/vc';
+import { Button, Checkbox, Scroller } from '@deot/vc';
 
 const isNative = ref(false);
 const isAlways = ref(true);
 const isBarVisible = ref(true);
 const count = ref(2);
-const handleMore = () => { count.value += 4; };
-const handleReset = () => { count.value = 2; };
+
+const handleMore = () => {
+	count.value += 4;
+};
+
+const handleReset = () => {
+	count.value = 2;
+};
 </script>
 
 <style scoped>
-.demo { display: grid; gap: 12px; }
-.actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
-.row { padding: 12px; border-bottom: 1px solid var(--vc-color-light-deeper); }
+.scroller-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.scroller-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+.scroller-demo__result {
+	margin: 0;
+}
+
+.scroller-demo__item {
+	padding: 12px;
+	border-bottom: 1px solid var(--vc-color-light-deeper);
+}
+</style>
+```
+:::
+
+### 滑块与轨道样式
+
+`thumbMinSize` 设置滑块最小长度（px），`thumbClass`、`thumbStyle` 作用于滑块，`trackClass`、`trackStyle` 作用于横纵轨道；`trackOffsetY` 为纵向轨道偏移 `[上, 右, 下, 左]`（左不生效），`trackOffsetX` 为横向轨道偏移（上不生效）。调整轨道粗细请使用 `--vc-scroller-track-size`，不要在 `trackStyle` 里写死宽高。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
+```vue
+<template>
+	<div class="scroller-demo">
+		<Scroller
+			class="scroller-demo__box"
+			:height="200"
+			:native="false"
+			always
+			:thumb-min-size="60"
+			thumb-class="scroller-demo__thumb"
+			:thumb-style="{ background: 'var(--vc-color-primary)' }"
+			track-class="scroller-demo__track"
+			:track-style="{ background: 'var(--vc-color-light-deep)' }"
+			:track-offset-y="[8, 4, 8, 0]"
+			:track-offset-x="[0, 8, 4, 8]"
+		>
+			<div class="scroller-demo__grid">
+				<div v-for="item in 60" :key="item" class="scroller-demo__cell">{{ item }}</div>
+			</div>
+		</Scroller>
+	</div>
+</template>
+
+<script setup>
+import { Scroller } from '@deot/vc';
+</script>
+
+<style scoped>
+.scroller-demo__box {
+	border: 1px solid var(--vc-color-light-deeper);
+	border-radius: 8px;
+}
+
+.scroller-demo :deep(.scroller-demo__track) {
+	--vc-scroller-track-size: 8px;
+}
+
+.scroller-demo :deep(.scroller-demo__thumb) {
+	opacity: 0.8;
+}
+
+.scroller-demo__grid {
+	display: grid;
+	grid-template-columns: repeat(12, 80px);
+	gap: 8px;
+	width: max-content;
+	padding: 12px;
+}
+
+.scroller-demo__cell {
+	display: grid;
+	place-items: center;
+	height: 48px;
+	border-radius: 6px;
+	background: var(--vc-background-color-light);
+}
 </style>
 ```
 :::
 
 ### 将滚动条放在内容之外
 
-`barTo` 指定轨道挂载容器，下面为滚动条预留右侧空间。目标节点先于 Scroller 挂载，使用实例唯一 ID 避免多个示例互相影响。拖动右侧滑块或点击轨道即可定位。
+`barTo` 指定轨道挂载容器，下面为滚动条预留右侧空间。目标节点先于 Scroller 挂载，使用实例唯一 ID 避免多个示例互相影响。`barTriggerElement` 指定鼠标悬停时显示滚动条的区域（优先匹配轨道的祖先），这里取整个面板，悬停面板即可显示滚动条；拖动右侧滑块或点击轨道即可定位。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="panel">
-		<div :id="trackId" class="track-host" />
-		<Scroller :height="200" :native="false" always :bar-to="`#${trackId}`" :track-offset-y="[8, 4, 8, 0]">
-			<div v-for="item in 16" :key="item" class="row">消息 {{ item }}：滚动条位于独立区域</div>
+	<div class="scroller-demo">
+		<div :id="trackId" class="scroller-demo__track-host" />
+		<Scroller
+			:height="200"
+			:native="false"
+			:bar-to="`#${trackId}`"
+			bar-trigger-element=".scroller-demo"
+			:track-offset-y="[8, 4, 8, 0]"
+		>
+			<div v-for="item in 16" :key="item" class="scroller-demo__item">消息 {{ item }}：滚动条位于独立区域</div>
 		</Scroller>
 	</div>
 </template>
@@ -233,14 +451,28 @@ const trackId = `scroller-track-${useId()}`;
 </script>
 
 <style scoped>
-.panel { position: relative; padding-right: 24px; }
-.track-host { position: absolute; top: 0; right: 0; width: 16px; height: 200px; }
-.row { padding: 12px; border-bottom: 1px solid var(--vc-color-light-deeper); }
+.scroller-demo {
+	position: relative;
+	padding-right: 24px;
+}
+
+.scroller-demo__track-host {
+	position: absolute;
+	top: 0;
+	right: 0;
+	width: 16px;
+	height: 200px;
+}
+
+.scroller-demo__item {
+	padding: 12px;
+	border-bottom: 1px solid var(--vc-color-light-deeper);
+}
 </style>
 ```
 :::
 
-### 移动端
+## 移动端
 
 `MScroller` 与 `Scroller` 结构相同，根节点另有标记类 `.vcm-scroller`（`.vc-scroller.vcm-scroller`）。触摸滚动、惯性与回弹都由浏览器处理，不同之处有三点：
 
@@ -250,17 +482,111 @@ const trackId = `scroller-track-${useId()}`;
 
 `thumbMinSize`、`trackOffsetX`、`trackOffsetY` 两端都以 px 为单位。
 
+:::playground
+<!--
+<config lang="json5">
+{
+	mobile: true,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
+</config>
+-->
 ```vue
 <template>
-	<MScroller :height="400" always>
-		<div v-for="item in 20" :key="item">条目 {{ item }}</div>
-	</MScroller>
+	<div class="m-scroller-demo">
+		<MScroller :height="400" class="m-scroller-demo__box">
+			<div v-for="item in 20" :key="item" class="m-scroller-demo__item" @click="handleClick(item)">默认原生 · 条目 {{ item }}</div>
+		</MScroller>
+		<MScroller :height="400" always class="m-scroller-demo__box">
+			<div v-for="item in 20" :key="item" class="m-scroller-demo__item" @click="handleClick(item)">always 指示条 · 条目 {{ item }}</div>
+		</MScroller>
+		<p class="m-scroller-demo__result">指示条不响应点按，最近点击：{{ current || '-' }}</p>
+		<MScroller always axis="x" class="m-scroller-demo__box">
+			<div class="m-scroller-demo__columns">
+				<div v-for="item in 12" :key="item" class="m-scroller-demo__column">{{ item }}</div>
+			</div>
+		</MScroller>
+		<MScroller :max-height="400" always class="m-scroller-demo__box">
+			<div v-for="item in count" :key="item" class="m-scroller-demo__item">maxHeight · 条目 {{ item }}</div>
+		</MScroller>
+		<div class="m-scroller-demo__row">
+			<MButton size="small" @click="handleToggle">切换条目数（{{ count }}）</MButton>
+		</div>
+	</div>
 </template>
 
 <script setup>
-import { MScroller } from '@deot/vc';
+import { ref } from 'vue';
+import { MButton, MScroller } from '@deot/vc';
+
+const current = ref('');
+const count = ref(3);
+
+const handleClick = (item) => {
+	current.value = `条目 ${item}`;
+};
+
+const handleToggle = () => {
+	count.value = count.value === 3 ? 20 : 3;
+};
 </script>
+
+<style scoped>
+.m-scroller-demo {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--vc-rem) * 32);
+	padding-inline: calc(var(--vc-rem) * 32);
+}
+
+.m-scroller-demo__box {
+	background: var(--vc-background-color-light);
+	border-radius: calc(var(--vc-rem) * 16);
+}
+
+.m-scroller-demo__item {
+	padding: calc(var(--vc-rem) * 24) calc(var(--vc-rem) * 32);
+	font-size: calc(var(--vc-rem) * 28);
+}
+
+.m-scroller-demo__item + .m-scroller-demo__item {
+	border-top: 1px solid var(--vc-border-color);
+}
+
+.m-scroller-demo__columns {
+	display: flex;
+	gap: calc(var(--vc-rem) * 16);
+	width: max-content;
+	padding: calc(var(--vc-rem) * 24) calc(var(--vc-rem) * 24) calc(var(--vc-rem) * 32);
+}
+
+.m-scroller-demo__column {
+	display: grid;
+	place-items: center;
+	width: calc(var(--vc-rem) * 192);
+	height: calc(var(--vc-rem) * 128);
+	background: var(--vc-background-color-primary-light);
+	border-radius: calc(var(--vc-rem) * 12);
+}
+
+.m-scroller-demo__result {
+	margin: 0;
+	font-size: calc(var(--vc-rem) * 26);
+}
+
+.m-scroller-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: calc(var(--vc-rem) * 16);
+}
+</style>
 ```
+:::
 
 ## 主题与局部覆盖
 
@@ -344,7 +670,7 @@ import { MScroller } from '@deot/vc';
 
 | 方法名 | 说明 | 参数 | 返回值 |
 | --- | --- | --- | --- |
-| refresh | 更新容器、内容尺寸并同步滚动条 | - | `Promise<void>`（运行时） |
+| refresh | 更新容器、内容尺寸并同步滚动条 | - | `Promise<void>` |
 | setScrollTop | 设置纵向滚动位置并通知监听器 | `value: number`，单位 px | `void` |
 | setScrollLeft | 设置横向滚动位置并通知监听器 | `value: number`，单位 px | `void` |
 | scrollTo | 设置指定轴的位置，未指定的轴保持原值；`duration`（毫秒）大于 0 时平滑滚动，新的 scrollTo、滚轮、拖动滚动条与卸载会取消进行中的动画 | `{ x?: number; y?: number; duration?: number }`，单位 px | `void` |
@@ -353,7 +679,7 @@ import { MScroller } from '@deot/vc';
 
 实例还暴露 `wrapper`、`content` DOM 引用，以及 `scrollLeft`、`scrollTop`、`clientWidth`、`clientHeight`、`scrollWidth`、`scrollHeight` 数值。定位时传入有效范围内的坐标，纵向最大值为 `scrollHeight - clientHeight`，横向为 `scrollWidth - clientWidth`。
 
-当前导出的 `ScrollerExposed` 类型声明 `refresh`、`scrollTo`、`setScrollTop`、`setScrollLeft`，其中 `refresh` 返回值声明为 `void`；上表同时记录了运行时实际暴露的方法。`scrollTo` 的参数类型导出名为 `ScrollerScrollToOptions`，属性类型导出名为 `ScrollerProps`。
+导出的 `ScrollerExposed` 类型包含上表的方法，以及 `wrapper`、`content` 与各尺寸数值。`scrollTo` 的参数类型导出名为 `ScrollerScrollToOptions`，属性类型导出名为 `ScrollerProps`。
 
 ### MScroller
 

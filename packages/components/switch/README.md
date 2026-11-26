@@ -1,6 +1,8 @@
 ## 开关（Switch）
 
-在两个状态之间切换，支持自定义值、文案和异步切换。移动端使用 `MSwitch`。
+在两个状态之间切换，支持自定义值、文案和异步切换。
+
+移动端入口导出的 `MSwitch` 与 `Switch` 的值、事件、插槽和方法相同，尺寸按 750 稿随 `--vc-rem` 缩放，见 [移动端](#移动端)。
 
 ### 何时使用
 
@@ -8,11 +10,22 @@
 
 ### 基础用法
 
+使用 `v-model` 绑定开关状态，`name` 设置内部隐藏 input 的 name；用户切换后发出 `change`，外部修改不触发。
+
 :::playground
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 16px;">
-		<Switch v-model="isEnabled" /><span>{{ isEnabled ? '已开启' : '已关闭' }}</span>
+	<div class="switch-demo">
+		<Switch v-model="isEnabled" name="enabled" @change="handleChange" />
+		<span>{{ isEnabled ? '已开启' : '已关闭' }}，change 触发 {{ count }} 次</span>
 	</div>
 </template>
 
@@ -21,19 +34,47 @@ import { ref } from 'vue';
 import { Switch } from '@deot/vc';
 
 const isEnabled = ref(false);
+const count = ref(0);
+
+const handleChange = () => {
+	count.value++;
+};
 </script>
+
+<style scoped>
+.switch-demo {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+</style>
 ```
 :::
 
 ### 自定义值和文案
 
-使用 `checked-value`、`unchecked-value` 定义值。轨道随文案自动加宽，宽度取两段文案中较宽的一段，切换时不跳动；`width` 为桌面端的最小宽度，比文案宽时文案在滑块旁的空余区域内居中。
+使用 `checkedValue`、`uncheckedValue` 定义值，`checkedText`、`uncheckedText` 定义文案。轨道随文案自动加宽，宽度取两段文案中较宽的一段，切换时不跳动。
 
 :::playground
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 16px;">
-		<Switch v-model="status" checked-value="on" unchecked-value="off" checked-text="开启" unchecked-text="关闭" />
+	<div class="switch-demo">
+		<Switch
+			v-model="status"
+			checked-value="on"
+			unchecked-value="off"
+			checked-text="开启"
+			unchecked-text="关闭"
+		/>
 		<span>当前值：{{ status }}</span>
 	</div>
 </template>
@@ -44,33 +85,111 @@ import { Switch } from '@deot/vc';
 
 const status = ref('off');
 </script>
+
+<style scoped>
+.switch-demo {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+</style>
+```
+:::
+
+### 尺寸
+
+`width` 为桌面端的最小宽度，比文案宽时文案在滑块旁的空余区域内居中；`height` 设置轨道高度，`borderWidth` 设置边框宽度，单位均为 px，只作用于桌面端。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
+```vue
+<template>
+	<div class="switch-demo">
+		<Switch v-model="isEnabled" :width="28" :height="16" />
+		<Switch v-model="isEnabled" />
+		<Switch v-model="isEnabled" :width="56" :height="26" :border-width="2" />
+		<Switch v-model="isEnabled" :width="72" checked-text="开" unchecked-text="关" />
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { Switch } from '@deot/vc';
+
+const isEnabled = ref(true);
+</script>
+
+<style scoped>
+.switch-demo {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+</style>
 ```
 :::
 
 ### 禁用状态
 
+`disabled` 禁止点击切换，保留当前状态的配色。
+
 :::playground
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 16px;">
-		<Switch :model-value="true" disabled /><Switch :model-value="false" disabled />
+	<div class="switch-demo">
+		<Switch :model-value="true" disabled />
+		<Switch :model-value="false" disabled />
 	</div>
 </template>
 
 <script setup>
 import { Switch } from '@deot/vc';
 </script>
+
+<style scoped>
+.switch-demo {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+</style>
 ```
 :::
 
 ### 自定义显示内容
 
-插槽优先于对应的文案属性。
+`checked`、`unchecked` 插槽优先于对应的文案属性。
 
 :::playground
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 16px;">
+	<div class="switch-demo">
 		<Switch v-model="isEnabled">
 			<template #checked>ON</template>
 			<template #unchecked>OFF</template>
@@ -84,48 +203,131 @@ import { Switch } from '@deot/vc';
 
 const isEnabled = ref(true);
 </script>
+
+<style scoped>
+.switch-demo {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+</style>
 ```
 :::
 
-### 异步切换
+### 异步切换与重置
 
-点击处理函数返回 Promise 时在滑块内显示加载标记（桌面端鼠标为 progress），成功后切换；等待期间重复点击无效。示例用定时器模拟异步操作。
+`click` 在切换前调用：返回 Promise 时在滑块内显示加载标记（桌面端鼠标为 progress），成功后切换，拒绝时不切换，等待期间重复点击无效；返回非 Promise 的真值时阻止切换。实例方法 `reset(value)` 只重置内部显示状态，不更新父级 `v-model`，也不触发 `change`。示例用定时器模拟异步操作。
 
 :::playground
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 16px;">
-		<Switch v-model="isEnabled" @click="handleClick" /><span>{{ isEnabled ? '已开启' : '已关闭' }}（点击后等待一秒）</span>
+	<div class="switch-demo">
+		<div class="switch-demo__row">
+			<Switch v-model="isEnabled" @click="handleClick" />
+			<span>{{ isEnabled ? '已开启' : '已关闭' }}（点击后等待一秒）</span>
+		</div>
+		<div class="switch-demo__row">
+			<Switch v-model="isBlocked" @click="handleBlock" />
+			<span>返回 true 阻止切换，已阻止 {{ blockCount }} 次</span>
+		</div>
+		<div class="switch-demo__row">
+			<Switch ref="switchRef" :model-value="false" />
+			<Button size="small" @click="handleReset">reset(true)</Button>
+			<span>只改变显示，绑定值仍为 false</span>
+		</div>
 	</div>
 </template>
 
 <script setup>
 import { ref } from 'vue';
-import { Switch } from '@deot/vc';
+import { Switch, Button } from '@deot/vc';
 
+const switchRef = ref();
 const isEnabled = ref(false);
-const handleClick = () => new Promise(resolve => setTimeout(resolve, 1000));
+const isBlocked = ref(false);
+const blockCount = ref(0);
+
+const handleClick = () => new Promise((resolve) => {
+	setTimeout(resolve, 1000);
+});
+
+const handleBlock = () => {
+	blockCount.value++;
+	return true;
+};
+
+const handleReset = () => {
+	switchRef.value.reset(true);
+};
 </script>
+
+<style scoped>
+.switch-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.switch-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+</style>
 ```
 :::
 
-### 移动端
+## 移动端
 
-`MSwitch` 共用开关值、事件、插槽和方法。尺寸为 102 × 62（750 稿），375 宽下为 51 × 31px，随 `--vc-rem` 缩放；`width`、`height`、`borderWidth` 不影响其布局。文案显示在滑块旁，离滑块约 8（4px），一个字时保持标准宽度，更长时轨道随之加宽。
+`MSwitch` 共用开关值、事件、插槽和方法，根节点为 `.vcm-switch`，带 `role="switch"`。尺寸按 750 稿设计，写为 `calc(var(--vc-rem) * n)`，随 `--vc-rem` 缩放；`width`、`height`、`borderWidth` 不影响其布局。底栏切换 `rem` 可查看不同屏宽下的效果。
 
 :::playground
 <!--
 <config lang="json5">
-{ viewport: 375 }
+{
+	mobile: true,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
 </config>
 -->
 ```vue
 <template>
-	<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 16px;">
-		<MSwitch v-model="isEnabled" checked-text="开" unchecked-text="关" />
-		<MSwitch :model-value="true" disabled />
-		<MSwitch :model-value="false" disabled />
-		<MSwitch v-model="isAsyncEnabled" @click="handleClick" />
+	<div class="m-switch-demo">
+		<div class="m-switch-demo__row">
+			<MSwitch v-model="status" checked-value="on" unchecked-value="off" />
+			<span>当前值：{{ status }}</span>
+		</div>
+		<div class="m-switch-demo__row">
+			<MSwitch :model-value="true" disabled />
+			<MSwitch :model-value="false" disabled />
+		</div>
+		<div class="m-switch-demo__row">
+			<MSwitch v-model="isEnabled" checked-text="开" unchecked-text="关" />
+			<MSwitch v-model="isEnabled" checked-text="已开启" unchecked-text="已关闭" />
+			<MSwitch v-model="isEnabled">
+				<template #checked>ON</template>
+				<template #unchecked>OFF</template>
+			</MSwitch>
+		</div>
+		<div class="m-switch-demo__row">
+			<MSwitch v-model="isAsyncEnabled" @click="handleClick" />
+			<span>异步切换（等待一秒）</span>
+		</div>
 	</div>
 </template>
 
@@ -133,12 +335,35 @@ const handleClick = () => new Promise(resolve => setTimeout(resolve, 1000));
 import { ref } from 'vue';
 import { MSwitch } from '@deot/vc';
 
+const status = ref('off');
 const isEnabled = ref(false);
 const isAsyncEnabled = ref(false);
-const handleClick = () => new Promise(resolve => setTimeout(resolve, 1000));
+
+const handleClick = () => new Promise((resolve) => {
+	setTimeout(resolve, 1000);
+});
 </script>
+
+<style scoped>
+.m-switch-demo {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--vc-rem) * 32);
+	padding-inline: calc(var(--vc-rem) * 32);
+	font-size: calc(var(--vc-rem) * 28);
+}
+
+.m-switch-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: calc(var(--vc-rem) * 16);
+}
+</style>
 ```
 :::
+
+尺寸为 102 × 62（750 稿），375 宽下为 51 × 31px。文案显示在滑块旁，离滑块约 8（4px），一个字时保持标准宽度，更长时轨道随之加宽。
 
 ## 主题与局部覆盖
 
@@ -157,7 +382,7 @@ const handleClick = () => new Promise(resolve => setTimeout(resolve, 1000));
 | 参数 | 使用位置 | 值 |
 | --- | --- | --- |
 | color-contrast-light | 滑块、桌面端文字、移动端选中文字 | `#FFFFFF`（亮暗主题相同） |
-| color-light-deepest | 桌面端亮色未选中轨道及同色边框 | 亮色：`#C0C4CC`；暗色：`#e8e8e8` |
+| color-light-deepest | 桌面端亮色未选中轨道及同色边框 | 亮色：`#C0C4CC`；暗色：`#E8E8E8` |
 | color-light-deeper | 移动端亮色未选中轨道 | 亮色：`#EBEDEF`；暗色：`#D5D9E1` |
 | color-primary | 选中轨道（桌面端含同色边框）、加载标记的转动弧 | `#456CF6` |
 | color-primary-lighter | 键盘聚焦光环、加载标记的底环 | `rgba(45, 140, 240, 0.2)` |

@@ -2,6 +2,8 @@
 
 标记默认插槽里的内容只是为了量出尺寸而渲染、不会展示；里面的组件用 `useMeasuring()` 得知这一点，跳过与尺寸无关的副作用。自身不生成外层 DOM 元素。
 
+移动端入口导出的 `MMeasuring` 与 `Measuring` 是同一实现。
+
 ### 何时使用
 
 - **写单元格 / 列表项组件时**（最常见）：虚拟列表 `RecycleList` 以及基于它的虚拟化 `Table`，在行尺寸未知时会先把每一行在隐藏的测量池里渲染一遍来量尺寸，再渲染展示的那一份。组件有挂载即触发的副作用（发请求、登记、埋点等）时，用 `useMeasuring()` 判断，测量的那一遍里跳过。`Image`（不发图片请求）、`Text`（不做截断测量）已内置这一处理。
@@ -17,6 +19,7 @@
 <!--
 <config lang="json5">
 {
+	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -24,18 +27,20 @@
 ```vue
 <template>
 	<div class="measuring-demo">
-		<section>
-			<h4>正常展示</h4>
-			<Probe />
-		</section>
-		<section>
-			<h4>测量范围内</h4>
-			<Measuring>
+		<div class="measuring-demo__row">
+			<section class="measuring-demo__section">
+				<h4 class="measuring-demo__title">正常展示</h4>
 				<Probe />
-			</Measuring>
-		</section>
+			</section>
+			<section class="measuring-demo__section">
+				<h4 class="measuring-demo__title">测量范围内</h4>
+				<Measuring>
+					<Probe />
+				</Measuring>
+			</section>
+		</div>
+		<p class="measuring-demo__result">挂载时执行的副作用次数：{{ effects }}</p>
 	</div>
-	<p>挂载时执行的副作用次数：{{ effects }}</p>
 </template>
 
 <script setup>
@@ -60,16 +65,31 @@ const Probe = defineComponent({
 <style scoped>
 .measuring-demo {
 	display: flex;
+	flex-direction: column;
 	gap: 16px;
 }
 
-.measuring-demo section {
-	flex: 1;
+.measuring-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 16px;
+}
+
+.measuring-demo__section {
+	display: flex;
+	flex: 1 1 200px;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.measuring-demo__title,
+.measuring-demo__result {
+	margin: 0;
 }
 
 .measuring-demo__probe {
 	padding: 12px 16px;
-	border: 1px solid #e5e7eb;
+	border: 1px solid var(--vc-color-light-deeper);
 	border-radius: 6px;
 }
 </style>
@@ -94,7 +114,3 @@ const Probe = defineComponent({
 
 - 同一个组件实例的取值不会变：测量的那份与展示的那份是两个实例。
 - 测量范围对所有后代组件生效，不限层级。
-
-### 移动端
-
-`MMeasuring` 是 `Measuring` 的别名，使用相同实现和默认插槽，可从 `@deot/vc` 导入。

@@ -2,23 +2,31 @@
 
 将变量名映射为元素的文字色、背景、边框、图片及伪类样式，支持 CSS 自定义属性和 JavaScript 变量表。
 
+移动端入口导出的 `Theme`、`ThemeView`、`ThemeText`、`ThemeImage` 与桌面端是同一实现，没有单独的 `MTheme` 别名。
+
 ### 何时使用
 
 需要让业务内容随自定义变量切换外观，或通过变量表切换图片资源时使用。组件不提供默认主题色，变量和切换状态由调用方维护。
 
 ### 基础用法
 
-颜色属性传入不带 `--` 的变量名。没有 JavaScript 映射时，`color="demo-text"` 生成 `color: var(--demo-text)`。示例变量只作用于局部容器。
+颜色属性传入不带 `--` 的变量名。没有 JavaScript 映射时，`color="demo-text"` 生成 `color: var(--demo-text)`；`borderColor` 只设置边框颜色，宽度和线型需自行设置。`pseudo` 为当前实例追加伪类样式，示例变量只作用于局部容器。
 
 :::playground
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="theme-demo" :data-mode="isDark ? 'dark' : 'light'">
+	<div class="theme-demo" :class="{ 'is-dark': isDark }">
 		<div class="theme-demo__toolbar">
 			<ThemeText color="demo-text">当前预览：{{ isDark ? '暗色' : '亮色' }}</ThemeText>
-			<Button size="small" type="primary" @click="isDark = !isDark">
-				切换主题
-			</Button>
+			<Button size="small" type="primary" @click="handleToggle">切换主题</Button>
 		</div>
 		<ThemeView
 			class="theme-demo__card"
@@ -36,6 +44,10 @@ import { ref } from 'vue';
 import { Button, ThemeView, ThemeText } from '@deot/vc';
 
 const isDark = ref(false);
+
+const handleToggle = () => {
+	isDark.value = !isDark.value;
+};
 </script>
 
 <style scoped>
@@ -44,22 +56,27 @@ const isDark = ref(false);
 	--demo-surface: #f5f7fa;
 	--demo-border: #b6c2d1;
 	--demo-accent: #245ac2;
-	padding: 20px;
-}
-.theme-demo__toolbar {
 	display: flex;
-	align-items: center;
-	justify-content: space-between;
+	flex-direction: column;
 	gap: 16px;
 }
-.theme-demo[data-mode="dark"] {
+
+.theme-demo.is-dark {
 	--demo-text: #e5eaf2;
 	--demo-surface: #202938;
 	--demo-border: #64748b;
 	--demo-accent: #93c5fd;
 }
+
+.theme-demo__toolbar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+}
+
 .theme-demo__card {
-	margin-top: 12px;
 	padding: 16px;
 	border: 1px solid;
 }
@@ -69,27 +86,33 @@ const isDark = ref(false);
 
 ### JavaScript 变量与图片
 
-`variables` 为当前实例提供具体 CSS 值或图片地址。此示例切换文字、背景与内嵌 SVG 图片；子组件需要分别传入变量表。
+`variables` 为当前实例提供具体 CSS 值或图片地址。`Theme` 的 `tag` 设置渲染的标签；`ThemeImage` 的 `src` 与 `ThemeView` 的 `backgroundImage`、`backgroundSize` 都可以传图片变量名。此示例切换文字、背景与内嵌 SVG 图片；变量表不向子组件注入，每个组件需要分别传入。
 
 :::playground
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div style="padding: 20px">
-		<div class="theme-vars__toolbar">
-			<ThemeText color="text">当前变量表：{{ isDark ? '暗色' : '亮色' }}</ThemeText>
-			<Button size="small" type="primary" @click="isDark = !isDark">
-				切换变量表
-			</Button>
+	<div class="theme-demo">
+		<div class="theme-demo__toolbar">
+			<ThemeText :variables="variables" color="text">当前变量表：{{ isDark ? '暗色' : '亮色' }}</ThemeText>
+			<Button size="small" type="primary" @click="handleToggle">切换变量表</Button>
 		</div>
 		<Theme
 			tag="section"
 			:variables="variables"
 			color="text"
 			background-color="surface"
-			class="theme-vars__card"
+			class="theme-demo__card"
 		>
-			<p class="theme-vars__description">当前文字和背景来自局部变量表。</p>
-			<div class="theme-vars__images">
+			<p class="theme-demo__description">当前文字和背景来自局部变量表。</p>
+			<div class="theme-demo__images">
 				<ThemeImage :variables="variables" src="image" alt="主题色块" width="64" height="64" />
 				<ThemeView
 					:variables="variables"
@@ -117,28 +140,45 @@ const variables = computed(() => {
 		image: 'data:image/svg+xml,' + encodeURIComponent(svg)
 	};
 });
+
+const handleToggle = () => {
+	isDark.value = !isDark.value;
+};
 </script>
 
 <style scoped>
-.theme-vars__toolbar {
+.theme-demo {
 	display: flex;
-	align-items: center;
-	justify-content: space-between;
+	flex-direction: column;
 	gap: 16px;
 }
-.theme-vars__card {
-	display: block;
-	margin-top: 12px;
-	padding: 20px;
-}
-.theme-vars__description {
-	margin: 0 0 16px;
-}
-.theme-vars__images {
+
+.theme-demo__toolbar {
 	display: flex;
-	gap: 12px;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
 }
-.theme-vars__images > * {
+
+.theme-demo__card {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	padding: 16px;
+}
+
+.theme-demo__description {
+	margin: 0;
+}
+
+.theme-demo__images {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.theme-demo__images > * {
 	width: 64px;
 	height: 64px;
 	border-radius: 8px;
@@ -171,7 +211,7 @@ const variables = computed(() => {
 | --- | --- | --- |
 | default | 元素内容；`ThemeImage` 渲染 `img`，不应提供子内容 | - |
 
-没有自定义事件或公开实例方法。`class`、`style`、`alt`、原生事件监听器等 attributes 透传到根元素。移动端入口导出相同的四个组件，没有单独的 `MTheme` 别名。
+没有自定义事件或公开实例方法。`class`、`style`、`alt`、原生事件监听器等 attributes 透传到根元素。
 
 ### 变量解析与全局配置
 

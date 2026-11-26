@@ -1,79 +1,231 @@
 ## 输入框（Input）
-通过鼠标或键盘输入内容，是最基础的表单域的包装
+通过鼠标或键盘输入内容，是最基础的表单域的包装。
+
+移动端入口导出的 `MInput`、`MInputNumber`、`MInputSearch` 有独立的移动端实现，尺寸按 750 稿随 `--vc-rem` 缩放，见 [移动端](#移动端)。
 
 ### 何时使用
 - 需要用户输入表单域内容时。
 - 提供组合型输入框，带搜索的输入框。
 
 ### 基础用法
-使用 v-model 实现输入数据的双向绑定。
+使用 `v-model` 实现输入数据的双向绑定；`focusEnd` 让聚焦时光标移到文字末尾。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<Input v-model="input" placeholder="请输入内容" style="width: 100%; max-width: 300px" />
+	<div class="input-demo">
+		<Input v-model="text" placeholder="请输入内容" />
+		<Input v-model="tail" focus-end placeholder="聚焦时光标在末尾" />
+		<p class="input-demo__result">当前值：{{ text || '（空）' }}</p>
+	</div>
 </template>
+
 <script setup>
 import { ref } from 'vue';
 import { Input } from '@deot/vc';
 
-const input = ref('');
+const text = ref('');
+const tail = ref('一段已有的文字');
 </script>
+
+<style scoped>
+.input-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	width: 300px;
+	max-width: 100%;
+}
+
+.input-demo__result {
+	margin: 0;
+}
+</style>
 ```
 :::
 
 ### 数字输入框
-输入时处理数字与小数位数；失焦、回车和步进操作时校正 min/max 范围。precision 限制小数位数，不补齐末尾的零。
+`InputNumber` 输入时处理数字与小数位数；失焦、回车和步进操作时按 `min`、`max` 校正范围，超出边界时发出 `tip`。`step` 设置步长，`false` 或 `0` 时不显示步进按钮；`precision` 限制小数位数，不补齐末尾的零。`output` 设置输出类型，`nullValue` 设置 number 输出时空值的结果，`required` 在失焦或回车时把空值归整为 `min`。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<InputNumber v-model="input" placeholder="请输入内容" style="width: 100%; max-width: 300px" />
+	<div class="input-demo">
+		<InputNumber v-model="count" :min="1" :max="10" placeholder="1 到 10" @tip="handleTip" />
+		<InputNumber v-model="decimal" :step="0.5" :precision="2" placeholder="步长 0.5，两位小数" />
+		<InputNumber v-model="text" :step="false" output="string" placeholder="无步进按钮，输出字符串" />
+		<InputNumber v-model="nullable" :null-value="null" placeholder="清空后为 null" clearable />
+		<InputNumber v-model="fallback" :min="5" required placeholder="必填，空值归整为 5" />
+		<p class="input-demo__result">{{ tip }}</p>
+		<p class="input-demo__result">
+			值：{{ count }} / {{ decimal }} / {{ JSON.stringify(text) }} / {{ String(nullable) }} / {{ fallback }}
+		</p>
+	</div>
 </template>
+
 <script setup>
 import { ref } from 'vue';
 import { InputNumber } from '@deot/vc';
 
-const input = ref('');
+const count = ref(1);
+const decimal = ref(0.5);
+const text = ref('');
+const nullable = ref(3);
+const fallback = ref(6);
+const tip = ref('超出范围时在这里提示');
+
+const handleTip = ({ type, message, tag }) => {
+	tip.value = `${type}（${tag}）：${message}`;
+};
 </script>
+
+<style scoped>
+.input-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	width: 300px;
+	max-width: 100%;
+}
+
+.input-demo__result {
+	margin: 0;
+}
+</style>
 ```
 :::
 
-### 禁用状态
-通过 `disabled` 属性指定是否禁用 input 组件。
+### 数字输入框的回调
+`before` 在步进更新前调用，返回 `false` 或拒绝的 Promise 阻止本次更新；`after` 在失焦、回车或步进停止 500ms 后调用，返回 `false` 时回滚。`plus`、`minus` 覆盖默认的增减逻辑，跳过内部边界判断、`before` 和 `after`。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<Input v-model="input" placeholder="请输入内容" disabled style="width: 100%; max-width: 300px" />
+	<div class="input-demo">
+		<InputNumber v-model="guarded" :step="2" :max="20" @before="handleBefore" @after="handleAfter" />
+		<InputNumber v-model="custom" @plus="handlePlus" @minus="handleMinus" />
+		<p class="input-demo__result">{{ status }}</p>
+	</div>
 </template>
+
+<script setup>
+import { ref } from 'vue';
+import { InputNumber } from '@deot/vc';
+
+const guarded = ref(2);
+const custom = ref(10);
+const status = ref('第一个步进超过 10 时被阻止，输入奇数时回滚；第二个每次加减 10');
+
+const handleBefore = (value) => {
+	if (value <= 10) return true;
+	status.value = `before：${value} 大于 10，已阻止`;
+	return false;
+};
+
+const handleAfter = (value) => {
+	if (value % 2 === 0) {
+		status.value = `after：${value} 已确认`;
+		return true;
+	}
+	status.value = `after：${value} 不是偶数，已回滚`;
+	return false;
+};
+
+const handlePlus = () => {
+	custom.value += 10;
+};
+
+const handleMinus = () => {
+	custom.value = Math.max(0, custom.value - 10);
+};
+</script>
+
+<style scoped>
+.input-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	width: 300px;
+	max-width: 100%;
+}
+
+.input-demo__result {
+	margin: 0;
+}
+</style>
+```
+:::
+
+### 禁用与可清空
+`disabled` 禁用输入框。`clearable` 提供清空图标：有值时才显示（`0` 也算有值），桌面端悬停时显示，移动端聚焦时显示；点击清空时发出 `clear`。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
+```vue
+<template>
+	<div class="input-demo">
+		<Input model-value="禁用时不能输入" disabled />
+		<Input v-model="text" placeholder="请输入内容" clearable @clear="handleClear" />
+		<p class="input-demo__result">清空 {{ count }} 次</p>
+	</div>
+</template>
+
 <script setup>
 import { ref } from 'vue';
 import { Input } from '@deot/vc';
 
-const input = ref('');
+const text = ref('悬停后点击右侧图标清空');
+const count = ref(0);
+
+const handleClear = () => {
+	count.value++;
+};
 </script>
-```
-:::
 
-### 可清空
-使用 `clearable` 属性即可得到一个可清空的输入框。有值时才显示清空图标（`0` 也算有值），桌面端悬停时显示，移动端聚焦时显示。
+<style scoped>
+.input-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	width: 300px;
+	max-width: 100%;
+}
 
-:::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
-```vue
-<template>
-	<Input v-model="input" placeholder="请输入内容" clearable style="width: 100%; max-width: 300px" />
-</template>
-<script setup>
-import { ref } from 'vue';
-import { Input } from '@deot/vc';
-
-const input = ref('');
-</script>
+.input-demo__result {
+	margin: 0;
+}
+</style>
 ```
 :::
 
@@ -81,157 +233,561 @@ const input = ref('');
 通过原生 `type="password"` 隐藏输入内容。组件没有额外的密码显示切换属性。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<Input v-model="input" placeholder="请输入密码" type="password" style="width: 100%; max-width: 300px" />
+	<div class="input-demo">
+		<Input v-model="password" type="password" placeholder="请输入密码" />
+	</div>
 </template>
+
 <script setup>
 import { ref } from 'vue';
 import { Input } from '@deot/vc';
 
-const input = ref('');
+const password = ref('');
 </script>
+
+<style scoped>
+.input-demo {
+	width: 300px;
+	max-width: 100%;
+}
+</style>
 ```
 :::
 
 ### 输入长度限制
-开启属性 `indicator` 可以显示字数统计，需配合 `maxlength` 属性来限制输入长度。
+`indicator` 显示字数统计，需配合 `maxlength` 使用：`inline` 在框内显示，`inverted` 显示剩余数量，`indicateClass` 设置计数元素的 class。`bytes` 按字节计算长度：可打印 ASCII 按 1 字节，其他字符按 2 字节，每个长度单位为 2 字节。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<Input
-		v-model="input"
-		placeholder="请输入内容"
-		:indicator="{ inline: true, inverted: false }"
-		:maxlength="10"
-		style="width: 100%; max-width: 300px"
-	/>
+	<div class="input-demo">
+		<Input
+			v-model="inline"
+			:indicator="{ inline: true, inverted: false }"
+			:maxlength="10"
+			placeholder="框内计数"
+		/>
+		<Input
+			v-model="outside"
+			:indicator="{ inline: false, inverted: true }"
+			:maxlength="10"
+			indicate-class="input-demo__indicator"
+			placeholder="框外显示剩余数量"
+		/>
+		<Input
+			v-model="bytes"
+			:indicator="{ inline: true, inverted: false }"
+			:maxlength="4"
+			bytes
+			placeholder="最多 8 个字节"
+		/>
+	</div>
 </template>
 
 <script setup>
 import { ref } from 'vue';
 import { Input } from '@deot/vc';
 
-const input = ref('');
+const inline = ref('');
+const outside = ref('');
+const bytes = ref('');
 </script>
+
+<style scoped>
+.input-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	width: 300px;
+	max-width: 100%;
+}
+
+.input-demo :deep(.input-demo__indicator) {
+	color: var(--vc-color-primary);
+}
+</style>
 ```
 :::
 
 ### 前缀和后缀
-在输入框上添加前缀或后缀图标。
+`prepend`、`append` 设置前后缀图标，同名插槽可自定义内容并优先于属性；`afloat` 提升桌面端前后缀的层级。`content` 插槽替换原生输入区域，替换后没有内置的输入交互。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="v-input-icon">
-		<div>
-			属性方式：
-			<Input v-model="input1" placeholder="请输入数值" prepend="rmb" style="width: 100%; max-width: 300px" />
-			<Input v-model="input2" placeholder="请输入内容" append="search" style="width: 100%; max-width: 300px" />
-		</div>
-
-		<div style="margin-top: 10px">
-			Slot方式：
-			<Input v-model="input3" placeholder="请输入数值" style="width: 100%; max-width: 300px" >
-				<template #prepend>
-					<div class="icon-wrapper">
-						<Icon type="rmb" class="icon" />
-					</div>
-				</template>
-			</Input>
-			<Input v-model="input4" placeholder="请输入内容" style="width: 100%; max-width: 300px" >
-				<template #append>
-					<div class="icon-wrapper">
-						<Icon type="search" class="icon" />
-					</div>
-				</template>
-			</Input>
-		</div>
+	<div class="input-demo">
+		<Input v-model="amount" prepend="rmb" placeholder="前缀图标" />
+		<Input v-model="keyword" append="search" afloat placeholder="后缀图标" />
+		<Input v-model="unit" placeholder="插槽前后缀">
+			<template #prepend>
+				<span class="input-demo__addon">数量</span>
+			</template>
+			<template #append>
+				<span class="input-demo__addon">件</span>
+			</template>
+		</Input>
+		<Input>
+			<template #content>
+				<span class="input-demo__content">content 插槽替换输入区域</span>
+			</template>
+		</Input>
 	</div>
 </template>
+
 <script setup>
 import { ref } from 'vue';
-import { Input, Icon } from '@deot/vc';
+import { Input } from '@deot/vc';
 
-const input1 = ref('');
-const input2 = ref('');
-const input3 = ref('');
-const input4 = ref('');
+const amount = ref('');
+const keyword = ref('');
+const unit = ref('');
 </script>
+
 <style scoped>
-.v-input-icon > div {
+.input-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	width: 300px;
+	max-width: 100%;
+}
+
+.input-demo__addon {
+	padding-inline: 8px;
+}
+
+.input-demo__content {
+	padding-inline: 8px;
+	line-height: 30px;
+}
+</style>
+```
+:::
+
+### 事件与方法
+`focus`、`blur`、`enter`、`paste` 及 `keydown`、`keypress`、`keyup` 透出原生交互，`input`、`change` 与 `update:modelValue` 同步触发。通过组件 ref 调用 `focus`、`blur`、`click`。`id` 设置包装元素的 id，`inputId` 设置原生 input 的 id，可与 `<label for>` 关联；`inputStyle` 设置原生 input 的样式。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
+```vue
+<template>
+	<div class="input-demo">
+		<label class="input-demo__label" for="input-demo-native">点击这段文字也能聚焦输入框</label>
+		<Input
+			id="input-demo-wrapper"
+			ref="inputRef"
+			v-model="text"
+			input-id="input-demo-native"
+			:input-style="{ textAlign: 'center' }"
+			placeholder="输入、粘贴或回车"
+			@focus="handleFocus"
+			@blur="handleBlur"
+			@enter="handleEnter"
+			@paste="handlePaste"
+			@change="handleChange"
+			@keydown="handleKey"
+			@keypress="handleKey"
+			@keyup="handleKey"
+		/>
+		<div class="input-demo__row">
+			<Button size="small" @click="handleCallFocus">focus()</Button>
+			<Button size="small" @click="handleCallBlur">blur()</Button>
+			<Button size="small" @click="handleCallClick">click()</Button>
+		</div>
+		<p class="input-demo__result">{{ log }}</p>
+		<p class="input-demo__result">按键事件 {{ keyCount }} 次</p>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { Input, Button } from '@deot/vc';
+
+const inputRef = ref();
+const text = ref('');
+const log = ref('等待操作');
+const keyCount = ref(0);
+
+const handleFocus = (event, value) => {
+	log.value = `focus：${value || '（空）'}`;
+};
+
+const handleBlur = (event, value, focusValue) => {
+	log.value = `blur：聚焦时为「${focusValue || ''}」，现在为「${value || ''}」`;
+};
+
+const handleEnter = () => {
+	log.value = `enter：${text.value}`;
+};
+
+const handlePaste = (event, content) => {
+	log.value = `paste：${content}`;
+};
+
+const handleChange = (value) => {
+	log.value = `change：${value}`;
+};
+
+const handleKey = () => {
+	keyCount.value++;
+};
+
+const handleCallFocus = () => {
+	inputRef.value.focus();
+};
+
+const handleCallBlur = () => {
+	inputRef.value.blur();
+};
+
+const handleCallClick = () => {
+	inputRef.value.click();
+};
+</script>
+
+<style scoped>
+.input-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	width: 300px;
+	max-width: 100%;
+}
+
+.input-demo__label {
+	cursor: pointer;
+}
+
+.input-demo__row {
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
-	gap: 12px;
+	gap: 8px;
 }
-.v-input-icon .icon-wrapper {
-	width: 16px;
-	font-size: 12px;
+
+.input-demo__result {
+	margin: 0;
+}
+</style>
+```
+:::
+
+### 受控与原生渲染
+`controllable` 使输入框完全受控：显示值始终由 `modelValue` 决定，下例在 `input` 中把输入转为大写后写回。`styleless` 直接渲染原生 input，不渲染包装、清空图标、计数或插槽，`class`、`style` 作用于原生 input。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
+```vue
+<template>
+	<div class="input-demo">
+		<Input
+			:model-value="upper"
+			controllable
+			placeholder="输入的字母转为大写"
+			@input="handleInput"
+		/>
+		<Input v-model="raw" styleless class="input-demo__native" placeholder="原生 input" />
+		<p class="input-demo__result">受控：{{ upper || '（空）' }}；原生：{{ raw || '（空）' }}</p>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { Input } from '@deot/vc';
+
+const upper = ref('');
+const raw = ref('');
+
+const handleInput = (value) => {
+	upper.value = String(value).toUpperCase();
+};
+</script>
+
+<style scoped>
+.input-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	width: 300px;
+	max-width: 100%;
+}
+
+.input-demo__native {
+	padding: 4px 8px;
+	border: 1px dashed var(--vc-border-color);
+}
+
+.input-demo__result {
+	margin: 0;
 }
 </style>
 ```
 :::
 
 ### 只读文字
-
-`plaintext` 时只显示 v-model 的值，不渲染输入框：输出一个没有样式的 `<span class="vc-input-plaintext">`（移动端为 `vcm-input-plaintext`），不能交互，`class`、`style` 等 attribute 落在它上面。与 `styleless`（直接渲染原生 input，仍可输入）不同。
+`plaintext` 时只显示 `v-model` 的值，不渲染输入框：输出一个没有样式的 `<span class="vc-input-plaintext">`（移动端为 `vcm-input-plaintext`），不能交互，`class`、`style` 等 attribute 落在它上面。与 `styleless`（直接渲染原生 input，仍可输入）不同。
 
 - `prepend` / `append` 插槽的内容放在文字前后（如单位），`prepend` / `append` 属性是图标名，不渲染。
 - 没有值时只显示 `extra`（不带前后缀），未传时为空。
 - `InputNumber` / `MInputNumber` 同样支持：显示值本身（不按 `precision` 补零），不带步进按钮。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="v-input-plaintext">
-		<p>文字：<Input model-value="一段文字" plaintext /></p>
-		<p>
-			金额：
+	<dl class="input-demo">
+		<dt>文字</dt>
+		<dd><Input model-value="一段文字" plaintext /></dd>
+		<dt>金额</dt>
+		<dd>
 			<InputNumber :model-value="100" plaintext>
-				<template #append>&nbsp;元</template>
+				<template #append>元</template>
 			</InputNumber>
-		</p>
-		<p>空值：<Input extra="-" plaintext /></p>
-	</div>
+		</dd>
+		<dt>空值</dt>
+		<dd><Input extra="-" plaintext /></dd>
+	</dl>
 </template>
+
 <script setup>
 import { Input, InputNumber } from '@deot/vc';
 </script>
+
 <style scoped>
-.v-input-plaintext p { margin: 0 0 12px; }
+.input-demo {
+	display: grid;
+	grid-template-columns: auto 1fr;
+	gap: 16px;
+	margin: 0;
+}
+
+.input-demo dd {
+	margin: 0;
+}
 </style>
 ```
 :::
 
 ### 搜索框
-使用`input-search`，可以设置为搜索型输入框。
+`InputSearch` 在后缀显示搜索区域，回车或点击搜索区域时发出 `enter`。`enterText` 为 `true` 时显示搜索图标，为字符串时显示文字，为 `false` 时不显示内容；`append` 插槽替换搜索区域。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<InputSearch v-model="input" placeholder="请输入内容"  style="width: 100%; max-width: 300px" />
+	<div class="input-demo">
+		<InputSearch v-model="keyword" placeholder="请输入关键词" @enter="handleEnter" />
+		<InputSearch v-model="keyword" enter-text="搜索" placeholder="文字按钮" @enter="handleEnter" />
+		<InputSearch v-model="keyword" placeholder="自定义搜索区域">
+			<template #append>
+				<Button type="primary" @click="handleEnter">查询</Button>
+			</template>
+		</InputSearch>
+		<p class="input-demo__result">{{ status }}</p>
+	</div>
 </template>
+
 <script setup>
 import { ref } from 'vue';
-import { InputSearch } from '@deot/vc';
+import { InputSearch, Button } from '@deot/vc';
 
-const input = ref('');
+const keyword = ref('');
+const status = ref('回车或点击搜索');
+
+const handleEnter = () => {
+	status.value = `搜索：${keyword.value || '（空）'}`;
+};
 </script>
+
+<style scoped>
+.input-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	width: 300px;
+	max-width: 100%;
+}
+
+.input-demo__result {
+	margin: 0;
+}
+</style>
 ```
 :::
 
-### 移动端
+## 移动端
 
-`MInput` 支持右对齐，`MInputNumber` 在两侧显示步进按钮，`MInputSearch` 聚焦时显示取消操作。使用 `v-model` 同步取消后的空值。
+`MInput`、`MInputNumber`、`MInputSearch` 沿用桌面端的通用属性、事件和方法，根节点为 `.vcm-input`、`.vcm-input-number`、`.vcm-input-search`。`MInput` 另有 `right`（文字右对齐），`MInputNumber` 在两侧显示步进按钮并支持 `theme`、`shape`，`MInputSearch` 聚焦时显示取消操作（`cancelText`、`cancel` 事件），并支持 `theme`、`shape`。尺寸按 750 稿设计，写为 `calc(var(--vc-rem) * n)`，随 `--vc-rem` 缩放；底栏切换 `rem` 可查看不同屏宽下的效果。
 
-`MInput` 单独使用时为一整行，尺寸按 750 稿设计，写为 `calc(var(--vc-rem) * n)`，随 `--vc-rem` 缩放（括号内为 375 宽下的 px）：
+:::playground
+<!--
+<config lang="json5">
+{
+	mobile: true,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
+</config>
+-->
+```vue
+<template>
+	<div class="m-input-demo">
+		<div class="m-input-demo__group">
+			<MInput v-model="text" clearable placeholder="请输入内容" />
+			<MInput v-model="keyword" prepend="search" clearable placeholder="前置图标" />
+			<MInput v-model="code" :maxlength="6" placeholder="请输入编号">
+				<template #append>
+					<MButton size="small" type="primary">获取</MButton>
+				</template>
+			</MInput>
+			<MInput v-model="amount" right placeholder="右对齐" />
+			<MInput model-value="不可编辑的内容" disabled />
+		</div>
+		<MList>
+			<MListItem label="默认步进器" :arrow="false">
+				<template #extra>
+					<MInputNumber v-model="counts[0]" :max="5" @tip="handleTip" />
+				</template>
+			</MListItem>
+			<MListItem label="允许负数" :arrow="false">
+				<template #extra>
+					<MInputNumber v-model="counts[1]" :min="-5" :max="5" />
+				</template>
+			</MListItem>
+			<MListItem
+				v-for="item in styles"
+				:key="item.label"
+				:label="item.label"
+				:arrow="false"
+			>
+				<template #extra>
+					<MInputNumber v-model="item.value" :theme="item.theme" :shape="item.shape" :max="10" />
+				</template>
+			</MListItem>
+		</MList>
+		<MInputNumber v-model="counts[2]" :step="false" clearable placeholder="无步进按钮时与 MInput 一致" />
+		<div class="m-input-demo__group">
+			<MInputSearch v-model="search" clearable placeholder="搜索" @enter="handleEnter" @cancel="handleCancel" />
+			<MInputSearch v-model="search" theme="inverted" cancel-text="关闭" placeholder="inverted" />
+			<MInputSearch v-model="search" shape="square" placeholder="square" />
+		</div>
+		<p class="m-input-demo__result">{{ log }}</p>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { MInput, MInputNumber, MInputSearch, MButton, MList, MListItem } from '@deot/vc';
+
+const text = ref('一段输入内容');
+const keyword = ref('');
+const code = ref('');
+const amount = ref('');
+const counts = ref([1, 0, undefined]);
+const search = ref('');
+const styles = ref([
+	{ label: 'fill + circle', theme: 'fill', shape: 'circle', value: 2 },
+	{ label: 'border + square', theme: 'border', shape: 'square', value: 3 },
+	{ label: 'border + circle', theme: 'border', shape: 'circle', value: 10 }
+]);
+const log = ref('回车、取消或超出范围时在这里显示');
+
+const handleTip = ({ message }) => {
+	log.value = `tip：${message}`;
+};
+
+const handleEnter = () => {
+	log.value = `搜索：${search.value || '（空）'}`;
+};
+
+const handleCancel = () => {
+	log.value = '已取消搜索';
+};
+</script>
+
+<style scoped>
+.m-input-demo {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--vc-rem) * 32);
+	background: var(--vc-background-color-light);
+}
+
+.m-input-demo__group {
+	display: flex;
+	flex-direction: column;
+	gap: 1px;
+}
+
+.m-input-demo__result {
+	margin: 0;
+	padding-inline: calc(var(--vc-rem) * 32);
+	font-size: calc(var(--vc-rem) * 28);
+	color: var(--vc-color-dark-extralight);
+}
+</style>
+```
+:::
+
+`MInput` 单独使用时为一整行，尺寸如下（括号内为 375 宽下的 px）：
 
 | 项 | 值 |
 | --- | --- |
@@ -248,38 +804,6 @@ const input = ref('');
 
 `MInputSearch`（375 宽下）：栏高 68、内边距 16、白底；输入框高 36、左右内边距 14、浅灰底、胶囊圆角，字号 14；搜索图标 16，与文字间距 9。清空图标在有值时显示，不要求聚焦；取消按钮为主色、字号 15，与输入框间距 16，按下即取消并让输入框失焦（阻止 `touchstart` 的默认行为，`mousedown` 同样可用）。
 
-:::playground
-<!-- <config lang="json5">{ previewInset: 16, viewport: 375 }</config> -->
-```vue
-<template>
-	<div class="mobile-demo">
-		<MInput v-model="name" placeholder="请输入名称" right />
-		<div class="quantity"><span>数量</span><MInputNumber v-model="quantity" :min="0" :max="10" /></div>
-		<MInputSearch v-model="keyword" placeholder="搜索关键词" @enter="handleEnter" @cancel="handleCancel" />
-		<p>{{ status }}</p>
-	</div>
-</template>
-
-<script setup>
-import { ref } from 'vue';
-import { MInput, MInputNumber, MInputSearch } from '@deot/vc';
-
-const name = ref('');
-const quantity = ref(1);
-const keyword = ref('');
-const status = ref('聚焦搜索框可显示取消操作');
-const handleEnter = () => { status.value = `搜索：${keyword.value}`; };
-const handleCancel = () => { status.value = '已取消搜索'; };
-</script>
-
-<style scoped>
-.mobile-demo { display: grid; gap: 20px; }
-.quantity { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.mobile-demo p { margin: 0; }
-</style>
-```
-:::
-
 ## 主题与局部覆盖
 
 全局参数通过 `--vc-<参数>` 配置，单个组件通过 `--vc-input-<参数>` 覆盖。同一参数可能作用于多个状态；多命名空间时在使用位置中标明。
@@ -294,15 +818,16 @@ const handleCancel = () => { status.value = '已取消搜索'; };
 | color-dark-extralight | 占位文字、数字按钮及附加图标 | 亮色：`#909399`；暗色：`#B9B9B9` |
 | color-disabled | 亮色禁用输入区、附加区及数字按钮背景 | `#EBEEF5` |
 | color-error | 错误边框 | `#F53F3F` |
-| color-light-extradeep | 移动端步进按钮禁用文字 | 亮色：`#B9B9B9`；暗色：`#F8F8F8` |
-| color-primary | 亮色聚焦及悬停边框；移动端光标 | `#456CF6` |
+| color-light-extradeep | 桌面端搜索区域文字、移动端步进按钮禁用文字 | 亮色：`#B9B9B9`；暗色：`#F8F8F8` |
+| color-neutral-light | 移动端步进器 `theme="border"` 的边框 | 亮色：`#EDEFF1`；暗色：`#3B4354` |
+| color-primary | 亮色聚焦及悬停边框；移动端光标及搜索取消文字 | `#456CF6` |
 | color-primary-light | 暗色聚焦边框、数字按钮悬停图标 | `#4A96FF` |
 | color-primary-lighter | 焦点阴影及移动端步进按钮激活背景 | `rgba(45, 140, 240, 0.2)` |
-| background-color | 移动端数字输入区及按钮背景 | 亮色：`#F5F6FA`；暗色：`#252B3A` |
+| background-color | 移动端数字输入区及按钮背景、搜索输入框背景 | 亮色：`#F5F6FA`；暗色：`#252B3A` |
 | background-color-light | 暗色禁用输入区、附加区及数字按钮背景 | 亮色：`#F7F8FA`；暗色：`#2D3444` |
 | background-color-lightest | 输入区、附加区及桌面端数字按钮背景 | 亮色：`#FFFFFF`；暗色：`#252B3A` |
 | border-color | 桌面端输入边框及数字按钮的纵向、横向分隔线 | `#D5D9E1`（亮暗主题相同） |
-| foreground-color | 附加区及移动端搜索按钮文字 | 亮色：`#080F20`；暗色：`#F8F8F8` |
+| foreground-color | 附加区文字及移动端附加图标 | 亮色：`#080F20`；暗色：`#F8F8F8` |
 
 ### 局部
 
@@ -366,7 +891,7 @@ const handleCancel = () => { status.value = '已取消搜索'; };
 
 | 方法名 | 说明 | 参数 | 返回值 |
 | --- | --- | --- | --- |
-| focus | 聚焦原生输入框 | - | `void` |
+| focus | 聚焦原生输入框 | `(options?: FocusOptions)` | `void` |
 | blur | 使原生输入框失焦 | - | `void` |
 | click | 触发原生点击并聚焦 | - | `void` |
 
@@ -458,11 +983,11 @@ disabled 禁用输入，搜索区域仅有禁用外观，当前仍会发出点�
 
 ### MInputSearch 事件
 
-沿用 Input 输入和键盘事件；focus、blur 只传 FocusEvent。取消通过 touchend 触发，依次发出 `update:modelValue('')`、`input('')`、`cancel()`，不发出 change，也不主动失焦。
+沿用 Input 输入和键盘事件；focus、blur 只传 FocusEvent。取消在 touchstart（桌面浏览器为 mousedown）时触发，依次发出 `update:modelValue('')`、`input('')`、`cancel()`，不发出 change，随后让输入框失焦。
 
 | 事件名 | 说明 | 回调参数 | 参数说明 |
 | --- | --- | --- | --- |
-| cancel | 触摸取消操作 | `()` | - |
+| cancel | 按下取消操作 | `()` | - |
 | enter | 回车 | `(event)` | KeyboardEvent |
 
 ### MInputSearch 插槽
@@ -476,6 +1001,6 @@ disabled 禁用输入，搜索区域仅有禁用外观，当前仍会发出点�
 
 ### 主题与语言
 
-组件族沿用 `--vc-input-*` 覆盖入口，并回退到共享主题变量。移动步进按钮额外支持 `--vc-input-background-color-active`、`--vc-input-foreground-color-disabled`。
+组件族沿用 `--vc-input-*` 覆盖入口，并回退到共享主题变量。
 
 数字提示使用 `vc.InputNumber.*`，移动搜索取消文字使用 `vc.MInputSearch.cancelText`，随 `VcInstance.configure({ locale })` 更新。调用方传入的 placeholder、搜索文字和插槽内容由调用方负责翻译。

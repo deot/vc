@@ -2,6 +2,8 @@
 
 展示一组文件（图片、视频、音频、其他文件），点击后在同一个查看器中预览。`ImagePreview.open` 用于直接打开图片预览。
 
+移动端入口导出的 `MFilePreview`、`MImagePreview` 与 `FilePreview`、`ImagePreview` 的属性、插槽、方法相同，尺寸按 750 稿缩放并使用移动端查看器，见 [移动端](#移动端)。
+
 ### 何时使用
 
 - 在详情页展示已上传的附件、图片或视频。
@@ -14,10 +16,19 @@
 文件项与 `UploadPicker` 共用两种样式：整行（缩略图或文件标记、文件名）与方格（图片、视频铺满，音频、文件为标记加文件名）。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<FilePreview :data="data" />
+	<div class="file-preview-demo">
+		<FilePreview :data="data" />
+	</div>
 </template>
 
 <script setup>
@@ -45,10 +56,17 @@ const data = [
 不传 `type` 时按数据自动选择：只有图片、视频为 `grid`，只有音频、文件为 `list`，两者都有为 `group`。布局只影响展示，预览时的顺序与索引仍按 `data` 原始顺序。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="demo">
+	<div class="file-preview-demo">
 		<RadioGroup v-model="type" type="card">
 			<Radio v-for="item in types" :key="item" :value="item" :label="item || 'auto'" />
 		</RadioGroup>
@@ -72,7 +90,11 @@ const data = [
 </script>
 
 <style scoped>
-.demo { display: grid; gap: 16px; }
+.file-preview-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
 </style>
 ```
 :::
@@ -88,23 +110,32 @@ const data = [
 | medium | 96px | 46px | 14px | 32px |
 | large | 128px | 56px | 14px | 40px |
 
-图片和视频的 `thumbnail` 优先用于展示，预览使用 `source`；视频没有 `thumbnail` 时使用原生 `<video preload="metadata">` 展示，能否显示首帧取决于浏览器及媒体资源。`previewable` 为 `false` 时禁用默认文件项的点击预览。
+图片和视频的 `thumbnail` 优先用于展示，预览使用 `source`；视频没有 `thumbnail` 时使用原生 `<video preload="metadata">` 展示，能否显示首帧取决于浏览器及媒体资源。`previewable` 为 `false` 时禁用默认文件项的点击预览。`placeholder` 为 `false` 时打开图片不用缩略图垫底，先淡入蒙层、显示加载中，大图就位后再放大。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="demo">
-		<div class="toolbar">
+	<div class="file-preview-demo">
+		<div class="file-preview-demo__row">
 			<RadioGroup v-model="size" type="card">
 				<Radio v-for="item in sizes" :key="item" :value="item" :label="item" />
 			</RadioGroup>
 			<Checkbox v-model="isPreviewable">previewable</Checkbox>
+			<Checkbox v-model="isPlaceholder">placeholder</Checkbox>
 		</div>
 		<FilePreview
 			:data="data"
 			:size="size"
 			:previewable="isPreviewable"
+			:placeholder="isPlaceholder"
 			type="group"
 		/>
 	</div>
@@ -117,6 +148,7 @@ import { FilePreview, RadioGroup, Radio, Checkbox } from '@deot/vc';
 const sizes = ['mini', 'small', 'medium', 'large'];
 const size = ref('medium');
 const isPreviewable = ref(true);
+const isPlaceholder = ref(true);
 const data = [
 	{
 		source: 'https://dummyimage.com/1800x600/555/fff.png?text=source',
@@ -133,12 +165,17 @@ const data = [
 </script>
 
 <style scoped>
-.toolbar {
+.file-preview-demo {
 	display: flex;
-	align-items: center;
-	flex-wrap: wrap;
+	flex-direction: column;
 	gap: 16px;
-	margin-bottom: 16px;
+}
+
+.file-preview-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
 }
 </style>
 ```
@@ -149,50 +186,58 @@ const data = [
 `default` 插槽替换每一项的内容，参数为 `{ row, index, preview }`。使用插槽后外层不再绑定点击，由插槽调用 `preview()` 打开预览；`preview()` 同样先经过全局 `enhancer`，且不受 `previewable` 限制。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<FilePreview :data="data" type="list">
-		<template #default="{ row, preview }">
-			<div class="row">
-				<span class="name">{{ row.name }}</span>
-				<Button size="small" @click="handlePreview(preview)">预览</Button>
-				<a :href="row.source" target="_blank" rel="noopener">新窗口打开</a>
-			</div>
-		</template>
-	</FilePreview>
+	<div class="file-preview-demo">
+		<FilePreview :data="data" type="list">
+			<template #default="{ row, index, preview }">
+				<div class="file-preview-demo__row">
+					<span class="file-preview-demo__name">{{ index + 1 }}. {{ row.name }}</span>
+					<Button size="small" @click="handlePreview(preview)">预览</Button>
+					<a :href="row.source" target="_blank" rel="noopener">新窗口打开</a>
+				</div>
+			</template>
+		</FilePreview>
+	</div>
 </template>
 
 <script setup>
 import { Button, FilePreview } from '@deot/vc';
 
-const handlePreview = preview => preview();
 const data = [
 	{ source: 'https://dummyimage.com/1800x600/555/fff.png?text=1', name: '1.png' },
 	'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
 	{ source: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', name: '示例文件-2026.pdf' }
 ];
+
+const handlePreview = (preview) => {
+	preview();
+};
 </script>
 
 <style scoped>
-.row {
+.file-preview-demo__row {
 	display: flex;
-	align-items: center;
 	flex-wrap: wrap;
-	gap: 12px;
+	align-items: center;
+	gap: 8px;
 	font-size: 13px;
 }
 
-.name {
-	width: 120px;
+.file-preview-demo__name {
+	width: 140px;
 	max-width: 100%;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-}
-
-.row a {
-	cursor: pointer;
 }
 </style>
 ```
@@ -225,12 +270,19 @@ const data = [
 示例中带处理后缀的图片地址（内置规则会识别为文件）被识别为图片，文件名去掉时间戳前缀，文件交给 `enhancer` 处理。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div>
+	<div class="file-preview-demo">
 		<FilePreview :data="data" type="group" />
-		<p class="tip">{{ tip }}</p>
+		<p class="file-preview-demo__result">{{ tip }}</p>
 	</div>
 </template>
 
@@ -265,29 +317,50 @@ onBeforeUnmount(() => VcInstance.configure({ FilePreview: original }));
 </script>
 
 <style scoped>
-.tip {
-	margin: 12px 0 0;
-	font-size: 13px;
+.file-preview-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.file-preview-demo__result {
+	margin: 0;
 }
 </style>
 ```
 :::
 
-### 图片预览（ImagePreview）
+### 直接打开（open）
 
-`ImagePreview.open` 直接用查看器打开一组图片，不经过 `enhancer`。
+`ImagePreview.open` 直接用查看器打开一组图片，不经过 `enhancer`；`FilePreview.open` 先调用全局 `enhancer`，未接管时打开查看器，`onClose` 在查看器关闭后调用。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<Button @click="handleClick">从第 2 张打开</Button>
+	<div class="file-preview-demo">
+		<div class="file-preview-demo__row">
+			<Button @click="handleImages">ImagePreview.open（从第 2 张）</Button>
+			<Button @click="handleFiles">FilePreview.open</Button>
+		</div>
+		<p class="file-preview-demo__result">{{ status }}</p>
+	</div>
 </template>
 
 <script setup>
-import { Button, ImagePreview } from '@deot/vc';
+import { ref } from 'vue';
+import { Button, FilePreview, ImagePreview } from '@deot/vc';
 
-const handleClick = () => {
+const status = ref('');
+
+const handleImages = () => {
 	ImagePreview.open({
 		current: 1,
 		data: [
@@ -297,13 +370,135 @@ const handleClick = () => {
 		]
 	});
 };
+
+const handleFiles = () => {
+	status.value = '查看器已打开';
+	FilePreview.open({
+		data: [
+			{ source: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', name: '示例文件-2026.pdf' },
+			'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4'
+		],
+		onClose: () => {
+			status.value = '查看器已关闭';
+		}
+	});
+};
 </script>
+
+<style scoped>
+.file-preview-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.file-preview-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+.file-preview-demo__result {
+	margin: 0;
+}
+</style>
 ```
 :::
 
-### 移动端
+## 移动端
 
-`MFilePreview` 的属性、插槽、结构与 `FilePreview` 相同，根节点另有标记类 `.vcm-file-preview`，结构样式与主题参数共用；各档尺寸按 750 稿随 `--vc-rem` 缩放（括号内为 375 宽下的 px）：
+`MFilePreview` 的属性、插槽、结构与 `FilePreview` 相同，根节点另有标记类 `.vcm-file-preview`，结构样式与主题参数共用；各档尺寸按 750 稿随 `--vc-rem` 缩放，见示例后的尺寸表。
+
+下例切换 `size` 与 `type`；点开为移动端查看器，`MImagePreview.open`、`MFilePreview.open` 直接打开。查看器挂到 `body`，因此在独立页面中预览。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	mobile: true,
+	local: false,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
+</config>
+-->
+```vue
+<template>
+	<div class="m-file-preview-demo">
+		<MRadioGroup v-model="size" type="button" size="small">
+			<MRadio v-for="item in sizes" :key="item" :value="item">{{ item }}</MRadio>
+		</MRadioGroup>
+		<MRadioGroup v-model="type" type="button" size="small">
+			<MRadio v-for="item in types" :key="item" :value="item">{{ item || 'auto' }}</MRadio>
+		</MRadioGroup>
+		<MFilePreview :data="data" :size="size" :type="type || undefined" />
+		<div class="m-file-preview-demo__row">
+			<MButton size="small" @click="handleImages">MImagePreview.open</MButton>
+			<MButton size="small" @click="handleFiles">MFilePreview.open</MButton>
+		</div>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { MButton, MFilePreview, MImagePreview, MRadio, MRadioGroup } from '@deot/vc';
+
+const sizes = ['mini', 'small', 'medium', 'large'];
+const types = ['', 'list', 'grid', 'group'];
+const size = ref('medium');
+const type = ref('');
+const data = [
+	{ source: 'https://dummyimage.com/1800x600/555/fff.png?text=1', name: '1.png' },
+	{ source: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', name: '示例文件-2026.pdf' },
+	{
+		source: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
+		thumbnail: 'https://dummyimage.com/120x120/2d8cf0/fff.png?text=cover'
+	},
+	{ source: 'https://dummyimage.com/600x1800/555/fff.png?text=2', name: '2.png' },
+	'https://interactive-examples.mdn.mozilla.net/media/cc0-audio/t-rex-roar.mp3'
+];
+
+const handleImages = () => {
+	MImagePreview.open({
+		data: [
+			'https://dummyimage.com/1800x600/555/fff.png?text=1',
+			'https://dummyimage.com/600x1800/555/fff.png?text=2'
+		]
+	});
+};
+
+const handleFiles = () => {
+	MFilePreview.open({
+		data: [
+			{ source: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf', name: '示例文件-2026.pdf' }
+		]
+	});
+};
+</script>
+
+<style scoped>
+.m-file-preview-demo {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--vc-rem) * 32);
+	padding-inline: calc(var(--vc-rem) * 32);
+}
+
+.m-file-preview-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: calc(var(--vc-rem) * 16);
+}
+</style>
+```
+:::
+
+尺寸（括号内为 375 宽下的 px）：
 
 | size | 方格边长 | 行高 | 行内字号 | 行首缩略图 |
 | --- | --- | --- | --- | --- |
@@ -320,18 +515,6 @@ const handleClick = () => {
 - 计数在底部通栏、左对齐，字号 28（14），底部渐变加深并留出安全区；蒙层为 90% 不透明的黑色。
 - 文件页左右留白 32（16），顶部让出关闭按钮、底部让出计数的高度；文件名 32（16）。
 - 「新窗口打开」「下载」统一为一个「复制链接」（高 64，即 32px），复制文件本身的地址，复制后按钮原地显示「复制成功」两秒：手机浏览器对跨域地址多不认 `download`，微信等内嵌浏览器常拦截新窗口。`blob:`、`data:` 地址复制出去无法打开，这类仍只提供「下载」。
-
-```vue
-<template>
-	<MFilePreview :data="files" />
-</template>
-
-<script setup>
-import { MFilePreview } from '@deot/vc';
-
-const files = ['https://dummyimage.com/600x400/555/fff.png?text=1', 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf'];
-</script>
-```
 
 ## 主题与局部覆盖
 
@@ -391,7 +574,7 @@ const files = ['https://dummyimage.com/600x400/555/fff.png?text=1', 'https://www
 | type | 布局（与数据项的文件类型无关）：`list` 全部整行，`grid` 全部方格，`group` 图片、视频方格在前、音频、文件整行在后；不传时按数据自动选择 | `'list' \| 'grid' \| 'group'` | `list` / `grid` / `group` | - |
 | size | 尺寸 | `'mini' \| 'small' \| 'medium' \| 'large'` | `mini` / `small` / `medium` / `large` | `medium` |
 | previewable | 点击是否预览；使用 `default` 插槽时由插槽调用 `preview` | `boolean` | - | `true` |
-| placeholder | 打开图片时是否用点中的缩略图垫底、立即放大，大图解码完再换上；为 `false` 时先淡入蒙层、显示加载中，大图就位后再放大。不传时用全局 `imageOptions.placeholder` | `boolean` | - | `true` |
+| placeholder | 打开图片时是否用点中的缩略图垫底、立即放大，大图解码完再换上；为 `false` 时先淡入蒙层、显示加载中，大图就位后再放大。不传时用全局 `imageOptions.placeholder` | `boolean` | - | 全局值（默认 `true`） |
 
 数据项（字符串会解析为 `{ source }`）：
 

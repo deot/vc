@@ -1,10 +1,13 @@
 ## 打印（Print）
 
-展示待打印内容，通过组件实例的 `print()` 方法调用浏览器打印功能。`MPrint` 与 `Print` 使用同一实现。
+展示待打印内容，通过组件实例的 `print()` 方法调用浏览器打印功能。
+
+移动端入口导出的 `MPrint` 与 `Print` 是同一实现。
 
 ### 何时使用
 
-需要打印页面中的一段内容，或调用方提供的 HTML 内容时。
+- 需要打印页面中的一段内容时。
+- 需要打印调用方提供的 HTML 内容时。
 
 ### 基础用法
 
@@ -13,49 +16,72 @@
 :::playground
 <!--
 <config lang="json5">
-{ previewInset: 16 }
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
 </config>
 -->
 ```vue
 <template>
-	<div>
+	<div class="print-demo">
 		<Print ref="pageTarget">
-			<article class="print-card">
-				<header>
+			<article class="print-demo__card">
+				<header class="print-demo__header">
 					<strong>条目明细</strong>
 					<span>2026-09-11</span>
 				</header>
-				<p>条目：条目 A × 2</p>
-				<p>数值合计：20</p>
+				<p class="print-demo__line">条目：条目 A × 2</p>
+				<p class="print-demo__line">数值合计：20</p>
 			</article>
 		</Print>
-		<Button style="margin-top: 12px;" @click="handlePrint">
-			打印条目
-		</Button>
+		<div class="print-demo__row">
+			<Button @click="handlePrint">打印条目</Button>
+		</div>
 	</div>
 </template>
 
 <script setup>
 import { ref } from 'vue';
-import { Print, Button } from '@deot/vc';
+import { Button, Print } from '@deot/vc';
 
 const pageTarget = ref();
+
 const handlePrint = () => {
 	pageTarget.value.print();
 };
 </script>
 
 <style scoped>
-.print-card {
+.print-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.print-demo__card {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
 	padding: 16px;
-	border: 1px solid #d9d9d9;
+	border: 1px solid var(--vc-color-light-deeper);
 	border-radius: 8px;
 }
 
-.print-card header {
+.print-demo__header {
 	display: flex;
 	justify-content: space-between;
-	margin-bottom: 12px;
+	gap: 8px;
+}
+
+.print-demo__line {
+	margin: 0;
+}
+
+.print-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
 }
 </style>
 ```
@@ -63,27 +89,30 @@ const handlePrint = () => {
 
 ### 打印 HTML 内容
 
-`value` 按 HTML 渲染，只应传入可信的 HTML；同时提供默认插槽时，插槽优先。组件本身不清洗内容，可通过全局的 `sanitize` 统一处理，见 [Customer](../customer/README.md)。
+`value` 按 HTML 渲染，只应传入可信的 HTML；同时提供默认插槽时，插槽优先。组件本身不清洗内容，可通过全局的 `sanitize` 统一处理，见 [Customer](../customer/README.md)。HTML 字符串不受 `<style scoped>` 影响，示例中的样式直接写在内容里。
 
 :::playground
 <!--
 <config lang="json5">
-{ previewInset: 16 }
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
 </config>
 -->
 ```vue
 <template>
-	<div>
+	<div class="print-demo">
 		<Print ref="pageTarget" :value="content" />
-		<Button style="margin-top: 12px;" @click="handlePrint">
-			打印说明
-		</Button>
+		<div class="print-demo__row">
+			<Button @click="handlePrint">打印说明</Button>
+		</div>
 	</div>
 </template>
 
 <script setup>
 import { ref } from 'vue';
-import { Print, Button } from '@deot/vc';
+import { Button, Print } from '@deot/vc';
 
 const pageTarget = ref();
 const content = `
@@ -92,10 +121,25 @@ const content = `
 		<p style="margin: 0">这是一段通过 HTML 字符串提供的示例内容。</p>
 	</article>
 `;
+
 const handlePrint = () => {
 	pageTarget.value.print();
 };
 </script>
+
+<style scoped>
+.print-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.print-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+</style>
 ```
 :::
 

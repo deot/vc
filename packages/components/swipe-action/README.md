@@ -7,57 +7,85 @@
 - 列表项的次要操作（置顶、标记、删除），平时收起，不占位置。
 - 危险操作配合二次确认，或用全滑一步完成。
 
-### 尺寸
-
-长度按 750 稿书写并随 `--vc-rem` 缩放；括号内为 375 宽下的 px。
-
-| 部位 | 值 |
-| --- | --- |
-| 按钮左右内边距 | 32（16），按钮宽度随内容 |
-| 文字字号 / 行高 | 32（16）/ 44（22） |
-| 图标 / 与文字的间距 | 40（20）/ 8（4） |
-
 ### 基础用法
 
-向左滑露出 `rightActions`，向右滑露出 `leftActions`；数组顺序即按钮从左到右的顺序。拖动超过按钮总宽的 `threshold`（默认 15%）后松手展开，快速甩动时不论距离都按方向展开或收起。
+向左滑露出 `rightActions`，向右滑露出 `leftActions`；数组顺序即按钮从左到右的顺序。拖动超过按钮总宽的 `threshold`（默认 15%）后松手展开，快速甩动时不论距离都按方向展开或收起。按钮的 `type` 决定背景色，`icon` 显示在文字左侧，`style` 可自定义颜色，`disabled` 置灰且点击无效。
 
 :::playground
 <!--
 <config lang="json5">
-{ viewport: 375, previewInset: 16 }
+{
+	mobile: true,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
 </config>
 -->
 ```vue
 <template>
-	<MList>
-		<MListItem
-			label="向左滑动"
-			extra="内容"
-			:swipe-action-options="{
-				rightActions: [
-					{ content: '置顶' },
-					{ content: '删除', type: 'error', onClick: () => (message = '删除') }
-				]
-			}"
-		/>
-		<MListItem
-			label="左右都可以滑"
-			:arrow="false"
-			:swipe-action-options="{
-				leftActions: [{ content: '已读', type: 'primary' }],
-				rightActions: [{ content: '删除', type: 'error' }]
-			}"
-		/>
-	</MList>
-	<p>{{ message }}</p>
+	<div class="m-swipe-action-demo">
+		<MList>
+			<MListItem
+				label="向左滑动"
+				extra="内容"
+				:swipe-action-options="{ rightActions: baseActions }"
+			/>
+			<MListItem
+				label="左右都可以滑"
+				description="threshold 为 0.5"
+				:arrow="false"
+				:swipe-action-options="{ leftActions, rightActions: iconActions, threshold: 0.5 }"
+			/>
+		</MList>
+		<p class="m-swipe-action-demo__result">{{ result }}</p>
+	</div>
 </template>
 
 <script setup>
 import { ref } from 'vue';
 import { MList, MListItem } from '@deot/vc';
 
-const message = ref('');
+const result = ref('尚未操作');
+
+const handleAction = (content) => {
+	result.value = `点击了「${content}」`;
+};
+
+const baseActions = [
+	{ content: '置顶', onClick: () => handleAction('置顶') },
+	{ content: '删除', type: 'error', onClick: () => handleAction('删除') }
+];
+
+const leftActions = [
+	{ content: '标记', type: 'primary', icon: 'success', onClick: () => handleAction('标记') },
+	{ content: '完成', type: 'success', onClick: () => handleAction('完成') }
+];
+
+const iconActions = [
+	{ content: '收藏', icon: 'star', style: { background: '#FFB400' }, onClick: () => handleAction('收藏') },
+	{ content: '稍后', type: 'warning', disabled: true },
+	{ content: '删除', type: 'error', icon: 'delete', onClick: () => handleAction('删除') }
+];
 </script>
+
+<style scoped>
+.m-swipe-action-demo {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--vc-rem) * 32);
+}
+
+.m-swipe-action-demo__result {
+	margin: 0;
+	padding-inline: calc(var(--vc-rem) * 32);
+	font-size: calc(var(--vc-rem) * 28);
+	color: var(--vc-color-dark-extralight);
+}
+</style>
 ```
 :::
 
@@ -74,20 +102,37 @@ const message = ref('');
 :::playground
 <!--
 <config lang="json5">
-{ viewport: 375, previewInset: 16 }
+{
+	mobile: true,
+	local: false,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
 </config>
 -->
 ```vue
 <template>
-	<MList>
-		<MListItem
-			v-for="item in rows"
-			:key="item"
-			:label="item"
-			:arrow="false"
-			:swipe-action-options="{ rightActions: [{ content: '删除', type: 'error', fullSwipe: true, onClick: () => confirm(item) }] }"
-		/>
-	</MList>
+	<div class="m-swipe-action-demo">
+		<MList>
+			<MListItem
+				v-for="item in rows"
+				:key="item"
+				:label="item"
+				:arrow="false"
+				:swipe-action-options="{
+					rightActions: [
+						{ content: '保持', onClick: () => true },
+						{ content: '删除', type: 'error', fullSwipe: true, onClick: () => handleRemove(item) }
+					]
+				}"
+			/>
+		</MList>
+		<p class="m-swipe-action-demo__result">剩余 {{ rows.length }} 项</p>
+	</div>
 </template>
 
 <script setup>
@@ -95,7 +140,8 @@ import { ref } from 'vue';
 import { MList, MListItem, MModal } from '@deot/vc';
 
 const rows = ref(['列表项 1', '列表项 2', '列表项 3']);
-const confirm = item => new Promise((resolve, reject) => {
+
+const handleRemove = item => new Promise((resolve, reject) => {
 	MModal.alert({
 		title: `删除${item}？`,
 		onOk: () => {
@@ -106,12 +152,27 @@ const confirm = item => new Promise((resolve, reject) => {
 	});
 });
 </script>
+
+<style scoped>
+.m-swipe-action-demo {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--vc-rem) * 32);
+}
+
+.m-swipe-action-demo__result {
+	margin: 0;
+	padding-inline: calc(var(--vc-rem) * 32);
+	font-size: calc(var(--vc-rem) * 28);
+	color: var(--vc-color-dark-extralight);
+}
+</style>
 ```
 :::
 
 ### 打开状态与独立使用
 
-`v-model` 为露出按钮的一侧：`'right'` 表示露出右侧按钮（即向左滑过），`'left'` 反之，收起时为 `false`；可以由代码打开或收起（MListItem 上为 `v-model:swiped`）。`MSwipeAction` 可以包裹任意内容。
+`v-model` 为露出按钮的一侧：`'right'` 表示露出右侧按钮（即向左滑过），`'left'` 反之，收起时为 `false`；可以由代码打开或收起（MListItem 上为 `v-model:swiped`），手势或按钮使状态变化时触发 `update:modelValue`。`MSwipeAction` 的默认插槽可以放任意内容，`duration` 设置展开、归位的动画时长，`disabled` 后不响应滑动，但由代码设置 `modelValue` 仍然有效。
 
 展开时：
 - 点内容区只会收起，不会触发内容上的点击（例如 MListItem 的 `click` 和跳转）；
@@ -120,36 +181,92 @@ const confirm = item => new Promise((resolve, reject) => {
 :::playground
 <!--
 <config lang="json5">
-{ viewport: 375, previewInset: 16 }
+{
+	mobile: true,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
 </config>
 -->
 ```vue
 <template>
-	<div>
+	<div class="m-swipe-action-demo">
 		<MSwipeAction
-			v-model="open"
+			v-model="side"
+			:disabled="isDisabled"
+			:duration="600"
 			:close-on-click-outside="false"
 			:right-actions="[{ content: '归档', type: 'primary' }, { content: '删除', type: 'error' }]"
+			@update:model-value="handleChange"
 		>
-			<div style="padding: 16px; background: var(--vc-background-color-lightest);">当前：{{ open }}</div>
+			<div class="m-swipe-action-demo__card">当前：{{ side }}</div>
 		</MSwipeAction>
-		<p>
-			<button @click="open = 'right'">打开</button>
-			<button @click="open = false">收起</button>
-		</p>
+		<div class="m-swipe-action-demo__row">
+			<MButton size="small" type="primary" @click="side = 'right'">打开</MButton>
+			<MButton size="small" @click="side = false">收起</MButton>
+			<MButton size="small" @click="isDisabled = !isDisabled">{{ isDisabled ? '启用手势' : '禁用手势' }}</MButton>
+		</div>
+		<p class="m-swipe-action-demo__result">update:modelValue 触发 {{ count }} 次</p>
 	</div>
 </template>
 
 <script setup>
 import { ref } from 'vue';
-import { MSwipeAction } from '@deot/vc';
+import { MButton, MSwipeAction } from '@deot/vc';
 
-const open = ref(false);
+const side = ref(false);
+const isDisabled = ref(false);
+const count = ref(0);
+
+const handleChange = () => {
+	count.value++;
+};
 </script>
+
+<style scoped>
+.m-swipe-action-demo {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--vc-rem) * 32);
+}
+
+.m-swipe-action-demo__card {
+	padding: calc(var(--vc-rem) * 32);
+	background: var(--vc-background-color-lightest);
+}
+
+.m-swipe-action-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: calc(var(--vc-rem) * 16);
+	padding-inline: calc(var(--vc-rem) * 32);
+}
+
+.m-swipe-action-demo__result {
+	margin: 0;
+	padding-inline: calc(var(--vc-rem) * 32);
+	font-size: calc(var(--vc-rem) * 28);
+	color: var(--vc-color-dark-extralight);
+}
+</style>
 ```
 :::
 
-### 手势
+## 尺寸
+
+长度按 750 稿书写并随 `--vc-rem` 缩放；括号内为 375 宽下的 px。
+
+| 部位 | 值 |
+| --- | --- |
+| 按钮左右内边距 | 32（16），按钮宽度随内容 |
+| 文字字号 / 行高 | 32（16）/ 44（22） |
+| 图标 / 与文字的间距 | 40（20）/ 8（4） |
+
+## 手势
 
 - 移动超过 10px 时锁定方向：
   - 纵向交给页面滚动；

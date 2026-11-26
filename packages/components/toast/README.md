@@ -8,62 +8,90 @@
 
 ### 基础用法
 
-通过静态方法显示提示。`success`、`warning` 和 `error` 在文字上方显示对应的状态图标，`info` 只有文字。字符串内容中的换行符会换行。
+通过静态方法显示提示。`success`、`warning` 和 `error` 在文字上方显示对应的状态图标，`info` 只有文字。字符串内容中的换行符会换行。提示方法支持位置参数 `(content, duration?, onClose?, maskClosable?)` 或配置对象，`onClose` 在关闭后调用。
 
 :::playground
 <!--
 <config lang="json5">
 {
-	viewport: 375,
-	viewportOptions: ['auto', 375],
-	expandable: true
+	mobile: true,
+	local: false,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
 }
 </config>
 -->
 ```vue
 <template>
-	<div class="toast-demo">
-		<div class="toast-actions">
-			<Button @click="handleInfo">普通提示</Button>
-			<Button @click="handleSuccess">操作成功</Button>
+	<div class="m-toast-demo">
+		<div class="m-toast-demo__row">
+			<MButton @click="handleInfo">普通提示</MButton>
+			<MButton @click="handleStatus('success')">成功</MButton>
+			<MButton @click="handleStatus('warning')">警告</MButton>
+			<MButton @click="handleStatus('error')">错误</MButton>
 		</div>
-		<p>{{ status }}</p>
+		<p class="m-toast-demo__result">{{ result }}</p>
 	</div>
 </template>
 
 <script setup>
 import { inject, onUnmounted, ref } from 'vue';
-import { MToast, Button } from '@deot/vc';
+import { MButton, MToast } from '@deot/vc';
 
-const status = ref('提示将在 3 秒后关闭，也可点击外部区域关闭。');
+const result = ref('提示默认 3 秒后关闭，也可点击遮罩关闭。');
 const playground = inject('docs:playground');
-const isInfoVisible = ref(false);
-const isSuccessVisible = ref(false);
+const isVisible = ref(false);
 
-const handleInfo = playground.run(360, { visible: isInfoVisible }, () => {
-	isInfoVisible.value = true;
-	MToast.info('这是一条提示', 3000, () => {
-		status.value = '提示已关闭';
-		isInfoVisible.value = false;
+const handleInfo = playground.run(360, { visible: isVisible }, () => {
+	isVisible.value = true;
+	MToast.info('这是一条提示\n第二行内容', 3000, () => {
+		result.value = 'info 已关闭';
+		isVisible.value = false;
 	});
 });
-const handleSuccess = playground.run(360, { visible: isSuccessVisible }, () => {
-	isSuccessVisible.value = true;
-	MToast.success({
-		content: '保存成功',
+
+const handleStatus = playground.run(360, { visible: isVisible }, (mode) => {
+	isVisible.value = true;
+	MToast[mode]({
+		content: `${mode} 提示`,
 		duration: 1500,
-		onClose: () => (isSuccessVisible.value = false)
+		onClose: () => {
+			result.value = `${mode} 已关闭`;
+			isVisible.value = false;
+		}
 	});
 });
+
 onUnmounted(() => {
 	MToast.destroy();
 });
 </script>
 
 <style scoped>
-.toast-demo { padding: 16px; }
-.toast-actions { display: flex; flex-wrap: wrap; gap: 12px; }
-.toast-demo p { margin: 12px 0 0; line-height: 1.6; }
+.m-toast-demo {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: calc(var(--vc-rem) * 32);
+	padding-inline: calc(var(--vc-rem) * 32);
+}
+
+.m-toast-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: calc(var(--vc-rem) * 16);
+}
+
+.m-toast-demo__result {
+	margin: 0;
+	font-size: calc(var(--vc-rem) * 28);
+	color: var(--vc-color-dark-extralight);
+}
 </style>
 ```
 :::
@@ -76,104 +104,184 @@ onUnmounted(() => {
 <!--
 <config lang="json5">
 {
-	viewport: 375,
-	viewportOptions: ['auto', 375],
-	expandable: true
+	mobile: true,
+	local: false,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
 }
 </config>
 -->
 ```vue
 <template>
-	<div class="toast-demo">
-		<div class="toast-actions">
-			<Button @click="handleShow('top')">顶部</Button>
-			<Button @click="handleShow('bottom')">底部</Button>
-			<Button @click="count++">页面仍可点击：{{ count }}</Button>
+	<div class="m-toast-demo">
+		<div class="m-toast-demo__row">
+			<MButton @click="handleShow('top')">顶部</MButton>
+			<MButton @click="handleShow('center')">居中</MButton>
+			<MButton @click="handleShow('bottom')">底部</MButton>
 		</div>
+		<MButton type="primary" @click="handleCount">页面仍可点击：{{ count }}</MButton>
 	</div>
 </template>
 
 <script setup>
 import { inject, onUnmounted, ref } from 'vue';
-import { MToast, Button } from '@deot/vc';
+import { MButton, MToast } from '@deot/vc';
 
 const playground = inject('docs:playground');
 const count = ref(0);
 const isVisible = ref(false);
+
 const handleShow = playground.run(360, { visible: isVisible }, (placement) => {
 	isVisible.value = true;
 	MToast.success({
-		content: placement === 'top' ? '已复制' : '已加入收藏',
+		content: `placement：${placement}`,
 		placement,
 		mask: false,
 		duration: 2000,
-		onClose: () => (isVisible.value = false)
+		onClose: () => {
+			isVisible.value = false;
+		}
 	});
 });
+
+const handleCount = () => {
+	count.value++;
+};
+
 onUnmounted(() => {
 	MToast.destroy();
 });
 </script>
 
 <style scoped>
-.toast-demo { padding: 16px; }
-.toast-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.m-toast-demo {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: calc(var(--vc-rem) * 32);
+	padding-inline: calc(var(--vc-rem) * 32);
+}
+
+.m-toast-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: calc(var(--vc-rem) * 16);
+}
+
+.m-toast-demo__result {
+	margin: 0;
+	font-size: calc(var(--vc-rem) * 28);
+	color: var(--vc-color-dark-extralight);
+}
 </style>
 ```
 :::
 
 ### 加载提示与手动关闭
 
-`MToast.loading()` 默认持续显示，且点击遮罩不会关闭。下例模拟任务完成后销毁当前提示；也可以显式设置 `duration` 和 `maskClosable`。
+`MToast.loading()` 默认持续显示，且点击遮罩不会关闭。下例模拟任务进行中通过 `leaf.wrapper.setContent` 更新文字，完成后用 `leaf.destroy()` 销毁当前提示；也可以显式设置 `duration` 和 `maskClosable`，并用 `leaf.resolve()` 销毁并完成实例。
 
 :::playground
 <!--
 <config lang="json5">
 {
-	viewport: 375,
-	viewportOptions: ['auto', 375],
-	expandable: true
+	mobile: true,
+	local: false,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
 }
 </config>
 -->
 ```vue
 <template>
-	<div class="toast-demo">
-		<Button @click="handleLoading">模拟加载任务</Button>
-		<p class="toast-status">{{ status }}</p>
+	<div class="m-toast-demo">
+		<div class="m-toast-demo__row">
+			<MButton @click="handleLoading">模拟加载任务</MButton>
+			<MButton @click="handleResolve">resolve 关闭</MButton>
+		</div>
+		<p class="m-toast-demo__result">{{ result }}</p>
 	</div>
 </template>
 
 <script setup>
 import { inject, onBeforeUnmount, ref } from 'vue';
-import { MToast, Button } from '@deot/vc';
+import { MButton, MToast } from '@deot/vc';
 
-const status = ref('加载提示在任务完成后关闭。');
+const result = ref('加载提示在任务完成后关闭。');
 const playground = inject('docs:playground');
 const isVisible = ref(false);
-let timer;
+let timers = [];
 let toast;
+
+const clear = () => {
+	timers.forEach(clearTimeout);
+	timers = [];
+	toast?.destroy();
+};
+
 const handleLoading = playground.run(360, { visible: isVisible }, () => {
+	clear();
 	isVisible.value = true;
-	clearTimeout(timer);
-	toast?.destroy();
-	status.value = '正在处理…';
+	result.value = '正在处理…';
 	toast = MToast.loading({ content: '加载中…' });
-	timer = setTimeout(() => {
+	timers.push(setTimeout(() => {
+		toast.wrapper.setContent('即将完成…');
+	}, 1000));
+	timers.push(setTimeout(() => {
 		toast.destroy();
-		status.value = '任务完成';
+		result.value = '任务完成：destroy() 不触发 onClose';
 		isVisible.value = false;
-	}, 2000);
+	}, 2000));
 });
-onBeforeUnmount(() => {
-	clearTimeout(timer);
-	toast?.destroy();
+
+const handleResolve = playground.run(360, { visible: isVisible }, () => {
+	clear();
+	isVisible.value = true;
+	toast = MToast.info({
+		content: '不自动关闭、遮罩不可关闭',
+		duration: 0,
+		maskClosable: false
+	});
+	toast.then(() => {
+		result.value = 'resolve() 后实例完成';
+		isVisible.value = false;
+	});
+	timers.push(setTimeout(() => toast.resolve(), 2000));
 });
+
+onBeforeUnmount(clear);
 </script>
 
 <style scoped>
-.toast-demo { padding: 16px; }
-.toast-status { margin: 12px 0 0; line-height: 1.6; }
+.m-toast-demo {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: calc(var(--vc-rem) * 32);
+	padding-inline: calc(var(--vc-rem) * 32);
+}
+
+.m-toast-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: calc(var(--vc-rem) * 16);
+}
+
+.m-toast-demo__result {
+	margin: 0;
+	font-size: calc(var(--vc-rem) * 28);
+	color: var(--vc-color-dark-extralight);
+}
 </style>
 ```
 :::
@@ -186,40 +294,172 @@ onBeforeUnmount(() => {
 <!--
 <config lang="json5">
 {
-	viewport: 375,
-	viewportOptions: ['auto', 375],
-	expandable: true
+	mobile: true,
+	local: false,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
 }
 </config>
 -->
 ```vue
 <template>
-	<div class="toast-demo">
-		<Button @click="handleCustom">显示自定义内容</Button>
+	<div class="m-toast-demo">
+		<div class="m-toast-demo__row">
+			<MButton @click="handleRender">渲染函数</MButton>
+			<MButton @click="handleHtml">HTML 内容</MButton>
+		</div>
 	</div>
 </template>
 
 <script setup>
-import { inject, h, onUnmounted, ref } from 'vue';
-import { MToast, Button } from '@deot/vc';
+import { h, inject, onUnmounted, ref } from 'vue';
+import { MButton, MToast } from '@deot/vc';
 
 const playground = inject('docs:playground');
 const isVisible = ref(false);
-const handleCustom = playground.run(360, { visible: isVisible }, () => {
+
+const handleRender = playground.run(360, { visible: isVisible }, () => {
 	isVisible.value = true;
 	MToast.info({
 		content: () => h('div', [h('strong', '已保存'), h('div', '可以继续操作')]),
 		duration: 3000,
-		onClose: () => (isVisible.value = false)
+		onClose: () => {
+			isVisible.value = false;
+		}
 	});
 });
+
+const handleHtml = playground.run(360, { visible: isVisible }, () => {
+	isVisible.value = true;
+	MToast.success({ type: 'html', value: '<b>HTML</b> 内容' }, 2000, () => {
+		isVisible.value = false;
+	});
+});
+
 onUnmounted(() => {
 	MToast.destroy();
 });
 </script>
 
 <style scoped>
-.toast-demo { padding: 16px; }
+.m-toast-demo {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: calc(var(--vc-rem) * 32);
+	padding-inline: calc(var(--vc-rem) * 32);
+}
+
+.m-toast-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: calc(var(--vc-rem) * 16);
+}
+
+.m-toast-demo__result {
+	margin: 0;
+	font-size: calc(var(--vc-rem) * 28);
+	color: var(--vc-color-dark-extralight);
+}
+</style>
+```
+:::
+
+### 组件形式
+
+直接使用 `MToastView`（或模板中的 `MToast`）时，在 `close` 事件中通过 `v-if` 卸载组件，以移除透明遮罩。修改 `duration` prop 不会重启计时，可通过组件 ref 调用 `setDuration`、`setContent`，或调用 `close` 立即发出关闭通知。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	mobile: true,
+	local: false,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
+</config>
+-->
+```vue
+<template>
+	<div class="m-toast-demo">
+		<div class="m-toast-demo__row">
+			<MButton @click="handleOpen">显示组件</MButton>
+			<MButton :disabled="!isVisible" @click="handleUpdate">更新内容并重新计时</MButton>
+			<MButton :disabled="!isVisible" @click="handleClose">立即关闭</MButton>
+		</div>
+		<p class="m-toast-demo__result">{{ result }}</p>
+		<MToastView
+			v-if="isVisible"
+			ref="toast"
+			mode="loading"
+			content="组件形式"
+			placement="bottom"
+			:mask="false"
+			:duration="0"
+			@close="handleClosed"
+		/>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { MButton, MToastView } from '@deot/vc';
+
+const toast = ref();
+const isVisible = ref(false);
+const result = ref('等待显示');
+
+const handleOpen = () => {
+	isVisible.value = true;
+	result.value = '已显示，duration 为 0 不自动关闭';
+};
+
+const handleUpdate = () => {
+	toast.value.setContent('1.5 秒后关闭');
+	toast.value.setDuration(1500);
+};
+
+const handleClose = () => {
+	toast.value.close();
+};
+
+const handleClosed = () => {
+	isVisible.value = false;
+	result.value = 'close：已卸载';
+};
+</script>
+
+<style scoped>
+.m-toast-demo {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: calc(var(--vc-rem) * 32);
+	padding-inline: calc(var(--vc-rem) * 32);
+}
+
+.m-toast-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: calc(var(--vc-rem) * 16);
+}
+
+.m-toast-demo__result {
+	margin: 0;
+	font-size: calc(var(--vc-rem) * 28);
+	color: var(--vc-color-dark-extralight);
+}
 </style>
 ```
 :::
@@ -291,6 +531,7 @@ onUnmounted(() => {
 | 事件名 | 说明 | 回调参数 | 参数说明 |
 | --- | --- | --- | --- |
 | close | 自动关闭或点击遮罩的离场动画结束时触发；调用实例关闭方法时立即触发 | - | - |
+| portal-fulfilled | 与 `close` 同时触发，通知 Portal 完成 | - | - |
 
 直接以组件形式使用时，请在 `close` 事件中通过 `v-if` 卸载组件，以移除透明遮罩。组件没有内容插槽，请使用 `content`。
 
@@ -300,7 +541,7 @@ onUnmounted(() => {
 
 | 方法名 | 说明 | 参数 | 返回值 |
 | --- | --- | --- | --- |
-| setContent | 更新当前显示内容 | `string \| Function` | `void` |
+| setContent | 更新当前显示内容，取值同 `content` | `string \| number \| Function \| { type: string; value: any }` | `void` |
 | setDuration | 清除原计时器并重新计时；`0` 取消自动关闭 | `number`，单位 ms | `void` |
 | destroy / remove / close / hide | 立即发出关闭通知，交由 Portal 或调用方卸载；直接使用组件时不会自行移除 DOM | - | `void` |
 

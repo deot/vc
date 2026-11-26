@@ -2,23 +2,32 @@
 
 通过图标或字符选择评分，支持半星、清空、只读展示及键盘操作。
 
+移动端入口导出的 `MRate` 与 `Rate` 的属性、事件和插槽相同，尺寸按 750 稿随 `--vc-rem` 缩放，见 [移动端](#移动端)。
+
 ### 何时使用
 
 用于满意度评价、内容评分或展示已有评分。
 
 ### 基础用法
 
-使用 `v-model` 绑定评分。`half` 允许选择半星，`clearable` 允许再次点按当前分值清零。
+使用 `v-model` 绑定评分。`half` 允许选择半星，`clearable` 允许再次点按当前分值清零，`tooltip` 按星级显示提示文字。分值改变时发出 `change`，悬停预览和外部赋值不触发。
 
 分值由指针的横坐标决定：星星之间的间距归最近的星星，开启 `half` 时点在星星左半边得到 `x - 0.5`、右半边得到 `x`。鼠标悬停时预览星级和提示文字；按住后左右滑动可连续改分，松开时生效，滑过当前分值不会清零。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 20 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
 	<div class="rate-demo">
-		<Rate v-model="value" half clearable :tooltip="tooltip" />
-		<span>当前评分：{{ value }}</span>
+		<Rate v-model="value" half clearable :tooltip="tooltip" @change="handleChange" />
+		<p class="rate-demo__result">当前评分：{{ value }}；{{ log }}</p>
 	</div>
 </template>
 
@@ -27,15 +36,23 @@ import { ref } from 'vue';
 import { Rate } from '@deot/vc';
 
 const value = ref(3.5);
-const tooltip = ['极差', '差', '一般', '好', '极好'];
+const tooltip = ['一星', '二星', '三星', '四星', '五星'];
+const log = ref('尚未改分');
+
+const handleChange = (current) => {
+	log.value = `change：${current}`;
+};
 </script>
 
 <style scoped>
 .rate-demo {
 	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
+	flex-direction: column;
 	gap: 16px;
+}
+
+.rate-demo__result {
+	margin: 0;
 }
 </style>
 ```
@@ -46,7 +63,14 @@ const tooltip = ['极差', '差', '一般', '好', '极好'];
 `readonly` 仅展示，颜色照常；`disabled` 不可操作，整体半透明。两者都不可聚焦，也不响应点按、滑动、悬停和按键。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 20 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
 	<div class="rate-demo">
@@ -63,7 +87,7 @@ import { Rate } from '@deot/vc';
 .rate-demo {
 	display: flex;
 	flex-direction: column;
-	gap: 12px;
+	gap: 16px;
 }
 </style>
 ```
@@ -71,14 +95,22 @@ import { Rate } from '@deot/vc';
 
 ### 自定义字符、颜色和尺寸
 
-`character` 优先于 `icon`，同名插槽 `#character` 又优先于属性，可按序号给每颗星放不同的内容。`color` 调整选中色，尺寸可通过 `iconStyle` 或局部变量 `--vc-rate-size` 调整。`tip` 插槽也需要非空的 `tooltip` 才会显示。
+`icon` 设置内置图标名称；`character` 优先于 `icon`，同名插槽 `#character` 又优先于属性，可按序号给每颗星放不同的内容。`count` 设置星级总数，`color` 调整选中色，尺寸可通过 `iconStyle` 或局部变量 `--vc-rate-size` 调整。`tip` 插槽也需要非空的 `tooltip` 才会显示。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 20 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
 	<div class="rate-demo">
-		<Rate v-model="value" character="好" color="#F53F3F" half />
+		<Rate v-model="value" icon="success" half />
+		<Rate v-model="value" character="A" color="#F53F3F" half />
 		<Rate v-model="level" :count="3">
 			<template #character="{ index }">
 				<span>{{ levels[index] }}</span>
@@ -90,7 +122,7 @@ import { Rate } from '@deot/vc';
 			:tooltip="['评分']"
 			half
 		>
-			<template #tip="{ value }">{{ value }} / 5</template>
+			<template #tip="{ value: current }">{{ current }} / 5</template>
 		</Rate>
 	</div>
 </template>
@@ -101,14 +133,14 @@ import { Rate } from '@deot/vc';
 
 const value = ref(3.5);
 const level = ref(2);
-const levels = ['差', '中', '好'];
+const levels = ['低', '中', '高'];
 </script>
 
 <style scoped>
 .rate-demo {
 	display: flex;
 	flex-direction: column;
-	gap: 12px;
+	gap: 16px;
 }
 </style>
 ```
@@ -116,7 +148,59 @@ const levels = ['差', '中', '好'];
 
 ## 移动端
 
-`MRate` 的属性、事件、插槽、结构与 `Rate` 相同，根节点另有标记类 `.vcm-rate`，结构样式、颜色与主题参数共用。尺寸按 750 稿设计，写为 `calc(var(--vc-rem) * n)`，随 `--vc-rem` 缩放（括号内为 375 宽下的 px）：
+`MRate` 的属性、事件、插槽、结构与 `Rate` 相同，根节点另有标记类 `.vcm-rate`，结构样式、颜色与主题参数共用。尺寸按 750 稿设计，写为 `calc(var(--vc-rem) * n)`，随 `--vc-rem` 缩放；底栏切换 `rem` 可查看不同屏宽下的效果。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	mobile: true,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
+</config>
+-->
+```vue
+<template>
+	<div class="m-rate-demo">
+		<MRate v-model="value" half clearable :tooltip="tooltip" />
+		<MRate v-model="value" character="A" color="#F53F3F" half />
+		<MRate :model-value="3.5" half readonly />
+		<MRate :model-value="3.5" half disabled />
+		<p class="m-rate-demo__result">当前评分：{{ value }}</p>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { MRate } from '@deot/vc';
+
+const value = ref(3.5);
+const tooltip = ['一星', '二星', '三星', '四星', '五星'];
+</script>
+
+<style scoped>
+.m-rate-demo {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: calc(var(--vc-rem) * 16);
+	padding-inline: calc(var(--vc-rem) * 32);
+}
+
+.m-rate-demo__result {
+	margin: 0;
+	font-size: calc(var(--vc-rem) * 28);
+}
+</style>
+```
+:::
+
+尺寸如下（括号内为 375 宽下的 px）：
 
 | 项 | 值 |
 | --- | --- |
@@ -128,19 +212,6 @@ const levels = ['差', '中', '好'];
 与桌面端的差异：未选中的星星用浅色线条色 `color-neutral-light`。两端都可以按住后左右滑动改分，纵向滑动仍然滚动页面；触摸松开后不会再补发鼠标事件，也没有系统的点按高亮。
 
 两端的尺寸都写成局部变量 `--vc-rate-<键>`（见“主题与局部覆盖”），移动端在 `.vcm-rate` 上覆盖，与样式的加载顺序无关。
-
-```vue
-<template>
-	<MRate v-model="value" half clearable />
-</template>
-
-<script setup>
-import { ref } from 'vue';
-import { MRate } from '@deot/vc';
-
-const value = ref(3.5);
-</script>
-```
 
 ## 主题与局部覆盖
 

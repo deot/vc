@@ -10,12 +10,13 @@
 
 ### 基础用法
 
-通过 `type` 设置提示类型。传入 `description` 后，组件会使用带说明文字的布局：标题加粗，说明文字使用次级颜色，图标与标题首行对齐。
+通过 `type` 设置提示类型。传入 `description` 后，组件会使用带说明文字的布局：标题加粗，说明文字使用次级颜色，图标与标题首行对齐；`description` 插槽可替代同名属性。`closable` 显示关闭入口，点击时触发 `close`。
 
 :::playground
 <!--
 <config lang="json5">
 {
+	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -26,12 +27,12 @@
 		<Alert title="信息提示" description="这是一条需要关注的信息。" />
 		<Alert type="success" title="成功提示" description="操作已经顺利完成。" />
 		<Alert type="error" title="错误提示" description="操作失败，请稍后重试。" />
-		<Alert type="warning" title="警告提示" closable @close="isClosed = true">
+		<Alert type="warning" title="警告提示" closable @close="handleClose">
 			<template #description>
 				当前操作可能影响已有数据。
 			</template>
 		</Alert>
-		<span v-if="isClosed" class="alert-demo__status">警告提示已关闭</span>
+		<p v-if="isClosed" class="alert-demo__result">警告提示已关闭</p>
 	</div>
 </template>
 
@@ -40,15 +41,20 @@ import { ref } from 'vue';
 import { Alert } from '@deot/vc';
 
 const isClosed = ref(false);
+
+const handleClose = () => {
+	isClosed.value = true;
+};
 </script>
 
 <style scoped>
 .alert-demo {
 	display: grid;
-	gap: 12px;
+	gap: 16px;
 }
 
-.alert-demo__status {
+.alert-demo__result {
+	margin: 0;
 	font-size: 13px;
 	color: var(--vc-color-dark-lightest);
 }
@@ -58,7 +64,74 @@ const isClosed = ref(false);
 
 ### 内容渲染
 
-`title` 和 `description` 的字符串按文本渲染；需要 HTML 时传 `{ type: 'html', value }`，这类内容只应来自可信来源，或由全局的 `sanitize` 统一清洗，见 [Customer](../customer/README.md)。同时提供默认插槽或 `description` 插槽时，插槽优先。
+`title` 和 `description` 的字符串按文本渲染；需要 HTML 时传 `{ type: 'html', value }`，这类内容只应来自可信来源，或由全局的 `sanitize` 统一清洗，见 [Customer](../customer/README.md)。同时提供默认插槽或 `description` 插槽时，插槽优先。默认插槽中的 `<em>` 使用当前状态色强调。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
+```vue
+<template>
+	<div class="alert-demo">
+		<Alert type="warning" :title="{ type: 'html', value: '已选择 <b>12</b> 项' }" />
+		<Alert type="success">
+			已选择<em>12</em>项，其中<em>3</em>项将被跳过。
+		</Alert>
+	</div>
+</template>
+
+<script setup>
+import { Alert } from '@deot/vc';
+</script>
+
+<style scoped>
+.alert-demo {
+	display: grid;
+	gap: 16px;
+}
+</style>
+```
+:::
+
+### 图标
+
+`icon` 为 `true`（默认）时按 `type` 显示状态图标，字符串作为图标类型（如 `warning`）显示对应图标，`false` 隐藏图标。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
+```vue
+<template>
+	<div class="alert-demo">
+		<Alert type="success" title="默认按类型显示图标" />
+		<Alert type="success" icon="warning" title="使用 warning 图标" />
+		<Alert type="success" :icon="false" title="不显示图标" />
+	</div>
+</template>
+
+<script setup>
+import { Alert } from '@deot/vc';
+</script>
+
+<style scoped>
+.alert-demo {
+	display: grid;
+	gap: 16px;
+}
+</style>
+```
+:::
 
 ### 跑马灯
 
@@ -68,6 +141,7 @@ const isClosed = ref(false);
 <!--
 <config lang="json5">
 {
+	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -89,38 +163,93 @@ const text = '这是一条较长的公告内容，长度超过容器宽度，超
 <style scoped>
 .alert-demo {
 	display: grid;
-	gap: 12px;
+	gap: 16px;
 }
 </style>
 ```
 :::
 
-### 前后内容
+### 前后内容与显示控制
 
-`prefix` 插槽替换左侧状态图标（传入后不再渲染 `icon`），`suffix` 插槽位于关闭入口之前，可放“查看详情”等操作；两者与首行文字居中对齐。整条提示可直接监听 `click`。
+`prefix` 插槽替换左侧状态图标（传入后不再渲染 `icon`），`suffix` 插槽位于关闭入口之前，可放“查看详情”等操作；两者与首行文字居中对齐。`close` 插槽自定义关闭入口内容。整条提示可直接监听 `click`。`v-model` 控制是否显示，点击关闭入口时同步为 `false`，同时触发 `visible-change`。
 
 :::playground
 <!--
 <config lang="json5">
 {
+	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
 -->
 ```vue
 <template>
-	<Alert type="warning" title="系统将于今晚进行维护。" closable>
-		<template #suffix>
-			<a class="alert-demo__more">查看详情</a>
-		</template>
-	</Alert>
+	<div class="alert-demo">
+		<Alert type="warning" title="系统将于今晚进行维护。" closable @click="handleClick">
+			<template #suffix>
+				<a class="alert-demo__more">查看详情</a>
+			</template>
+		</Alert>
+		<Alert
+			v-model="isVisible"
+			type="error"
+			title="自定义图标与关闭入口"
+			closable
+			@visible-change="handleVisibleChange"
+		>
+			<template #prefix>
+				<Icon type="o-warning" />
+			</template>
+			<template #close>
+				<span>不再提示</span>
+			</template>
+		</Alert>
+		<div class="alert-demo__row">
+			<p class="alert-demo__result">点击次数：{{ count }}；{{ status }}</p>
+			<Button v-if="!isVisible" size="small" @click="handleShow">重新显示</Button>
+		</div>
+	</div>
 </template>
 
 <script setup>
-import { Alert } from '@deot/vc';
+import { ref } from 'vue';
+import { Alert, Button, Icon } from '@deot/vc';
+
+const isVisible = ref(true);
+const count = ref(0);
+const status = ref('提示显示中');
+
+const handleClick = () => {
+	count.value++;
+};
+
+const handleVisibleChange = (visible) => {
+	status.value = visible ? '提示显示中' : '提示已关闭';
+};
+
+const handleShow = () => {
+	isVisible.value = true;
+	status.value = '提示显示中';
+};
 </script>
 
 <style scoped>
+.alert-demo {
+	display: grid;
+	gap: 16px;
+}
+
+.alert-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+.alert-demo__result {
+	margin: 0;
+}
+
 .alert-demo__more {
 	font-size: 13px;
 	color: var(--vc-color-primary);
@@ -132,7 +261,85 @@ import { Alert } from '@deot/vc';
 
 ## 移动端
 
-`MAlert` 的属性、事件、插槽、结构与 `Alert` 相同，根节点另有标记类 `.vcm-alert`，跑马灯使用 `MMarquee`。样式为通栏：无边框、无圆角，标题与关闭入口使用状态色，背景与桌面端相同。尺寸按 750 稿设计，写为 `calc(var(--vc-rem) * n)`，随 `--vc-rem` 缩放（括号内为 375 宽下的 px）：
+`MAlert` 的属性、事件、插槽、结构与 `Alert` 相同，根节点另有标记类 `.vcm-alert`，跑马灯使用 `MMarquee`。样式为通栏：无边框、无圆角，标题与关闭入口使用状态色，背景与桌面端相同。尺寸按 750 稿设计，写为 `calc(var(--vc-rem) * n)`，随 `--vc-rem` 缩放；底栏切换 `rem` 可查看不同屏宽下的效果。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	mobile: true,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
+</config>
+-->
+```vue
+<template>
+	<div class="m-alert-demo">
+		<MAlert title="这是一条普通提示信息。" />
+		<MAlert type="success" title="文件已上传完成。" />
+		<MAlert type="error" title="网络不可用，请检查网络设置。" closable />
+		<MAlert type="warning" title="提示标题" description="说明文字可以换行，用于补充当前提示的详细内容。" closable>
+			<template #suffix>
+				<MIcon type="right" />
+			</template>
+		</MAlert>
+		<MAlert type="warning" marquee :title="longText" closable />
+		<MAlert type="success" :icon="false" marquee title="内容较短也滚动" :marquee-options="{ always: true }" />
+		<MAlert v-model="isVisible" type="error" :title="text" closable>
+			<template #prefix>
+				<MIcon type="o-warning" />
+			</template>
+			<template #close>
+				<span>不再提示</span>
+			</template>
+		</MAlert>
+		<MAlert type="warning">
+			<MCarousel :height="40" vertical :indicator="false" :draggable="false">
+				<MCarouselItem v-for="item in 3" :key="item">
+					第 {{ item }} 条提示信息
+				</MCarouselItem>
+			</MCarousel>
+		</MAlert>
+		<div v-if="!isVisible" class="m-alert-demo__footer">
+			<MButton size="small" @click="handleShow">重新显示</MButton>
+		</div>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { MAlert, MButton, MCarousel, MCarouselItem, MIcon } from '@deot/vc';
+
+const isVisible = ref(true);
+const text = '这是一条提示信息。';
+const longText = '这是一条较长的提示信息，长度超过容器宽度，超出时会从右向左循环滚动显示。';
+
+const handleShow = () => {
+	isVisible.value = true;
+};
+</script>
+
+<style scoped>
+.m-alert-demo {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--vc-rem) * 16);
+}
+
+.m-alert-demo__footer {
+	display: flex;
+	padding-inline: calc(var(--vc-rem) * 32);
+}
+</style>
+```
+:::
+
+尺寸如下（括号内为 375 宽下的 px）：
 
 | 项 | 值 |
 | --- | --- |
@@ -145,17 +352,7 @@ import { Alert } from '@deot/vc';
 
 两端的尺寸都写成局部变量 `--vc-alert-<键>`，桌面端的默认值为 px，移动端在 `.vcm-alert` 上覆盖，与样式的加载顺序无关。键为 `padding`、`desc-padding`、`border-width`、`radius`、`color`、`icon-size`、`desc-icon-size`、`icon-gap`、`suffix-gap`、`close-size`、`close-gap`、`close-color`、`close-hover-color`、`title-gap`、`desc-font-size`、`fade-width`；字号与行高沿用主题参数的组件级入口 `--vc-alert-font-size-small`、`--vc-alert-font-size`、`--vc-alert-line-height-large`。
 
-竖向轮播可在默认插槽中放入 `MCarousel`（`vertical`，高度 40）。
-
-```vue
-<template>
-	<MAlert type="warning" marquee closable title="这是一条较长的公告内容，超出宽度时滚动显示。" />
-</template>
-
-<script setup>
-import { MAlert } from '@deot/vc';
-</script>
-```
+竖向轮播可在默认插槽中放入 `MCarousel`（`vertical`，高度 40），见上方 demo 最后一条。
 
 ## 主题与局部覆盖
 
@@ -210,7 +407,7 @@ import { MAlert } from '@deot/vc';
 | type | 提示类型 | `'success' \| 'info' \| 'error' \| 'warning'` | `success`、`info`、`error`、`warning` | `info` |
 | title | 标题。字符串按文本渲染，也可传渲染函数或 `{ type, value }`（需要 HTML 时传 `{ type: 'html', value }`），见 [Customer](../customer/README.md)；默认插槽优先 | `string \| number \| Function \| { type: string; value: any }` | - | `''` |
 | description | 说明文字，取值与 title 相同；`description` 插槽优先 | `string \| number \| Function \| { type: string; value: any }` | - | `''` |
-| icon | 图标配置；`true` 或空字符串使用当前 `type`，字符串使用对应图标，`false` 隐藏图标 | `string \| boolean` | - | `true` |
+| icon | 图标配置；`true` 或空字符串使用当前 `type`，非空字符串作为 `Icon` 的 `type`（如 `warning`），`false` 隐藏图标 | `string \| boolean` | - | `true` |
 | closable | 是否显示关闭入口 | `boolean` | - | `false` |
 | marquee | 标题行超出宽度时滚动（跑马灯），标题不再换行 | `boolean` | - | `false` |
 | marqueeOptions | 透传给 Marquee 的属性，如 `always`、`speed`、`delay`、`gap`、`pauseOnHover`；`delay` 默认 `1000` | `object` | - | `{}` |

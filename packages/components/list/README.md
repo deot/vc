@@ -6,7 +6,265 @@
 
 适合展示左侧标签、右侧内容和导航箭头，也可以将列表项独立嵌入其他布局。
 
-### 尺寸
+### 基础用法
+
+通过 `labelWidth` 统一标签宽度，列表项可以单独覆盖。`arrow` 默认显示右箭头，`false` 隐藏，字符串指定其他图标类型；`click` 在导航处理之前触发。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	mobile: true,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
+</config>
+-->
+```vue
+<template>
+	<div class="m-list-demo">
+		<MList :label-width="160">
+			<MListItem label="名称" extra="示例名称" :arrow="false" />
+			<MListItem label="状态切换" :extra="isEnabled ? '已开启' : '已关闭'" @click="handleToggle" />
+			<MListItem label="展开" extra="arrow 为 down" arrow="down" />
+			<MListItem label="描述" :label-width="200" extra="单独覆盖标签宽度" :arrow="false" />
+			<MListItem label="较长的标题文字" :label-width="0" extra="0 为自动宽度" :arrow="false" />
+		</MList>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { MList, MListItem } from '@deot/vc';
+
+const isEnabled = ref(true);
+
+const handleToggle = () => {
+	isEnabled.value = !isEnabled.value;
+};
+</script>
+
+<style scoped>
+.m-list-demo {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--vc-rem) * 32);
+}
+</style>
+```
+:::
+
+### 描述、图标与分组标题
+
+`description` 显示在 label 下方；`icon` 为 MIcon 的类型，`icon` 插槽可放头像等任意内容。MList 的 `header`、`footer` 分别显示在列表上方和下方，也可用同名插槽替换；`description` 插槽替换描述。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	mobile: true,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
+</config>
+-->
+```vue
+<template>
+	<div class="m-list-demo">
+		<MList header="分组标题" footer="分组说明">
+			<MListItem icon="search" label="标题" extra="内容" />
+			<MListItem icon="success" label="标题" description="描述文字" extra="内容" />
+			<MListItem label="标题" description="描述文字" :arrow="false">
+				<template #icon>
+					<span class="m-list-demo__avatar" />
+				</template>
+			</MListItem>
+		</MList>
+		<MList>
+			<template #header>
+				<strong>插槽标题</strong>
+			</template>
+			<MListItem label="标题" extra="内容">
+				<template #description>
+					<em>插槽描述</em>
+				</template>
+			</MListItem>
+			<template #footer>
+				<em>插槽说明</em>
+			</template>
+		</MList>
+	</div>
+</template>
+
+<script setup>
+import { MList, MListItem } from '@deot/vc';
+</script>
+
+<style scoped>
+.m-list-demo {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--vc-rem) * 32);
+}
+
+.m-list-demo__avatar {
+	display: block;
+	width: calc(var(--vc-rem) * 64);
+	height: calc(var(--vc-rem) * 64);
+	background: var(--vc-color-neutral);
+	border-radius: 50%;
+}
+</style>
+```
+:::
+
+### 自定义内容与独立列表项
+
+`label`、`extra` 插槽分别替换同名属性；`multiple` 将标签与内容上下排列；`border` 为 `false` 时去掉列表的上下边框，`tag` 设置 MList 的容器标签。没有外层 `MList` 时自动使用独立模式，也可通过 `alone` 显式启用；`indent` 设置左内边距（750 稿长度）。`to` 为函数时点击后执行，`href` 在当前页面跳转。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	mobile: true,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
+</config>
+-->
+```vue
+<template>
+	<div class="m-list-demo">
+		<MList tag="section" :border="false">
+			<MListItem multiple :arrow="false">
+				<template #label>
+					<strong>多行描述</strong>
+				</template>
+				<template #extra>这是一段用于展示多行布局的示例描述，内容换行后保持对齐。</template>
+			</MListItem>
+		</MList>
+		<MListItem label="独立入口" :extra="`已点击 ${count} 次`" :indent="0" :to="handleOpen" />
+		<MList>
+			<MListItem label="显式独立" extra="alone" alone :arrow="false" />
+			<MListItem label="页内跳转" extra="href" href="#自定义内容与独立列表项" />
+		</MList>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { MList, MListItem } from '@deot/vc';
+
+const count = ref(0);
+
+const handleOpen = () => {
+	count.value++;
+};
+</script>
+
+<style scoped>
+.m-list-demo {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--vc-rem) * 32);
+}
+</style>
+```
+:::
+
+### 滑动操作
+
+在 `swipeActionOptions` 中传入 `leftActions`、`rightActions` 后，可以左右滑动列表项露出操作按钮；展开状态用 `v-model:swiped`，变化时触发 `update:swiped`。整行连同左侧缩进和分隔线一起滑动；展开时点列表项只会收起，不触发 `click` 和跳转。
+
+按钮字段、二次确认、全滑等用法见 [MSwipeAction](../swipe-action/README.md)。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	mobile: true,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
+</config>
+-->
+```vue
+<template>
+	<div class="m-list-demo">
+		<MList>
+			<MListItem
+				v-model:swiped="swiped"
+				label="向左滑动"
+				extra="内容"
+				:swipe-action-options="rightOptions"
+			/>
+			<MListItem
+				label="左右都可滑动"
+				:arrow="false"
+				:swipe-action-options="bothOptions"
+			/>
+		</MList>
+		<p class="m-list-demo__result">第一项展开：{{ swiped || 'false' }}；{{ result }}</p>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { MList, MListItem } from '@deot/vc';
+
+const swiped = ref(false);
+const result = ref('尚未操作');
+
+const handleAction = (content) => {
+	result.value = `点击了「${content}」`;
+};
+
+const rightOptions = {
+	rightActions: [
+		{ content: '置顶', onClick: () => handleAction('置顶') },
+		{ content: '删除', type: 'error', onClick: () => handleAction('删除') }
+	]
+};
+
+const bothOptions = {
+	leftActions: [{ content: '标记', type: 'primary', onClick: () => handleAction('标记') }],
+	rightActions: [{ content: '删除', type: 'error', onClick: () => handleAction('删除') }]
+};
+</script>
+
+<style scoped>
+.m-list-demo {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--vc-rem) * 32);
+}
+.m-list-demo__result {
+	margin: 0;
+	padding-inline: calc(var(--vc-rem) * 32);
+	font-size: calc(var(--vc-rem) * 28);
+	color: var(--vc-color-dark-extralight);
+}
+</style>
+```
+:::
+
+## 尺寸
 
 长度按 750 稿书写并随 `--vc-rem` 缩放；括号内为 375 宽下的 px。
 
@@ -22,109 +280,6 @@
 | header、footer | 字号 28（14），内边距 24 32（12 16） |
 
 单行模式下 extra 右对齐，最多显示两行，超出省略；`multiple` 模式不限制行数。
-
-### 基础用法
-
-通过 `labelWidth` 统一标签宽度，列表项可以单独覆盖。箭头默认显示，点击事件会在导航处理之前触发。
-
-:::playground
-<!--
-<config lang="json5">
-{ viewport: 375, previewInset: 16 }
-</config>
--->
-```vue
-<template>
-	<MList :label-width="160">
-		<MListItem label="名称" extra="示例名称" :arrow="false" />
-		<MListItem label="状态切换" :extra="isEnabled ? '已开启' : '已关闭'" @click="isEnabled = !isEnabled" />
-		<MListItem label="描述" :label-width="200" extra="点击列表项可切换选项状态" :arrow="false" />
-	</MList>
-</template>
-
-<script setup>
-import { ref } from 'vue';
-import { MList, MListItem } from '@deot/vc';
-
-const isEnabled = ref(true);
-</script>
-```
-:::
-
-### 描述、图标与分组标题
-
-`description` 显示在 label 下方；`icon` 为 MIcon 的类型，`icon` 插槽可放头像等任意内容；MList 的 `header`、`footer` 分别显示在列表上方和下方。
-
-:::playground
-<!--
-<config lang="json5">
-{ viewport: 375, previewInset: 16 }
-</config>
--->
-```vue
-<template>
-	<MList header="分组标题" footer="分组说明">
-		<MListItem icon="search" label="标题" extra="内容" />
-		<MListItem icon="success" label="标题" description="描述文字" extra="内容" />
-		<MListItem label="标题" description="描述文字" :arrow="false">
-			<template #icon>
-				<span style="display: block; width: 32px; height: 32px; background: #c4c9d2; border-radius: 50%;" />
-			</template>
-		</MListItem>
-	</MList>
-</template>
-
-<script setup>
-import { MList, MListItem } from '@deot/vc';
-</script>
-```
-:::
-
-### 自定义内容与独立列表项
-
-`label`、`extra` 插槽分别替换同名属性；`multiple` 将标签与内容上下排列。没有外层 `MList` 时自动使用独立模式，也可通过 `alone` 显式启用。
-
-:::playground
-<!--
-<config lang="json5">
-{ viewport: 375, previewInset: 16 }
-</config>
--->
-```vue
-<template>
-	<div>
-		<MList :border="false">
-			<MListItem multiple :arrow="false">
-				<template #label><strong>多行描述</strong></template>
-				<template #extra>这是一段用于展示多行布局的示例描述，内容换行后保持对齐。</template>
-			</MListItem>
-		</MList>
-		<MListItem label="独立入口" :extra="`已点击 ${count} 次`" :indent="0" :to="handleOpen" />
-	</div>
-</template>
-
-<script setup>
-import { ref } from 'vue';
-import { MList, MListItem } from '@deot/vc';
-
-const count = ref(0);
-const handleOpen = () => { count.value++; };
-</script>
-```
-:::
-
-### 滑动操作
-
-在 `swipeActionOptions` 中传入 `leftActions`、`rightActions` 后，可以左右滑动列表项露出操作按钮；展开状态用 `v-model:swiped`。整行连同左侧缩进和分隔线一起滑动；展开时点列表项只会收起，不触发 `click` 和跳转。
-
-按钮字段、二次确认、全滑等用法见 [MSwipeAction](../swipe-action/README.md)。
-
-```vue
-<MListItem
-	label="向左滑动"
-	:swipe-action-options="{ rightActions: [{ content: '置顶' }, { content: '删除', type: 'error', onClick: remove }] }"
-/>
-```
 
 ## 主题与局部覆盖
 

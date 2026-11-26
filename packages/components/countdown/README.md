@@ -1,38 +1,66 @@
 ## 倒计时（Countdown）
 
-展示距离目标时间的剩余时长。移动端 `MCountdown` 与 `Countdown` 使用相同实现和 API。
+展示距离目标时间的剩余时长。
+
+移动端入口导出的 `MCountdown` 与 `Countdown` 是同一实现。
 
 ### 何时使用
 
-显示倒计时，结束时触发事件，多用于秒杀营销活动中。
+显示倒计时，结束时触发事件，多用于限时活动等场景。
 
 ### 基础用法
 
-通过 `targetTime` 设置倒计时时间
+通过 `targetTime` 设置目标时间，默认格式跟随 locale。`trim` 移除默认展示中为 `00` 的片段及其分隔文本。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<Countdown :target-time="targetTime" />
+	<div class="countdown-demo">
+		<Countdown :target-time="targetTime" />
+		<Countdown :target-time="targetTime" trim />
+	</div>
 </template>
 
 <script setup>
 import { Countdown } from '@deot/vc';
 
-const targetTime = Date.now() + 2 * 24 * 60 * 60 * 1000;
+const targetTime = Date.now() + 25 * 60 * 1000;
 </script>
+
+<style scoped>
+.countdown-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+</style>
 ```
 :::
 
 ### 设置倒计时刷新周期
-通过 `t` 设置倒计时刷新周期
+
+通过 `t` 设置刷新周期（毫秒），在计时器启动时确定；`SSS` 的位数随周期变化。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div style="display: flex; align-items: center; gap: 12px">
+	<div class="countdown-demo">
 		<Countdown
 			:target-time="targetTime"
 			:t="refreshInterval"
@@ -56,17 +84,36 @@ const handleSwitchInterval = () => {
 	targetTime.value = Date.now() + 90 * 1000;
 };
 </script>
+
+<style scoped>
+.countdown-demo {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+</style>
 ```
 :::
 
-### 自定义渲染倒计时
-通过 `format` 自定义渲染倒计时
+### 自定义格式
+
+通过 `format` 自定义展示格式，`DD`、`HH`、`mm`、`ss`、`SSS` 分别替换为天、小时、分钟、秒和秒内余量。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<Countdown :target-time="targetTime" format="DD 天 HH:mm:ss" />
+	<div class="countdown-demo">
+		<Countdown :target-time="targetTime" format="DD 天 HH:mm:ss" />
+	</div>
 </template>
 
 <script setup>
@@ -74,19 +121,34 @@ import { Countdown } from '@deot/vc';
 
 const targetTime = Date.now() + 26 * 60 * 60 * 1000;
 </script>
+
+<style scoped>
+.countdown-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+</style>
 ```
 :::
 
 ### 自定义插槽
 
-默认插槽优先于 `render`，接收时间字段；使用插槽时，`format` 和 `trim` 不会自动应用。
+默认插槽优先于 `render`，接收时间字段；使用插槽时，`format` 和 `trim` 不会自动应用。倒计时结束后触发 `complete`。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div style="display: flex; align-items: center; gap: 12px">
-		<Countdown :target-time="targetTime" @complete="isCompleted = true">
+	<div class="countdown-demo">
+		<Countdown :target-time="targetTime" @complete="handleComplete">
 			<template #default="{ minute, second }">
 				剩余 {{ minute }} 分 {{ second }} 秒
 			</template>
@@ -103,11 +165,159 @@ import { Button, Countdown } from '@deot/vc';
 const targetTime = ref(Date.now() + 10 * 1000);
 const isCompleted = ref(false);
 
+const handleComplete = () => {
+	isCompleted.value = true;
+};
+
 const handleRestart = () => {
 	targetTime.value = Date.now() + 10 * 1000;
 	isCompleted.value = false;
 };
 </script>
+
+<style scoped>
+.countdown-demo {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+</style>
+```
+:::
+
+### 渲染函数与外层标签
+
+`render` 接收与默认插槽相同的字段，返回的内容放在 `tag` 指定的外层标签内（默认 `span`）。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
+```vue
+<template>
+	<div class="countdown-demo">
+		<Countdown
+			class="countdown-demo__blocks"
+			tag="div"
+			:target-time="targetTime"
+			:render="renderBlocks"
+		/>
+	</div>
+</template>
+
+<script setup>
+import { h } from 'vue';
+import { Countdown } from '@deot/vc';
+
+const targetTime = Date.now() + 3 * 60 * 60 * 1000;
+
+const renderBlocks = ({ hour, minute, second }) => [hour, minute, second].map(
+	(value, index) => h('span', { key: index, class: 'countdown-demo__block' }, value)
+);
+</script>
+
+<style scoped>
+.countdown-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.countdown-demo__blocks {
+	display: flex;
+	gap: 8px;
+}
+
+.countdown-demo :deep(.countdown-demo__block) {
+	min-width: 32px;
+	padding: 4px 0;
+	border-radius: 4px;
+	text-align: center;
+	color: #fff;
+	background: var(--vc-color-primary, #456cf6);
+}
+</style>
+```
+:::
+
+### 服务器时间与事件
+
+`serverTime` 传入服务器当前时间，用来校正本地时钟的偏移。`change` 在启动时和每次刷新时触发，`timestamp` 为剩余毫秒数；`targetTime` 无法解析时触发 `error`（下例同时用空字符串的 `format` 隐藏默认展示）。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
+```vue
+<template>
+	<div class="countdown-demo">
+		<div class="countdown-demo__row">
+			<span>本地时钟：</span>
+			<Countdown :target-time="targetTime" format="mm:ss" />
+		</div>
+		<div class="countdown-demo__row">
+			<span>服务器快 5 分钟：</span>
+			<Countdown
+				:target-time="targetTime"
+				:server-time="serverTime"
+				format="mm:ss"
+				@change="handleChange"
+			/>
+		</div>
+		<p class="countdown-demo__result">剩余 {{ remaining }} 毫秒</p>
+		<Countdown target-time="无效时间" format="" @error="handleError" />
+		<p class="countdown-demo__result">{{ errorText }}</p>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { Countdown } from '@deot/vc';
+
+const targetTime = Date.now() + 30 * 60 * 1000;
+// 实际使用时取自接口返回的服务器时间，只赋值一次
+const serverTime = Date.now() + 5 * 60 * 1000;
+const remaining = ref(0);
+const errorText = ref('');
+
+const handleChange = ({ timestamp }) => {
+	remaining.value = timestamp;
+};
+
+const handleError = (message) => {
+	errorText.value = `error：${message}`;
+};
+</script>
+
+<style scoped>
+.countdown-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.countdown-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+.countdown-demo__result {
+	margin: 0;
+}
+</style>
 ```
 :::
 
@@ -162,11 +372,11 @@ interface CountdownRenderData extends CountdownTimeData {
 
 ### 注意事项
 
-- 推荐传入数字时间戳或 `Date`。字符串会将 `-` 替换为 `/` 后交给 `Date.parse`。
+- 推荐传入数字时间戳或 `Date`。字符串交给 dayjs 解析，无法解析时按空值处理并触发 `error`。
 - 更新 `targetTime` 或 `serverTime` 会重新启动计时，连续更新采用 200ms 防抖。不要在父组件每次渲染时重新创建 `serverTime`。`t` 在计时器启动时确定刷新周期。
 - `DD`、`HH`、`mm`、`ss`、`SSS` 分别替换天、小时、分钟、秒和秒内余量，每种标记只替换第一次出现的位置。小时、分钟和秒为扣除更大单位后的余数。
 - `SSS` 不补零：`t < 10` 时为 0–999，`10 ≤ t < 100` 时为 0–99，`t ≥ 100` 时为 0–9。
 - `trim` 会将格式分隔文本拼入正则表达式，复杂格式建议通过插槽自行展示。
 - 默认格式按 HTML 渲染，勿将不可信内容直接作为 `format`；配置了全局的 `sanitize` 时会先经过清洗。
 - 写在组件上的 `class`、`style` 和事件监听会落到外层标签上；`id`、`data-*` 等其他属性不会出现在 DOM 上，使用默认插槽或 `render` 时它们会并入参数。组件没有公开的启动、暂停或停止方法。
-- 完成事件的数据已归零，但默认展示及插槽字段可能保留最后一次计算结果；需要结束状态时，请响应 `complete` 切换展示内容。
+- 完成时默认展示及插槽字段同样归零（插槽的 `millisecond` 为 `'0'`，`change` 中为 `'00'`）；需要结束状态时，请响应 `complete` 切换展示内容。

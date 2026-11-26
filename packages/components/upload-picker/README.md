@@ -1,6 +1,8 @@
 ## 文件选择上传（UploadPicker）
 
-统一选择、预览、排序和删除图片、视频、音频及普通文件。桌面端使用 `UploadPicker`，移动端使用 `MUploadPicker`，共享数据与事件 API。
+统一选择、预览、排序和删除图片、视频、音频及普通文件。
+
+移动端入口导出的 `MUploadPicker` 与 `UploadPicker` 共享数据与事件 API，尺寸按 750 稿随 `--vc-rem` 缩放，见 [移动端](#移动端)。
 
 ### 何时使用
 
@@ -8,21 +10,29 @@
 
 ### 基础用法
 
-只有图片时为方格，添加入口在末尾。选择本地图片后可以预览、删除和排序，最多保留 3 张。示例通过 `onResponse` 生成临时 URL，仅演示本地流程。实际上传请在 `uploadOptions.image` 中设置 `url`，响应包含 `value` 或 `source`；其他响应格式通过 `formatter` 转换。
+只有图片时为方格，添加入口在末尾。选择本地图片后可以预览、删除和排序（`sortable`，`mask` 在排序时显示操作遮罩），`max` 限制最多保留 3 张。示例通过 `onResponse` 生成临时 URL，仅演示本地流程。实际上传请在 `uploadOptions.image` 中设置 `url`，响应包含 `value` 或 `source`；其他响应格式通过 `formatter` 转换。`change` 在上传周期完成、排序、添加或删除时触发。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 20 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="demo">
+	<div class="upload-picker-demo">
 		<UploadPicker
 			v-model="files"
 			:max="3"
-			sortable mask
+			sortable
+			mask
 			:upload-options="uploadOptions"
-		>
-		</UploadPicker>
-		<p>已选择 {{ files.length }} 个文件；点击媒体项预览。</p>
+			@change="handleChange"
+		/>
+		<p class="upload-picker-demo__result">已选择 {{ files.length }} 个文件，change 触发 {{ count }} 次；点击媒体项预览。</p>
 	</div>
 </template>
 
@@ -31,21 +41,35 @@ import { ref, onBeforeUnmount } from 'vue';
 import { UploadPicker } from '@deot/vc';
 
 const files = ref([]);
+const count = ref(0);
 const urls = [];
-const labels = { image: '图片' };
-const uploadOptions = Object.fromEntries(Object.keys(labels).map(type => [type, {
-	onResponse: ({ requestOptions }) => {
-		const value = URL.createObjectURL(requestOptions.file);
-		urls.push(value);
-		return { value };
+const uploadOptions = {
+	image: {
+		onResponse: ({ requestOptions }) => {
+			const value = URL.createObjectURL(requestOptions.file);
+			urls.push(value);
+			return { value };
+		}
 	}
-}]));
+};
+
+const handleChange = () => {
+	count.value++;
+};
+
 onBeforeUnmount(() => urls.forEach(url => URL.revokeObjectURL(url)));
 </script>
 
 <style scoped>
-.demo p { margin: 8px 0 0; font-size: 13px; }
-.demo button { padding: 6px 10px; }
+.upload-picker-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.upload-picker-demo__result {
+	margin: 0;
+}
 </style>
 ```
 :::
@@ -66,22 +90,33 @@ onBeforeUnmount(() => urls.forEach(url => URL.revokeObjectURL(url)));
 上传中方格显示百分比与带轨道的细进度条，整行在右侧显示百分比、底部显示进度条，传完等待服务端响应时显示「服务器正在接收...」；失败时显示「上传失败」与「重试」（方格红色描边），点「重试」用原文件重新上传；删除浮在右上角。文件项与 `FilePreview` 共用，`size` 同 FilePreview，不传时方格为 `small`（64px）、整行为 `medium`（行高 46px）。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 20 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="demo">
+	<div class="upload-picker-demo">
 		<RadioGroup v-model="type" type="card">
 			<Radio v-for="item in types" :key="item" :value="item" :label="item || 'auto'" />
+		</RadioGroup>
+		<RadioGroup v-model="size" type="card">
+			<Radio v-for="item in sizes" :key="item" :value="item" :label="item || '默认尺寸'" />
 		</RadioGroup>
 		<UploadPicker
 			v-model="files"
 			:type="type || undefined"
+			:size="size || undefined"
 			:picker="['image', 'video', 'audio', 'file']"
 			:max="{ image: 2, video: 1, audio: 1, file: 2 }"
 			sortable
 			:upload-options="uploadOptions"
 		/>
-		<p>已选择 {{ files.length }} 个文件；点击已上传的项预览。</p>
+		<p class="upload-picker-demo__result">已选择 {{ files.length }} 个文件；点击已上传的项预览。</p>
 	</div>
 </template>
 
@@ -90,7 +125,9 @@ import { ref, onBeforeUnmount } from 'vue';
 import { UploadPicker, RadioGroup, Radio } from '@deot/vc';
 
 const types = ['', 'list', 'grid', 'group'];
+const sizes = ['', 'mini', 'small', 'medium', 'large'];
 const type = ref('');
+const size = ref('');
 const files = ref([]);
 const urls = [];
 const uploadOptions = Object.fromEntries(['image', 'video', 'audio', 'file'].map(item => [item, {
@@ -100,84 +137,258 @@ const uploadOptions = Object.fromEntries(['image', 'video', 'audio', 'file'].map
 		return { value };
 	}
 }]));
+
 onBeforeUnmount(() => urls.forEach(url => URL.revokeObjectURL(url)));
 </script>
 
 <style scoped>
-.demo { display: grid; gap: 16px; }
-.demo p { margin: 0; font-size: 13px; }
+.upload-picker-demo {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 16px;
+}
+
+.upload-picker-demo__result {
+	margin: 0;
+}
+</style>
+```
+:::
+
+### 上传事件与数据转换
+
+`file-before` 在上传前调用，返回 `false` 取消该文件；`file-start`、`file-success`、`file-error`、`complete`、`error` 透出上传周期，参数均为带 `type` 的单个对象。`formatter` 把响应转换为文件项，`output` 设置输出格式（`'string'` 时只输出地址），`keyValue` 设置名称和地址的字段映射。`remove-before` 在删除前调用，返回 reject 的 Promise 时中止删除。`showError` 用 Message 提示上传错误；`enhancer` 在打开原生选择前调用，返回真值表示已自行处理。`boxClass` 设置默认上传入口的 class。下方的列表 `disabled`，隐藏上传入口与删除按钮，仍可预览；它的 `modelValue` 为逗号分隔的字符串，`output="string"` 时保持字符串输出。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
+```vue
+<template>
+	<div class="upload-picker-demo">
+		<UploadPicker
+			v-model="files"
+			:picker="['image', 'file']"
+			:upload-options="uploadOptions"
+			:formatter="handleFormat"
+			:key-value="{ label: 'name', value: 'url' }"
+			:enhancer="handleEnhance"
+			box-class="upload-picker-demo__box"
+			show-error
+			@file-before="handleFileBefore"
+			@file-start="handleFileStart"
+			@file-success="handleFileSuccess"
+			@file-error="handleFileError"
+			@complete="handleComplete"
+			@error="handleError"
+			@remove-before="handleRemoveBefore"
+		/>
+		<p class="upload-picker-demo__result">{{ log }}</p>
+		<p class="upload-picker-demo__result">modelValue：{{ JSON.stringify(files) }}</p>
+		<UploadPicker :model-value="addresses" output="string" disabled />
+	</div>
+</template>
+
+<script setup>
+import { ref, onBeforeUnmount } from 'vue';
+import { UploadPicker } from '@deot/vc';
+
+const files = ref([]);
+const addresses = ref('https://example.com/a.txt,https://example.com/b.txt');
+const log = ref('选择小于 2MB 的图片或文件');
+const urls = [];
+const uploadOptions = Object.fromEntries(['image', 'file'].map(item => [item, {
+	onResponse: ({ requestOptions }) => {
+		const url = URL.createObjectURL(requestOptions.file);
+		urls.push(url);
+		return { data: { url } };
+	}
+}]));
+
+const handleFormat = (response, file) => {
+	return { url: response.data.url, name: file.name };
+};
+
+const handleEnhance = ({ types }) => {
+	log.value = `enhancer：可选类型 ${types.join('、')}，继续打开选择`;
+	return false;
+};
+
+const handleFileBefore = ({ file, type }) => {
+	if (file.size > 2 * 1024 * 1024) {
+		log.value = `file-before：${type} 超过 2MB，已取消`;
+		return false;
+	}
+};
+
+const handleFileStart = ({ file, type }) => {
+	log.value = `file-start：${type} ${file.name}`;
+};
+
+const handleFileSuccess = ({ file, type }) => {
+	log.value = `file-success：${type} ${file.name}`;
+};
+
+const handleFileError = ({ message, type }) => {
+	log.value = `file-error：${type} ${message}`;
+};
+
+const handleComplete = ({ result, type }) => {
+	log.value = `complete：${type} 成功 ${result.succeeded} 个`;
+};
+
+const handleError = ({ cause }) => {
+	log.value = `error：${cause}`;
+};
+
+const handleRemoveBefore = (position, type) => new Promise((resolve, reject) => {
+	if (type === 'image') {
+		resolve();
+		return;
+	}
+	log.value = `remove-before：第 ${position + 1} 项是文件，已中止删除`;
+	reject(new Error('cancel'));
+});
+
+onBeforeUnmount(() => urls.forEach(url => URL.revokeObjectURL(url)));
+</script>
+
+<style scoped>
+.upload-picker-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.upload-picker-demo :deep(.upload-picker-demo__box) {
+	border-style: solid;
+}
+
+.upload-picker-demo__result {
+	margin: 0;
+	overflow-wrap: anywhere;
+}
 </style>
 ```
 :::
 
 ### 自定义入口、文件项和实例方法
 
-`upload` 插槽替换整个上传入口，参数为 `{ types }`，点击后的行为同默认入口。默认插槽替换整个文件项，包括内置预览与删除控件，参数为 `{ row, type, index, position }`：`position` 是在列表中的位置，用于 `remove`；`index` 是过滤失败、未完成项后的预览索引，不适合用于删除。
+`upload` 插槽替换整个上传入口，参数为 `{ types }`，点击后的行为同默认入口。默认插槽替换整个文件项，包括内置预览与删除控件，参数为 `{ row, type, index, position }`：`position` 是在列表中的位置，用于 `remove`；`index` 是过滤失败、未完成项后的预览索引，不适合用于删除。实例方法 `add` 追加数据，`remove` 删除指定项，`reset` 只重置内部视图，不更新 `modelValue`。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 20 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="demo">
-		<div class="actions">
-			<button type="button" @click="handleAdd">添加示例文件</button>
-			<button type="button" @click="handleReset">重置视图</button>
+	<div class="upload-picker-demo">
+		<div class="upload-picker-demo__row">
+			<Button size="small" @click="handleAdd">添加示例文件</Button>
+			<Button size="small" @click="handleReset">重置视图</Button>
 		</div>
-		<UploadPicker ref="picker" v-model="files" :picker="['image', 'file']" type="list">
+		<UploadPicker ref="pickerRef" v-model="files" :picker="['image', 'file']" type="list">
 			<template #upload="{ types }">
-				<button type="button">选择{{ types.map(item => labels[item]).join('或') }}</button>
+				<Button size="small" type="primary">选择{{ types.map(item => labels[item]).join('或') }}</Button>
 			</template>
 			<template #default="{ row, position }">
-				<button class="file" type="button" @click="handleRemove(position)">{{ row.label }} ×</button>
+				<Button size="small" @click="handleRemove(position)">{{ row.label }} ×</Button>
 			</template>
 		</UploadPicker>
-		<p>modelValue 中有 {{ files.length }} 项；reset 仅重置内部视图，不更新 modelValue。</p>
+		<p class="upload-picker-demo__result">modelValue 中有 {{ files.length }} 项；reset 仅重置内部视图，不更新 modelValue。</p>
 	</div>
 </template>
 
 <script setup>
 import { ref } from 'vue';
-import { UploadPicker } from '@deot/vc';
+import { UploadPicker, Button } from '@deot/vc';
 
 const labels = { image: '图片', file: '文件' };
-const picker = ref();
+const pickerRef = ref();
 const files = ref([]);
+let count = 0;
+
 const handleAdd = () => {
-	picker.value.add([{ type: 'file', label: '说明.txt', value: 'data:text/plain,UploadPicker' }]);
+	count++;
+	pickerRef.value.add([{ type: 'file', label: `文件 ${count}.txt`, value: `data:text/plain,${count}` }]);
 };
-const handleRemove = position => picker.value.remove(position);
-const handleReset = () => picker.value.reset();
+
+const handleRemove = (position) => {
+	pickerRef.value.remove(position);
+};
+
+const handleReset = () => {
+	pickerRef.value.reset();
+};
 </script>
 
 <style scoped>
-.demo { display: grid; gap: 16px; }
-.actions { display: flex; flex-wrap: wrap; gap: 8px; }
-.file { overflow-wrap: anywhere; }
-.demo p { margin: 0; font-size: 13px; }
+.upload-picker-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.upload-picker-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+.upload-picker-demo__result {
+	margin: 0;
+}
 </style>
 ```
 :::
 
-### 移动端
+## 移动端
 
-`MUploadPicker` 的属性、事件、插槽、结构与 `UploadPicker` 相同，根节点另有标记类 `.vcm-upload-picker`；尺寸按 750 稿随 `--vc-rem` 缩放，375 宽下与桌面端同 px：
-
-- 方格以 `size` 为最小边长（默认 small，128，即 375 宽下 64px），均分铺满一行，屏幕变宽时每行多放几个；整行默认 medium，行高 92（46）。
-- 删除为右上角的半透明黑底角标 36（18），与项的右上角贴合。
-- 多种类型时，点「上传」先选类型（图片、视频、音频、文件），再打开该类型的原生选择；选项名使用 `vc.UploadPicker` 下的 locale。
-- 预览打开移动端查看器（只保留关闭按钮，计数在底部），见 FilePreview 的「移动端」。
+`MUploadPicker` 的属性、事件、插槽、结构与 `UploadPicker` 相同，根节点另有标记类 `.vcm-upload-picker`；尺寸按 750 稿随 `--vc-rem` 缩放，375 宽下与桌面端同 px。多种类型时点「上传」先用 ActionSheet 选择类型，预览打开移动端查看器，因此示例在独立页面中运行；底栏切换 `rem` 可查看不同屏宽下的效果。
 
 :::playground
-<!-- <config lang="json5">{ viewport: [375, 400], previewInset: 20 }</config> -->
+<!--
+<config lang="json5">
+{
+	mobile: true,
+	local: false,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="demo">
+	<div class="m-upload-picker-demo">
+		<MUploadPicker
+			v-model="images"
+			:max="6"
+			sortable
+			:upload-options="uploadOptions"
+		/>
 		<MUploadPicker
 			v-model="files"
 			:picker="['image', 'file']"
 			:upload-options="uploadOptions"
 		/>
-		<p>已选择 {{ files.length }} 个文件；点击已上传的项预览。</p>
+		<MUploadPicker v-model="rows" type="list" :picker="['file']" disabled />
+		<p class="m-upload-picker-demo__result">已选择 {{ images.length + files.length }} 个文件；点击已上传的项预览。</p>
 	</div>
 </template>
 
@@ -185,7 +396,9 @@ const handleReset = () => picker.value.reset();
 import { ref, onBeforeUnmount } from 'vue';
 import { MUploadPicker } from '@deot/vc';
 
+const images = ref([]);
 const files = ref([]);
+const rows = ref([{ label: '文件一.txt', value: 'data:text/plain,1' }]);
 const urls = [];
 const uploadOptions = Object.fromEntries(['image', 'file'].map(type => [type, {
 	onResponse: ({ requestOptions }) => {
@@ -194,14 +407,30 @@ const uploadOptions = Object.fromEntries(['image', 'file'].map(type => [type, {
 		return { value };
 	}
 }]));
+
 onBeforeUnmount(() => urls.forEach(url => URL.revokeObjectURL(url)));
 </script>
 
 <style scoped>
-.demo p { margin: 8px 0 0; font-size: 13px; }
+.m-upload-picker-demo {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--vc-rem) * 32);
+	padding-inline: calc(var(--vc-rem) * 32);
+}
+
+.m-upload-picker-demo__result {
+	margin: 0;
+	font-size: calc(var(--vc-rem) * 28);
+}
 </style>
 ```
 :::
+
+- 方格以 `size` 为最小边长（默认 small，128，即 375 宽下 64px），均分铺满一行，屏幕变宽时每行多放几个；整行默认 medium，行高 92（46）。
+- 删除为右上角的半透明黑底角标 36（18），与项的右上角贴合。
+- 多种类型时，点「上传」先选类型（图片、视频、音频、文件），再打开该类型的原生选择；选项名使用 `vc.UploadPicker` 下的 locale。
+- 预览打开移动端查看器（只保留关闭按钮，计数在底部），见 FilePreview 的「移动端」。
 
 ## 主题与局部覆盖
 
@@ -291,8 +520,8 @@ onBeforeUnmount(() => urls.forEach(url => URL.revokeObjectURL(url)));
 | 方法名 | 说明 | 参数 | 返回值 |
 | --- | --- | --- | --- |
 | add | 解析并追加到列表末尾，触发同步；不检查 max | `source = []`，按当前 modelValue 形态解析 | `void` |
-| remove | 等待删除前回调并删除指定项 | `(position)` | `Promise<void>` |
-| reset | 用数组替换内部列表并通知 FormItem，不触发 update:modelValue/change | `source = []`，必须为数组 | `void` |
+| remove | 等待删除前回调并删除指定项；位置不存在时抛出错误 | `(position)` | `Promise<void>` |
+| reset | 用数组替换内部列表并通知 FormItem，不触发 update:modelValue/change；参数不是数组时抛出错误 | `source = []`，必须为数组 | `void` |
 
 ### 预览
 

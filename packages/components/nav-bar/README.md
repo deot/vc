@@ -7,73 +7,146 @@
 - 二级及以下页面的顶部：返回上一页、显示当前页面标题与操作。
 - 详情页的沉浸式头部：顶部透明叠在头图上，向下滚动时渐变为实底。
 
-### 尺寸
-
-长度按 750 稿书写并随 `--vc-rem` 缩放；括号内为 375 宽下的 px。
-
-| 部位 | 值 |
-| --- | --- |
-| 栏高 | 88（44） |
-| 两侧内边距 / 字号 | 32（16）/ 32（16） |
-| 返回箭头、两侧图标 / 箭头与文字的间距 | 40（20）/ 8（4） |
-| 标题字号 / 字重 | 34（17）/ 600 |
-| 副标题字号 | 24（12） |
-
 ### 基础用法
 
-默认显示返回箭头。`back` 为字符串时在箭头后显示文字，`backIcon` 为 `false` 时只显示文字，`back` 为 `false` 时不显示返回区域。右侧内容用 `right` 或 `#right` 插槽。
+默认显示返回箭头。`back` 为字符串时在箭头后显示文字，`backIcon` 为 `false` 时只显示文字，`back` 为 `false` 时不显示返回区域；点击返回区域触发 `back`。右侧内容用 `right` 或 `#right` 插槽，`#left` 放在返回区域之后；`subtitle` 显示在标题下方，`border` 为 `false` 时去掉底部分割线。
 
 :::playground
 <!--
 <config lang="json5">
-{ viewport: 375, previewInset: 16 }
+{
+	mobile: true,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
 </config>
 -->
 ```vue
 <template>
-	<MNavBar title="标题" @back="message = '返回'" />
-	<br>
-	<MNavBar title="标题" back="返回" right="编辑" @back="message = '返回'" />
-	<br>
-	<MNavBar title="新建" back="取消" :back-icon="false" @back="message = '取消'">
-		<template #right>
-			<MButton size="small" type="primary">
-				完成
-			</MButton>
-		</template>
-	</MNavBar>
-	<br>
-	<MNavBar title="消息" subtitle="在线" :back="false">
-		<template #right>
-			<MIcon type="search" />
-		</template>
-	</MNavBar>
-	<p>{{ message }}</p>
+	<div class="m-nav-bar-demo">
+		<MNavBar title="标题" @back="handleBack('返回')" />
+		<MNavBar title="标题" back="返回" right="编辑" @back="handleBack('返回')" />
+		<MNavBar title="新建" back="取消" :back-icon="false" @back="handleBack('取消')">
+			<template #right>
+				<MButton size="small" type="primary">完成</MButton>
+			</template>
+		</MNavBar>
+		<MNavBar title="消息" subtitle="副标题" :back="false" :border="false">
+			<template #right>
+				<MIcon type="search" />
+			</template>
+		</MNavBar>
+		<MNavBar title="标题" @back="handleBack('返回')">
+			<template #left>
+				<MIcon type="close" @click="handleBack('关闭')" />
+			</template>
+		</MNavBar>
+		<p class="m-nav-bar-demo__result">{{ result }}</p>
+	</div>
 </template>
 
 <script setup>
 import { ref } from 'vue';
-import { MNavBar, MButton, MIcon } from '@deot/vc';
+import { MButton, MIcon, MNavBar } from '@deot/vc';
 
-const message = ref('');
+const result = ref('点击左侧区域');
+
+const handleBack = (label) => {
+	result.value = `点击了「${label}」`;
+};
 </script>
+
+<style scoped>
+.m-nav-bar-demo {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--vc-rem) * 16);
+}
+
+.m-nav-bar-demo__result {
+	margin: 0;
+	padding-inline: calc(var(--vc-rem) * 32);
+	font-size: calc(var(--vc-rem) * 28);
+	color: var(--vc-color-dark-extralight);
+}
+</style>
 ```
 :::
 
 ### 标题居中
 
-三列布局：两侧各占剩余宽度的一半，标题始终在正中，与左右内容的宽度无关。标题较长、放不下时，先占用两侧剩余的空间，仍放不下再单行省略；两侧内容不会被标题挤压或遮盖。
+三列布局：两侧各占剩余宽度的一半，标题始终在正中，与左右内容的宽度无关。标题较长、放不下时，先占用两侧剩余的空间，仍放不下再单行省略；两侧内容不会被标题挤压或遮盖。`#title`、`#subtitle` 替换标题、副标题的内容，仍然居中并省略。
 
 `#default` 替换整个中间区域（如放入 [MTabs](../tabs/README.md) 或搜索框），这时中间区域占满两侧内容之间的宽度。
 
+:::playground
+<!--
+<config lang="json5">
+{
+	mobile: true,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
+</config>
+-->
 ```vue
-<MNavBar>
-	<MTabs v-model="tab">
-		<MTabsPane label="关注" value="follow" />
-		<MTabsPane label="推荐" value="recommend" />
-	</MTabs>
-</MNavBar>
+<template>
+	<div class="m-nav-bar-demo">
+		<MNavBar title="这是一条很长很长很长很长很长很长很长的标题" back="返回">
+			<template #right>
+				<MIcon type="share" />
+			</template>
+		</MNavBar>
+		<MNavBar title="短标题" back="返回上一页" right="更多" />
+		<MNavBar>
+			<template #title>
+				<strong>插槽标题</strong>
+			</template>
+			<template #subtitle>
+				<em>插槽副标题</em>
+			</template>
+		</MNavBar>
+		<MNavBar>
+			<MTabs v-model="tab" class="m-nav-bar-demo__tabs">
+				<MTabsPane label="标签一" value="1" />
+				<MTabsPane label="标签二" value="2" />
+				<MTabsPane label="标签三" value="3" />
+			</MTabs>
+			<template #right>
+				<MIcon type="search" />
+			</template>
+		</MNavBar>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { MIcon, MNavBar, MTabs, MTabsPane } from '@deot/vc';
+
+const tab = ref('2');
+</script>
+
+<style scoped>
+.m-nav-bar-demo {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--vc-rem) * 16);
+}
+
+.m-nav-bar-demo__tabs {
+	width: 100%;
+}
+</style>
 ```
+:::
 
 ### 返回
 
@@ -98,9 +171,63 @@ VcInstance.configure({
 - 固定时默认在顶部补上安全区（`env(safe-area-inset-top)`），`safeArea` 设为 `false` 可以关闭；不固定时也能用 `safeArea` 单独开启。
 - `zIndex` 只在固定时生效，默认为 10。
 
+:::playground
+<!--
+<config lang="json5">
+{
+	mobile: true,
+	local: false,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
+</config>
+-->
 ```vue
-<MNavBar fixed title="标题" />
+<template>
+	<div class="m-nav-bar-demo">
+		<MNavBar
+			fixed
+			title="固定导航栏"
+			:placeholder="hasPlaceholder"
+			:safe-area="false"
+			:z-index="20"
+		/>
+		<div class="m-nav-bar-demo__body">
+			<MButton size="small" @click="hasPlaceholder = !hasPlaceholder">
+				{{ hasPlaceholder ? '去掉占位' : '保留占位' }}
+			</MButton>
+			<p v-for="i in 20" :key="i" class="m-nav-bar-demo__row">第 {{ i }} 行</p>
+		</div>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { MButton, MNavBar } from '@deot/vc';
+
+const hasPlaceholder = ref(true);
+</script>
+
+<style scoped>
+.m-nav-bar-demo__body {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: calc(var(--vc-rem) * 16);
+	padding: calc(var(--vc-rem) * 32);
+}
+
+.m-nav-bar-demo__row {
+	margin: 0;
+	font-size: calc(var(--vc-rem) * 28);
+}
+</style>
 ```
+:::
 
 ### 透明与滚动渐变
 
@@ -113,29 +240,40 @@ VcInstance.configure({
 :::playground
 <!--
 <config lang="json5">
-{ viewport: 375, previewInset: 0 }
+{
+	mobile: true,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
 </config>
 -->
 ```vue
 <template>
-	<div style="position: relative; height: 360px; overflow: hidden;">
-		<MNavBar
-			:transparent="300"
-			:get-scroller="() => scroller"
-			title="详情"
-			style="position: absolute; top: 0; right: 0; left: 0; z-index: 1;"
-		>
-			<template #back="{ progress }">
-				<MIcon type="left" :style="{ fontSize: '20px', color: progress < 0.5 ? '#fff' : '' }" />
-			</template>
-			<template #right="{ progress }">
-				<MIcon type="share" :style="{ color: progress < 0.5 ? '#fff' : '' }" />
-			</template>
-		</MNavBar>
-		<div ref="scroller" style="height: 100%; overflow: auto;">
-			<div style="height: 200px; background: linear-gradient(135deg, #456CF6, #1DB88C);" />
-			<div v-for="i in 12" :key="i" style="padding: 14px 16px;">
-				内容 {{ i }}
+	<div class="m-nav-bar-demo">
+		<div class="m-nav-bar-demo__hero is-short">
+			<MNavBar transparent title="始终透明" class="m-nav-bar-demo__light" />
+		</div>
+		<div class="m-nav-bar-demo__immersive">
+			<MNavBar
+				:transparent="300"
+				:get-scroller="() => scroller"
+				title="详情"
+				class="m-nav-bar-demo__overlay"
+			>
+				<template #back="{ progress }">
+					<MIcon type="left" class="m-nav-bar-demo__icon" :class="{ 'is-light': progress < 0.5 }" />
+				</template>
+				<template #right="{ progress }">
+					<MIcon type="share" :class="{ 'is-light': progress < 0.5 }" />
+				</template>
+			</MNavBar>
+			<div ref="scroller" class="m-nav-bar-demo__scroller">
+				<div class="m-nav-bar-demo__hero">头图</div>
+				<div v-for="i in 12" :key="i" class="m-nav-bar-demo__row">内容 {{ i }}</div>
 			</div>
 		</div>
 	</div>
@@ -143,12 +281,86 @@ VcInstance.configure({
 
 <script setup>
 import { ref } from 'vue';
-import { MNavBar, MIcon } from '@deot/vc';
+import { MIcon, MNavBar } from '@deot/vc';
 
 const scroller = ref();
 </script>
+
+<style scoped>
+.m-nav-bar-demo {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--vc-rem) * 32);
+}
+
+.m-nav-bar-demo__light {
+	--vc-nav-bar-color: #fff;
+}
+
+.m-nav-bar-demo__immersive {
+	position: relative;
+	height: calc(var(--vc-rem) * 720);
+	overflow: hidden;
+}
+
+.m-nav-bar-demo__overlay {
+	position: absolute;
+	top: 0;
+	right: 0;
+	left: 0;
+	z-index: 1;
+}
+
+.m-nav-bar-demo__icon {
+	font-size: calc(var(--vc-rem) * 40);
+}
+
+.is-light {
+	color: #fff;
+	transition: color 0.2s;
+}
+
+.m-nav-bar-demo__scroller {
+	height: 100%;
+	overflow: auto;
+	background: var(--vc-background-color-lightest);
+}
+
+.m-nav-bar-demo__hero {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: calc(var(--vc-rem) * 400);
+	font-size: calc(var(--vc-rem) * 32);
+	color: #fff;
+	background: linear-gradient(135deg, var(--vc-color-primary), var(--vc-color-success));
+}
+
+.m-nav-bar-demo__hero.is-short {
+	display: block;
+	height: auto;
+}
+
+.m-nav-bar-demo__row {
+	padding: calc(var(--vc-rem) * 28) calc(var(--vc-rem) * 32);
+	font-size: calc(var(--vc-rem) * 28);
+	border-bottom: 1px solid var(--vc-color-neutral-light);
+}
+</style>
 ```
 :::
+
+## 尺寸
+
+长度按 750 稿书写并随 `--vc-rem` 缩放；括号内为 375 宽下的 px。
+
+| 部位 | 值 |
+| --- | --- |
+| 栏高 | 88（44） |
+| 两侧内边距 / 字号 | 32（16）/ 32（16） |
+| 返回箭头、两侧图标 / 箭头与文字的间距 | 40（20）/ 8（4） |
+| 标题字号 / 字重 | 34（17）/ 600 |
+| 副标题字号 | 24（12） |
 
 ## 主题与局部覆盖
 

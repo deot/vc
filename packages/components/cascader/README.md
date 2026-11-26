@@ -1,6 +1,6 @@
 ## 级联选择器（Cascader）
 
-逐级查看树形数据，并选择一条层级路径。
+逐级查看树形数据，并选择一条层级路径。移动端使用独立的 `MCascader`，见[移动端](#移动端)。
 
 ### 何时使用
 
@@ -10,29 +10,28 @@
 
 `trigger` 控制浮层的打开方式，默认点击打开；子列始终在鼠标移入选项时展开，点击叶子节点才提交完整路径。只展开父节点后关闭，不会提交临时路径。
 
-示例在浮层打开时通过 `docs:playground` 增加预览高度，等待 `close`（关闭动画完成）后恢复。
-
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="trigger-demo">
-		<div v-for="trigger in ['click', 'hover']" :key="trigger" class="trigger-demo__item">
-			<p>{{ trigger === 'click' ? '点击打开浮层' : '悬停打开浮层' }}</p>
-			<Cascader
-				v-model="values[trigger]"
-				:data="data"
-				:trigger="trigger"
-				@visible-change="isVisible => isVisible && handleVisibleChange(trigger, true)"
-				@close="handleVisibleChange(trigger, false)"
-			/>
-			<p>已提交路径：{{ values[trigger] }}</p>
+	<div class="cascader-demo">
+		<div v-for="trigger in ['click', 'hover']" :key="trigger" class="cascader-demo__item">
+			<p class="cascader-demo__result">{{ trigger === 'click' ? '点击打开浮层' : '悬停打开浮层' }}</p>
+			<Cascader v-model="values[trigger]" :data="data" :trigger="trigger" />
+			<p class="cascader-demo__result">已提交路径：{{ values[trigger] }}</p>
 		</div>
 	</div>
 </template>
 
 <script setup>
-import { inject, reactive } from 'vue';
+import { reactive } from 'vue';
 import { Cascader } from '@deot/vc';
 
 const data = [
@@ -46,29 +45,25 @@ const data = [
 	] }
 ];
 const values = reactive({ click: [], hover: [] });
-const playground = inject('docs:playground');
-const isVisibleByTrigger = {};
-const handlePreview = playground.run(360);
-const handleVisibleChange = (trigger, isVisible) => {
-	isVisibleByTrigger[trigger] = isVisible;
-	return handlePreview(Object.values(isVisibleByTrigger).some(Boolean));
-};
 </script>
+
 <style scoped>
-.trigger-demo {
+.cascader-demo {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 20px;
+	gap: 16px;
 }
-.trigger-demo__item {
-	display: grid;
-	gap: 12px;
+
+.cascader-demo__item {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
 	width: 280px;
 	max-width: 100%;
 }
-p {
+
+.cascader-demo__result {
 	margin: 0;
-	line-height: 1.6;
 	overflow-wrap: anywhere;
 }
 </style>
@@ -77,29 +72,29 @@ p {
 
 ### 默认值、清空与禁用
 
-用数组保存完整路径。`clearable` 默认关闭，启用后鼠标移入输入框显示清除按钮；清空也触发 `change`。`disabled` 阻止打开和清空。
+用数组保存完整路径。`clearable` 默认关闭，启用后鼠标移入输入框显示清除按钮；点击清除按钮先触发 `clear`，清空也触发 `change`。`disabled` 阻止打开和清空。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
 	<div class="cascader-demo">
-		<Cascader
-			v-model="value"
-			:data="data"
-			:disabled="isDisabled"
-			clearable
-			@visible-change="isVisible => isVisible && handleVisibleChange(true)"
-			@close="handleVisibleChange(false)"
-		/>
-		<label><input v-model="isDisabled" type="checkbox"> 禁用选择器</label>
-		<p>当前路径：{{ value }}</p>
+		<Cascader v-model="value" :data="data" :disabled="isDisabled" clearable @clear="handleClear" />
+		<Checkbox v-model="isDisabled">禁用选择器</Checkbox>
+		<p class="cascader-demo__result">当前路径：{{ value }}；{{ status }}</p>
 	</div>
 </template>
 
 <script setup>
-import { inject, ref } from 'vue';
-import { Cascader } from '@deot/vc';
+import { ref } from 'vue';
+import { Cascader, Checkbox } from '@deot/vc';
 
 const data = [
 	{ value: 'group-a', label: '分组 A', children: [
@@ -113,19 +108,23 @@ const data = [
 ];
 const value = ref(['group-a', 'item-a-1']);
 const isDisabled = ref(false);
-const playground = inject('docs:playground');
-const handleVisibleChange = playground.run(320);
+const status = ref('等待操作');
+
+const handleClear = () => {
+	status.value = '触发 clear';
+};
 </script>
 
 <style scoped>
 .cascader-demo {
-	display: grid;
-	gap: 12px;
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
 	max-width: 320px;
 }
-p {
+
+.cascader-demo__result {
 	margin: 0;
-	line-height: 1.6;
 	overflow-wrap: anywhere;
 }
 </style>
@@ -137,25 +136,24 @@ p {
 `formatter` 接收路径上的文本数组，默认使用 ` / ` 连接。返回空值时显示 `extra`；`extra` 是输入框内容，`placeholder` 是内容为空时的占位提示。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
 	<div class="cascader-demo">
-		<Cascader
-			v-model="value"
-			:data="data"
-			:formatter="formatter"
-			placeholder="选择条目"
-			clearable
-			@visible-change="isVisible => isVisible && handleVisibleChange(true)"
-			@close="handleVisibleChange(false)"
-		/>
-		<p>只显示最后一级文本，提交值仍是完整路径：{{ value }}</p>
+		<Cascader v-model="value" :data="data" :formatter="formatter" placeholder="选择条目" clearable />
+		<p class="cascader-demo__result">只显示最后一级文本，提交值仍是完整路径：{{ value }}</p>
 	</div>
 </template>
 
 <script setup>
-import { inject, ref } from 'vue';
+import { ref } from 'vue';
 import { Cascader } from '@deot/vc';
 
 const data = [
@@ -170,19 +168,18 @@ const data = [
 ];
 const value = ref(['group-b', 'item-b-2']);
 const formatter = labels => labels[labels.length - 1];
-const playground = inject('docs:playground');
-const handleVisibleChange = playground.run(320);
 </script>
 
 <style scoped>
 .cascader-demo {
-	display: grid;
-	gap: 12px;
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
 	max-width: 320px;
 }
-p {
+
+.cascader-demo__result {
 	margin: 0;
-	line-height: 1.6;
 	overflow-wrap: anywhere;
 }
 </style>
@@ -197,32 +194,86 @@ p {
 - `left`：向左展开。第一列贴着触发区，下一级出现在左侧，浮层与触发区右对齐（`placement` 的左右对齐互换）。此时 ← 进入下一级，→ 回到上一级。
 - `auto`：每次打开时判断。右侧放得下（第一列宽度 × 数据层级）就向右；放不下时朝空间更大的一侧展开。有 `loadData` 时层级未知，直接朝空间更大的一侧。
 
-适合放在页面右侧的触发区：向左展开时，增删列都发生在远离触发区的一端，已有的列不移动。
+适合放在页面右侧的触发区：向左展开时，增删列都发生在远离触发区的一端，已有的列不移动。下例三个触发区靠右排列，可对比三种取值。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
+```vue
+<template>
+	<div class="cascader-demo">
+		<div v-for="direction in ['right', 'left', 'auto']" :key="direction" class="cascader-demo__item">
+			<span>{{ direction }}</span>
+			<Cascader v-model="values[direction]" :data="data" :expand-direction="direction" class="cascader-demo__trigger" />
+		</div>
+	</div>
+</template>
+
+<script setup>
+import { reactive } from 'vue';
+import { Cascader } from '@deot/vc';
+
+const make = (prefix, level) => Array.from({ length: 4 }, (_, index) => {
+	const value = `${prefix}-${index + 1}`;
+	const label = `第 ${level} 级 ${index + 1}`;
+	return level === 3 ? { value, label } : { value, label, children: make(value, level + 1) };
+});
+const data = make('node', 1);
+const values = reactive({ right: [], left: [], auto: [] });
+</script>
+
+<style scoped>
+.cascader-demo {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	gap: 16px;
+}
+
+.cascader-demo__item {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	width: 220px;
+}
+
+.cascader-demo__trigger {
+	flex: 1;
+}
+</style>
+```
+:::
 
 ### 选择任意一级
 
 开启 `changeOnSelect` 后，点击任意一级都会提交当前路径并关闭浮层。鼠标移入仍只展开或高亮，不会触发 `change`。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
 	<div class="cascader-demo">
-		<Cascader
-			v-model="value"
-			:data="data"
-			change-on-select
-			@visible-change="isVisible => isVisible && handleVisibleChange(true)"
-			@close="handleVisibleChange(false)"
-			@change="handleChange"
-		/>
-		<p>已提交路径：{{ value }}</p>
-		<p>已提交文本：{{ labels.join(' / ') || '尚未选择' }}</p>
+		<Cascader v-model="value" :data="data" change-on-select @change="handleChange" />
+		<p class="cascader-demo__result">已提交路径：{{ value }}</p>
+		<p class="cascader-demo__result">已提交文本：{{ labels.join(' / ') || '尚未选择' }}</p>
 	</div>
 </template>
 
 <script setup>
-import { inject, ref } from 'vue';
+import { ref } from 'vue';
 import { Cascader } from '@deot/vc';
 
 const data = [
@@ -237,22 +288,22 @@ const data = [
 ];
 const value = ref([]);
 const labels = ref([]);
+
 const handleChange = (nextValue, nextLabels) => {
 	labels.value = nextLabels;
 };
-const playground = inject('docs:playground');
-const handleVisibleChange = playground.run(320);
 </script>
 
 <style scoped>
 .cascader-demo {
-	display: grid;
-	gap: 12px;
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
 	max-width: 320px;
 }
-p {
+
+.cascader-demo__result {
 	margin: 0;
-	line-height: 1.6;
 	overflow-wrap: anywhere;
 }
 </style>
@@ -269,26 +320,25 @@ p {
 `child` 时，输入的值按 `value ===` 在 `data` 中深度优先查找，找到第一个匹配的节点后还原路径并回显；值在不同分支重复时，保留当前选中的分支。传数组时取最后一项，字符串不按 `separator` 拆分；`data` 的 value 是数字、输入却是字符串（如来自 URL）时开启 `numerable`。输出的形状跟随当前 `v-model`：是数组时输出 `[最后一级]`、清空为 `[]`；否则输出最后一级的值、清空为 `nullValue`。`change` 的第二个参数和 `formatter` 收到的仍是完整路径的文本。`data` 晚于值到达时会重新查找；配合 `loadData` 时，尚未加载的节点找不到，回显为空。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
 	<div class="cascader-demo">
-		<Cascader
-			v-model="value"
-			:data="data"
-			check-strategy="child"
-			clearable
-			@visible-change="isVisible => isVisible && handleVisibleChange(true)"
-			@close="handleVisibleChange(false)"
-			@change="handleChange"
-		/>
-		<p>已提交值：{{ value }}</p>
-		<p>已提交文本：{{ labels.join(' / ') || '尚未选择' }}</p>
+		<Cascader v-model="value" :data="data" check-strategy="child" clearable @change="handleChange" />
+		<p class="cascader-demo__result">已提交值：{{ value }}</p>
+		<p class="cascader-demo__result">已提交文本：{{ labels.join(' / ') || '尚未选择' }}</p>
 	</div>
 </template>
 
 <script setup>
-import { inject, ref } from 'vue';
+import { ref } from 'vue';
 import { Cascader } from '@deot/vc';
 
 const data = [
@@ -303,22 +353,81 @@ const data = [
 ];
 const value = ref('item-b-1');
 const labels = ref([]);
+
 const handleChange = (nextValue, nextLabels) => {
 	labels.value = nextLabels;
 };
-const playground = inject('docs:playground');
-const handleVisibleChange = playground.run(320);
 </script>
 
 <style scoped>
 .cascader-demo {
-	display: grid;
-	gap: 12px;
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
 	max-width: 320px;
 }
-p {
+
+.cascader-demo__result {
 	margin: 0;
-	line-height: 1.6;
+	overflow-wrap: anywhere;
+}
+</style>
+```
+:::
+
+### 字符串路径
+
+非数组的 `v-model` 按 `separator` 拆成路径，提交时再用它连接。`data` 的 value 是数字、路径却是字符串时开启 `numerable`。`nullValue` 指定清空后返回的值（数组值清空仍为 `[]`）。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
+```vue
+<template>
+	<div class="cascader-demo">
+		<Cascader v-model="textValue" :data="data" separator="/" :null-value="null" clearable />
+		<Cascader v-model="numberValue" :data="numberData" numerable clearable />
+		<p class="cascader-demo__result">separator：{{ JSON.stringify(textValue) }}；numerable：{{ JSON.stringify(numberValue) }}</p>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { Cascader } from '@deot/vc';
+
+const data = [
+	{ value: 'group-a', label: '分组 A', children: [
+		{ value: 'item-a-1', label: '条目 A-1' },
+		{ value: 'item-a-2', label: '条目 A-2' }
+	] },
+	{ value: 'group-b', label: '分组 B', children: [
+		{ value: 'item-b-1', label: '条目 B-1' }
+	] }
+];
+const numberData = [
+	{ value: 1, label: '分组一', children: [{ value: 11, label: '条目 1-1' }, { value: 12, label: '条目 1-2' }] },
+	{ value: 2, label: '分组二', children: [{ value: 21, label: '条目 2-1' }] }
+];
+const textValue = ref('group-a/item-a-2');
+const numberValue = ref('1,12');
+</script>
+
+<style scoped>
+.cascader-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	max-width: 320px;
+}
+
+.cascader-demo__result {
+	margin: 0;
 	overflow-wrap: anywhere;
 }
 </style>
@@ -329,7 +438,7 @@ p {
 
 `searchable` 开启搜索，取值与 [Select](../select/README.md#搜索方式与键盘) 相同：默认在输入框内直接输入，已选路径以占位文字的形式保留；`searchable="popover"` 改为在浮层顶部显示搜索栏。使用默认插槽替换输入框后没有内联的输入位置，这时两种取值都使用浮层搜索栏。
 
-输入关键词后，浮层从级联列换成扁平的路径列表：路径上任意一级的文字命中即列出，关键词可以分别落在不同层级；关键词的分隔规则见 [Select 搜索规则](../select/README.md#搜索规则)，全局键为 `Cascader.searchMatch`（MCascader 读同一个键）。默认只列出末级节点，`changeOnSelect` 时任意一级都可选。点击结果会写入整条路径、提交并关闭；没有匹配时显示 `vc.Cascader.noMatch`。关闭浮层会清空搜索词。
+输入关键词后，浮层从级联列换成扁平的路径列表：路径上任意一级的文字命中即列出，关键词可以分别落在不同层级；关键词的分隔规则由 `searchMatch` 设置，见 [Select 搜索规则](../select/README.md#搜索规则)，全局键为 `Cascader.searchMatch`（MCascader 读同一个键）。默认只列出末级节点，`changeOnSelect` 时任意一级都可选。点击结果会写入整条路径、提交并关闭；没有匹配时显示 `vc.Cascader.noMatch`。关闭浮层会清空搜索词。
 
 搜索只在已有的 `data` 内进行，不发起请求：`loadData` 仍然只用于加载子节点，尚未加载的节点搜不到，待加载子节点的节点也不会作为结果。
 
@@ -340,17 +449,29 @@ p {
 | 级联列 | ↑ / ↓ 在当前列内移动，← / → 回到父级或进入子级（搜索词为空时），Enter 等同点击当前项 |
 | 搜索结果 | ↑ / ↓ 移动高亮，Enter 选中高亮的路径 |
 
+下例第二个使用 `searchable="popover"`，并让空格也表示任一命中。
+
 :::playground
 <!--
 <config lang="json5">
-{ previewInset: 20 }
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
 </config>
 -->
 ```vue
 <template>
-	<div class="cascader-search-demo">
+	<div class="cascader-demo">
 		<Cascader v-model="path" :data="options" searchable clearable search-placeholder="输入分组或条目名称" />
-		<p>已提交路径：{{ path.length ? path.join(' / ') : '无' }}</p>
+		<Cascader
+			v-model="orPath"
+			:data="options"
+			:search-match="{ or: [' ', ',', '，'] }"
+			searchable="popover"
+			search-placeholder="空格也是任一命中"
+		/>
+		<p class="cascader-demo__result">已提交路径：{{ path.length ? path.join(' / ') : '无' }}；{{ orPath.join(' / ') || '无' }}</p>
 	</div>
 </template>
 
@@ -359,6 +480,7 @@ import { ref } from 'vue';
 import { Cascader } from '@deot/vc';
 
 const path = ref([]);
+const orPath = ref([]);
 const options = ['A', 'B'].map(group => ({
 	value: `group-${group}`,
 	label: `分组 ${group}`,
@@ -374,8 +496,17 @@ const options = ['A', 'B'].map(group => ({
 </script>
 
 <style scoped>
-.cascader-search-demo { width: min(100%, 360px); }
-.cascader-search-demo p { margin: 12px 0 0; overflow-wrap: anywhere; }
+.cascader-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	width: min(100%, 360px);
+}
+
+.cascader-demo__result {
+	margin: 0;
+	overflow-wrap: anywhere;
+}
 </style>
 ```
 :::
@@ -387,29 +518,31 @@ const options = ['A', 'B'].map(group => ({
 示例只设置一个待加载父节点，使用本地延时模拟加载。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
 	<div class="cascader-demo">
-		<Cascader
-			v-model="value"
-			:data="data"
-			:load-data="loadData"
-			@visible-change="isVisible => isVisible && handleVisibleChange(true)"
-			@close="handleVisibleChange(false)"
-		/>
-		<p>加载次数：{{ loadCount }}；当前路径：{{ value }}</p>
-		<p>打开后将鼠标移到“分组 A”，等待子节点出现再选择。</p>
+		<Cascader v-model="value" :data="data" :load-data="loadData" />
+		<p class="cascader-demo__result">加载次数：{{ loadCount }}；当前路径：{{ value }}</p>
+		<p class="cascader-demo__result">打开后将鼠标移到“分组 A”，等待子节点出现再选择。</p>
 	</div>
 </template>
 
 <script setup>
-import { inject, ref } from 'vue';
+import { ref } from 'vue';
 import { Cascader } from '@deot/vc';
 
 const value = ref([]);
 const data = ref([{ value: 'group-a', label: '分组 A', children: [] }]);
 const loadCount = ref(0);
+
 // row 为待加载的节点，values / labels 为从根到它的路径
 const loadData = ({ row }) => {
 	loadCount.value++;
@@ -418,19 +551,18 @@ const loadData = ({ row }) => {
 		{ value: `${row.value}-2`, label: `${row.label} 的条目 2` }
 	]), 600));
 };
-const playground = inject('docs:playground');
-const handleVisibleChange = playground.run(320);
 </script>
 
 <style scoped>
 .cascader-demo {
-	display: grid;
-	gap: 12px;
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
 	max-width: 320px;
 }
-p {
+
+.cascader-demo__result {
 	margin: 0;
-	line-height: 1.6;
 	overflow-wrap: anywhere;
 }
 </style>
@@ -442,27 +574,29 @@ p {
 默认插槽替换整个输入框，可读取 `label`、`value`、`active`。默认模式下，`value` 包含正在浏览的临时路径，`label` 对应已提交路径；以外部 `v-model` 判断提交结果。替换输入框后，内置清除按钮也随之移除。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
 	<div class="cascader-demo">
-		<Cascader
-			v-model="value"
-			:data="data"
-			@visible-change="isVisible => isVisible && handleVisibleChange(true)"
-			@close="handleVisibleChange(false)"
-		>
+		<Cascader v-model="value" :data="data">
 			<template #default="{ label, active }">
 				<Button>{{ label.join(' / ') || '选择条目' }}{{ active ? '（展开中）' : '' }}</Button>
 			</template>
 		</Cascader>
-		<p>已提交路径：{{ value }}</p>
+		<p class="cascader-demo__result">已提交路径：{{ value }}</p>
 	</div>
 </template>
 
 <script setup>
-import { inject, ref } from 'vue';
-import { Cascader, Button } from '@deot/vc';
+import { ref } from 'vue';
+import { Button, Cascader } from '@deot/vc';
 
 const data = [
 	{ value: 'group-a', label: '分组 A', children: [
@@ -475,53 +609,67 @@ const data = [
 	] }
 ];
 const value = ref([]);
-const playground = inject('docs:playground');
-const handleVisibleChange = playground.run(320);
 </script>
 
 <style scoped>
 .cascader-demo {
-	display: grid;
-	gap: 12px;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 16px;
 	max-width: 320px;
 }
-p {
+
+.cascader-demo__result {
 	margin: 0;
-	line-height: 1.6;
 	overflow-wrap: anywhere;
 }
 </style>
 ```
 :::
 
-### 浮层挂载位置
+### 浮层位置与挂载
+
+`placement` 设置浮层位置，`arrow` 显示箭头，`autoWidth` 为 `false` 时浮层与触发区同宽；`tag` 设置触发区根元素，`id` 传给默认输入框的根节点。浮层初始化完成时触发 `ready`，关闭动画完成后触发 `close`。
 
 `portal` 默认将浮层挂到 `body`；`false` 将其挂到组件根节点内，会受祖先 `overflow` 裁剪。取消勾选后可观察局部滚动容器中的裁剪效果。更多滚动场景见 [完整示例](./examples/portal.vue)。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16, viewport: 375 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
 	<div class="cascader-demo">
-		<label><input v-model="isPortal" type="checkbox"> 挂载到 body（切换前关闭浮层）</label>
-		<div class="scroll-area">
-			<div class="scroll-content">
-				<Cascader
-					v-model="value"
-					:data="data"
-					:portal="isPortal"
-					@visible-change="isVisible => isVisible && handleVisibleChange(true)"
-					@close="handleVisibleChange(false)"
-				/>
+		<Cascader
+			id="cascader-demo-target"
+			v-model="topValue"
+			:data="data"
+			:auto-width="false"
+			placement="top-left"
+			tag="section"
+			arrow
+			@ready="handleReady"
+			@close="handleClose"
+		/>
+		<Checkbox v-model="isPortal">挂载到 body（切换前关闭浮层）</Checkbox>
+		<div class="cascader-demo__scroll">
+			<div class="cascader-demo__content">
+				<Cascader v-model="value" :data="data" :portal="isPortal" />
 			</div>
 		</div>
-		<p>当前路径：{{ value }}</p>
+		<p class="cascader-demo__result">当前路径：{{ topValue }} {{ value }}；{{ status }}</p>
 	</div>
 </template>
 
 <script setup>
-import { inject, ref } from 'vue';
-import { Cascader } from '@deot/vc';
+import { ref } from 'vue';
+import { Cascader, Checkbox } from '@deot/vc';
 
 const data = [
 	{ value: 'group-a', label: '分组 A', children: [
@@ -533,33 +681,43 @@ const data = [
 		{ value: 'item-b-2', label: '条目 B-2' }
 	] }
 ];
+const topValue = ref([]);
 const value = ref([]);
 const isPortal = ref(true);
-const playground = inject('docs:playground');
-const handleVisibleChange = playground.run(420);
+const status = ref('等待操作');
+
+const handleReady = () => {
+	status.value = '触发 ready';
+};
+
+const handleClose = () => {
+	status.value = '触发 close';
+};
 </script>
 
 <style scoped>
 .cascader-demo {
-	display: grid;
-	gap: 12px;
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	gap: 16px;
 	max-width: 320px;
 }
-p {
-	margin: 0;
-	line-height: 1.6;
-	overflow-wrap: anywhere;
-}
-</style>
-<style scoped>
-.scroll-area {
+
+.cascader-demo__scroll {
 	height: 160px;
 	overflow: auto;
 	border: 1px solid var(--vc-color-light-deeper);
 }
-.scroll-content {
+
+.cascader-demo__content {
 	height: 400px;
 	padding: 24px 12px;
+}
+
+.cascader-demo__result {
+	margin: 0;
+	overflow-wrap: anywhere;
 }
 </style>
 ```
@@ -572,14 +730,17 @@ p {
 :::playground
 <!--
 <config lang="json5">
-{ previewInset: 20 }
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
 </config>
 -->
 ```vue
 <template>
 	<div class="cascader-demo">
 		<Cascader v-model="value" :data="options" virtualized searchable clearable />
-		<p>当前值：{{ value }}</p>
+		<p class="cascader-demo__result">当前值：{{ value }}</p>
 	</div>
 </template>
 
@@ -599,8 +760,16 @@ const value = ref(['2500', '2500-3']);
 </script>
 
 <style scoped>
-.cascader-demo { width: min(100%, 320px); }
-.cascader-demo p { margin: 12px 0 0; }
+.cascader-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	width: min(100%, 320px);
+}
+
+.cascader-demo__result {
+	margin: 0;
+}
 </style>
 ```
 :::
@@ -615,13 +784,20 @@ const value = ref(['2500', '2500-3']);
 - `MCascader` 同样支持，输出 `<span class="vcm-cascader-plaintext">`。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
 	<div class="cascader-demo">
-		<p>完整路径：<Cascader :model-value="['a', 'a-1', 'a-1-2']" :data="options" plaintext /></p>
-		<p>最后一级：<Cascader model-value="b-1" :data="options" check-strategy="child" plaintext /></p>
-		<p>空值：<Cascader :data="options" extra="-" plaintext /></p>
+		<div>完整路径：<Cascader :model-value="['a', 'a-1', 'a-1-2']" :data="options" plaintext /></div>
+		<div>最后一级：<Cascader model-value="b-1" :data="options" check-strategy="child" plaintext /></div>
+		<div>空值：<Cascader :data="options" extra="-" plaintext /></div>
 	</div>
 </template>
 
@@ -641,52 +817,94 @@ const options = [
 </script>
 
 <style scoped>
-.cascader-demo p { margin: 0 0 12px; }
+.cascader-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
 </style>
 ```
 :::
 
+## 移动端
+
+`MCascader` 是独立的移动端组件，`MCascaderView` 是它弹层里的内容，也可以直接放在页面中。`v-model` 的形状与转换规则（`checkStrategy`、`separator`、`numerable`、`nullValue`）、`loadData`、搜索规则与桌面端相同；尺寸按 750 稿设计，写为 `calc(var(--vc-rem) * n)`，随 `--vc-rem` 缩放，底栏切换 `rem` 可查看不同屏宽下的效果。
+
 ### 移动端选择
 
-`MCascader` 是独立的移动端组件：默认渲染 MListItem，点击后从底部弹出。弹层上方的标签切换层级，待选的一级显示「请选择」，下方是选项列表，选中项为主色并打勾。`v-model` 的形状与转换规则与桌面端相同（`checkStrategy`、`separator`、`numerable`、`nullValue`）。
+`MCascader` 默认渲染 MListItem（`label`、`labelWidth`、`arrow` 传给它），点击后从底部弹出。弹层上方的标签切换层级，待选的一级显示「请选择」，下方是选项列表，选中项为主色并打勾。默认插槽替换整个触发区，参数为 `{ label, value }`。
 
 - 默认选到最后一级即提交并关闭，标题栏右侧有关闭按钮。
-- `confirm`：选到最后一级不自动关闭，由「确定」提交；路径还没到最后一级时「确定」置灰。`true` / `'top'` 为顶部的「取消 / 确定」工具栏，`'bottom'` 为底部的「确定」大按钮。
+- `confirm`：选到最后一级不自动关闭，由「确定」提交；路径还没到最后一级时「确定」置灰。`true` / `'top'` 为顶部的「取消 / 确定」工具栏（文案由 `cancelText`、`okText` 设置），`'bottom'` 为底部的「确定」大按钮。提交时触发 `ok`，点「取消」触发 `cancel`。
 - `changeOnSelect`：可以停在任意一级，同样显示工具栏，点「确定」提交当前路径；选到最后一级时，没开 `confirm` 仍自动提交并关闭。
-- `clearable`：有选中路径时，层级标签栏右端显示「清空」。没开 `confirm` 时清空即提交空值并关闭；开了 `confirm` 时只清空弹层内的路径，由「确定」提交空值。
+- `clearable`：有选中路径时，层级标签栏右端显示「清空」（触发 `clear`）。没开 `confirm` 时清空即提交空值并关闭；开了 `confirm` 时只清空弹层内的路径，由「确定」提交空值。
 - `searchable`：列表上方显示搜索框，规则同桌面端：按整条路径匹配，只列出最后一级，开启 `changeOnSelect` 时任意一级都可选。
 - 节点的 `disabled: true` 置灰且不可点。
 - 切换层级时该级的选中项滚到列表中间；搜索词变化后结果列表回到顶部。
 - `virtualized`：每一级与搜索结果只渲染可视范围附近的项（基于 [MRecycleList](../recycle-list/README.md)），列宽不受影响。默认不开启。
 
 :::playground
-<!-- <config lang="json5">{ viewport: 375, previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	mobile: true,
+	local: false,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
+</config>
+-->
 ```vue
 <template>
-	<div style="display: grid; gap: 12px; max-width: 420px">
+	<div class="m-cascader-demo">
 		<MCascader
 			v-model="value"
 			:data="data"
 			label="选择条目"
+			label-width="160"
 			title="选择条目"
-			@visible-change="visible => visible && handleVisibleChange('basic', true)"
-			@close="handleVisibleChange('basic', false)"
+			@visible-change="handleVisibleChange"
+		/>
+		<MCascader
+			v-model="confirmed"
+			:data="data"
+			label="顶部确定"
+			label-width="160"
+			title="选择条目"
+			cancel-text="返回"
+			ok-text="完成"
+			:arrow="false"
+			confirm
+			@ok="handleOk"
+			@cancel="handleCancel"
 		/>
 		<MCascader
 			v-model="anyLevel"
 			:data="data"
 			label="任意一级"
+			label-width="160"
+			confirm="bottom"
 			change-on-select
 			searchable
 			clearable
-			@visible-change="visible => visible && handleVisibleChange('any', true)"
-			@close="handleVisibleChange('any', false)"
+			@clear="handleClear"
 		/>
-		<p>value：{{ value }}；anyLevel：{{ anyLevel }}</p>
+		<MCascader v-model="custom" :data="data" title="选择条目">
+			<template #default="{ label }">
+				<div class="m-cascader-demo__trigger">{{ label.length ? label.join(' / ') : '自定义触发区，点击选择' }}</div>
+			</template>
+		</MCascader>
+		<p class="m-cascader-demo__result">value：{{ value }}；confirmed：{{ confirmed }}；anyLevel：{{ anyLevel }}</p>
+		<p class="m-cascader-demo__result">{{ status }}</p>
 	</div>
 </template>
+
 <script setup>
-import { ref, inject } from 'vue';
+import { ref } from 'vue';
 import { MCascader } from '@deot/vc';
 
 const data = [
@@ -703,46 +921,107 @@ const data = [
 	] }
 ];
 const value = ref([]);
+const confirmed = ref([]);
 const anyLevel = ref([]);
+const custom = ref([]);
+const status = ref('等待操作');
 
-const playground = inject('docs:playground');
-const visibleStates = {};
-const handlePreview = playground.run(560);
-const handleVisibleChange = (key, visible) => {
-	visibleStates[key] = visible;
-	return handlePreview(Object.values(visibleStates).some(Boolean));
+const handleVisibleChange = (visible) => {
+	status.value = `visible-change：${visible}`;
+};
+
+const handleOk = (nextValue, labels) => {
+	status.value = `ok：${labels.join(' / ')}`;
+};
+
+const handleCancel = () => {
+	status.value = '触发 cancel';
+};
+
+const handleClear = () => {
+	status.value = '触发 clear';
 };
 </script>
+
+<style scoped>
+.m-cascader-demo {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--vc-rem) * 16);
+}
+
+.m-cascader-demo__trigger {
+	padding: calc(var(--vc-rem) * 24) calc(var(--vc-rem) * 32);
+	color: var(--vc-color-primary);
+}
+
+.m-cascader-demo__result {
+	margin: 0;
+	padding-inline: calc(var(--vc-rem) * 32);
+	overflow-wrap: anywhere;
+}
+</style>
 ```
 :::
 
 ### 移动端内嵌视图与直接调用
 
-`MCascaderView` 是弹层里的内容，也可以直接放在页面中，提交规则同上：选到最后一级（或开启 `changeOnSelect` 时任意一级）才更新 `v-model`，每次点选都触发 `select`。`loadData` 与桌面端相同，点击待加载的节点时该行显示加载图标。
+`MCascaderView` 是弹层里的内容，也可以直接放在页面中，提交规则同上：选到最后一级（或开启 `changeOnSelect` 时任意一级）才更新 `v-model`，每次点选都触发 `select`，点「清空」触发 `clear`。`loadData` 与桌面端相同，点击待加载的节点时该行显示加载图标。`renderLabel`（或 `label` 插槽）自定义选项内容；下例的值是按 `separator` 连接的字符串，清空返回 `nullValue`。
 
 `MCascader.open(options)` 直接打开弹层，通过 `onOk(value, labels)` 接收结果；返回的 Portal 实例可以 `await`：确定后（关闭动画结束时）得到 `onOk` 的参数组成的对象 `{ value, labels }`，取消、点遮罩等没有确定就关闭时拒绝（只用回调时不会产生未处理的拒绝）；也可调用 `destroy()`。
 
 :::playground
-<!-- <config lang="json5">{ viewport: 375, previewInset: 0 }</config> -->
+<!--
+<config lang="json5">
+{
+	mobile: true,
+	local: false,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
+</config>
+-->
 ```vue
 <template>
-	<div>
-		<MCascaderView v-model="value" :data="data" :load-data="loadData" @select="handleSelect" />
-		<p style="padding: 0 16px">{{ value }} {{ selected }}</p>
-		<p style="padding: 0 16px; color: var(--vc-color-primary)" @click="handleOpen">MCascader.open 直接调用：{{ opened }}</p>
+	<div class="m-cascader-demo">
+		<MCascaderView
+			v-model="value"
+			:data="data"
+			:load-data="loadData"
+			:render-label="renderLabel"
+			:null-value="null"
+			separator="/"
+			clearable
+			@select="handleSelect"
+			@clear="handleClear"
+		/>
+		<p class="m-cascader-demo__result">{{ JSON.stringify(value) }} {{ selected }}</p>
+		<div class="m-cascader-demo__actions">
+			<MButton type="primary" @click="handleOpen">MCascader.open 直接调用</MButton>
+		</div>
+		<p class="m-cascader-demo__result">open：{{ opened }}</p>
 	</div>
 </template>
+
 <script setup>
-import { ref } from 'vue';
-import { MCascader, MCascaderView } from '@deot/vc';
+import { h, ref } from 'vue';
+import { MButton, MCascader, MCascaderView } from '@deot/vc';
 
 const data = ref([
 	{ value: 'x', label: '分组 X', children: [] },
 	{ value: 'y', label: '分组 Y', children: [] }
 ]);
-const value = ref([]);
+const numberData = [
+	{ value: 1, label: '分组一', children: [{ value: 11, label: '条目 1-1' }, { value: 12, label: '条目 1-2' }] },
+	{ value: 2, label: '分组二', children: [{ value: 21, label: '条目 2-1' }] }
+];
+const value = ref('');
 const selected = ref('');
-const opened = ref([]);
+const opened = ref('1,11');
 
 // row 为待加载的节点，values / labels 为从根到它的路径
 const loadData = ({ row }) => new Promise(resolve => setTimeout(() => resolve([
@@ -750,21 +1029,51 @@ const loadData = ({ row }) => new Promise(resolve => setTimeout(() => resolve([
 	{ value: `${row.value}-2`, label: `${row.label}-2` }
 ]), 600));
 
+const renderLabel = ({ label, selected: isSelected }) => h('span', isSelected ? `${label}（当前）` : label);
+
 const handleSelect = ({ labels, leaf }) => {
 	selected.value = `${labels.join(' / ')}${leaf ? '' : '…'}`;
 };
 
-const handleOpen = () => {
-	MCascader.open({
-		value: opened.value,
-		data: data.value,
-		title: '直接调用',
-		onOk: (v) => {
-			opened.value = v;
-		}
-	});
+const handleClear = () => {
+	selected.value = '已清空';
+};
+
+const handleOpen = async () => {
+	try {
+		const result = await MCascader.open({
+			value: opened.value,
+			data: numberData,
+			title: '直接调用',
+			numerable: true,
+			searchable: true,
+			searchMatch: { or: [' ', ',', '，'] }
+		});
+		opened.value = result.value;
+	} catch {
+		selected.value = '已取消';
+	}
 };
 </script>
+
+<style scoped>
+.m-cascader-demo {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--vc-rem) * 32);
+}
+
+.m-cascader-demo__actions {
+	display: flex;
+	padding-inline: calc(var(--vc-rem) * 32);
+}
+
+.m-cascader-demo__result {
+	margin: 0;
+	padding-inline: calc(var(--vc-rem) * 32);
+	overflow-wrap: anywhere;
+}
+</style>
 ```
 :::
 
@@ -779,7 +1088,7 @@ const handleOpen = () => {
 | 参数 | 使用位置 | 值 |
 | --- | --- | --- |
 | color-dark-lighter | 级联选项文字（cascader-column）；搜索结果文字（select-paths）；移动端选项与已选层级的标签（cascader-view） | 亮色：`#515151`；暗色：`#D9D9D9` |
-| color-dark-extralight | 输入区附加图标（cascader）；搜索结果的空状态文字（select-paths） | 亮色：`#909399`；暗色：`#B9B9B9` |
+| color-dark-extralight | 输入区附加图标（cascader）；`disabled` 选项文字（cascader-column）；搜索结果的空状态文字（select-paths） | 亮色：`#909399`；暗色：`#B9B9B9` |
 | color-neutral-light | 级联列分隔线（cascader-column） | 亮色：`#EDEFF1`；暗色：`#3B4354` |
 | color-primary | 选中选项文字（cascader-column）；搜索结果中当前路径的文字（cascader）；搜索命中的文字（select-highlight） | `#456CF6` |
 | background-color-primary-light | 选项悬停及当前浏览选项背景（cascader-column）；搜索结果的高亮背景（select-paths） | 亮色：`#E6F7FF`；暗色：`#273E5E` |
@@ -849,7 +1158,7 @@ const handleOpen = () => {
 
 ### 数据格式与值转换
 
-以下类型用于说明节点结构，无需导入。桌面端节点级的 `disabled`、自定义 `loading` 或 `hasChildren` 不控制当前列行为（移动端的 `disabled` 置灰且不可点）；展开和加载状态由 `children` 与 `loadData` 推导。
+以下类型用于说明节点结构，无需导入。桌面端节点级的 `disabled` 只置灰（仍可点击），自定义 `loading` 或 `hasChildren` 不控制当前列行为（移动端的 `disabled` 置灰且不可点）；展开和加载状态由 `children` 与 `loadData` 推导。
 
 ```ts
 interface CascaderOption {
@@ -869,6 +1178,7 @@ interface CascaderOption {
 
 | 属性 | 说明 | 类型 | 可选值 | 默认值 |
 | --- | --- | --- | --- | --- |
+| disabled | 禁用，点击不打开 | `boolean` | - | `false` |
 | label | 条目标签 | `string \| number \| Function \| { type: string; value: any }` | - | - |
 | labelWidth | 条目标签宽度，750 稿长度，传给 MListItem | `string \| number` | - | `''` |
 | arrow | 条目箭头 | `boolean \| string` | - | `right` |
@@ -950,6 +1260,7 @@ interface CascaderOption {
 | 变量 | 用途 |
 | --- | --- |
 | `--vc-cascader-column-color-dark-lighter` | 选项文本 |
+| `--vc-cascader-column-color-dark-extralight` | `disabled` 选项的文本 |
 | `--vc-cascader-column-color-neutral-light` | 列分隔线 |
 | `--vc-cascader-column-color-primary` | 当前浏览选项的文本 |
 | `--vc-cascader-column-background-color-primary-light` | 选项悬停及当前浏览选项的背景 |

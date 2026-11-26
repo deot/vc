@@ -49,17 +49,26 @@ app.use(vc);
 下面将语言配置放在 `locale.js`，页面通过 `useLocale()` 读取当前语言名称。切换全局配置后状态同步更新，示例卸载时恢复原语言。
 
 :::playground
-<!-- <config lang="json5">{ entry: 'App.vue', views: ['runtime', 'files'], previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	entry: 'App.vue',
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue App.vue
 <template>
-	<div class="demo">
-		<div class="actions">
+	<div class="vc-demo">
+		<div class="vc-demo__row">
 			<Button @click="handleChinese">简体中文</Button>
 			<Button @click="handleEnglish">English</Button>
 		</div>
-		<p>当前语言：{{ lang }}</p>
+		<p class="vc-demo__result">当前语言：{{ lang }}</p>
 	</div>
 </template>
+
 <script setup>
 import { onBeforeUnmount } from 'vue';
 import { Button, useLocale } from '@deot/vc';
@@ -69,15 +78,23 @@ const { lang } = useLocale();
 
 onBeforeUnmount(restoreLocale);
 </script>
+
 <style scoped>
-.actions {
+.vc-demo {
 	display: flex;
-	flex-wrap: wrap;
-	gap: 12px;
+	flex-direction: column;
+	gap: 16px;
 }
 
-.demo p {
-	margin: 16px 0;
+.vc-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+.vc-demo__result {
+	margin: 0;
 }
 </style>
 ```
@@ -279,6 +296,52 @@ VcInstance.configure({
 });
 ```
 
+### MNavBar 全局配置
+
+没有监听 `back` 时接管返回。详见 [NavBar](../nav-bar/README.md)。
+
+| 配置项 | 具体作用 | 默认值 |
+| --- | --- | --- |
+| back | 接收 `{ instance }`；返回非 `undefined` 值时视为已接管，否则调用 `window.history.back()` | `undefined` |
+
+```js
+import { VcInstance } from '@deot/vc';
+
+// 没有上一页时回到首页
+VcInstance.configure({
+	MNavBar: {
+		back: () => {
+			if (window.history.length > 1) return;
+			window.location.replace('/');
+			return true;
+		}
+	}
+});
+```
+
+### MTabBar 全局配置
+
+接入标签栏各项的 `to`。详见 [TabBar](../tab-bar/README.md)。
+
+| 配置项 | 具体作用 | 默认值 |
+| --- | --- | --- |
+| to | 接收 `{ value, instance }`，`value` 为该项的 `to`，`instance` 为被点击的 MTabBarItem；返回非 `undefined` 值时视为已接管，否则函数形式的 `to` 直接调用、带协议的地址用 `window.open` 打开 | `undefined` |
+
+```js
+import { VcInstance } from '@deot/vc';
+
+// 站内路径自行跳转，其余交给默认处理
+VcInstance.configure({
+	MTabBar: {
+		to: ({ value }) => {
+			if (typeof value !== 'string' || !value.startsWith('/')) return;
+			window.location.assign(value);
+			return true;
+		}
+	}
+});
+```
+
 ### FilePreview 全局配置
 
 FilePreview 与 UploadPicker 共用此配置，Editor 只读取文件类型和名称配置。配置类型可通过 `VcOptions['FilePreview']` 获取。详见 [FilePreview](../file-preview/README.md)。
@@ -287,8 +350,8 @@ FilePreview 与 UploadPicker 共用此配置，Editor 只读取文件类型和�
 | --- | --- | --- |
 | getFileType | 接收 `{ source }`，`source` 为地址或文件名，识别 `image`、`video`、`audio` 或 `file`；返回空值或非法类型时回退内置规则 | `undefined` |
 | getFileName | 接收 `{ source }`，从地址推导缺省名称；数据中的显式名称优先，返回空值时回退内置规则 | `undefined` |
-| enhancer | 接收 `{ current, data, instance }`；返回真值或 resolve 真值时接管预览 | `undefined` |
-| renderSlide | 接收 `{ type, row, index, active, close, instance }`，返回 VNode 时替换查看器中的这一页；返回 `false` 或空值时使用内置页 | `undefined` |
+| enhancer | 接收 `{ current, data, instance, mobile }`，`mobile` 为是否由移动端入口打开；返回真值或 resolve 真值时接管预览 | `undefined` |
+| renderSlide | 接收 `{ type, row, index, active, close, instance, mobile }`，返回 VNode 时替换查看器中的这一页；返回 `false` 或空值时使用内置页 | `undefined` |
 | imageOptions | 图片页配置。`fit` 为初始展示：`max-edge` 放大到长边贴齐视口；`actual` 按自然像素，超出视口时同比例缩小。`max`、`min` 为相对初始尺寸的最大、最小倍数 | `{ fit: 'max-edge', max: 10, min: 1 }` |
 
 ```js
@@ -316,7 +379,7 @@ VcInstance.configure({
 | 配置项 | 具体作用 | 默认值 |
 | --- | --- | --- |
 | options | 提供 Quill 初始化配置，在 Editor 默认配置之后、组件 `options` 之前合并 | `undefined` |
-| enhancer | 接收 `{ instance, type }`，返回真值时终止默认工具栏上传；需要组件启用 `enhancer`，缺省回退到 `UploadPicker.enhancer` | `undefined` |
+| enhancer | 接收 `{ instance, type, types, mobile }`，`types` 为 `[type]`，`mobile` 为是否为 MEditor；返回真值或 resolve 真值时终止默认工具栏上传；需要组件启用 `enhancer`，缺省回退到 `UploadPicker.enhancer` | `undefined` |
 
 ```js
 import { VcInstance } from '@deot/vc';
@@ -362,11 +425,11 @@ VcInstance.configure({
 
 ### RecycleList 全局配置
 
-定制各状态的默认内容；对应插槽优先于组件 `render*` 属性，组件属性优先于全局配置。详见 [RecycleList](../recycle-list/README.md)。
+定制各状态的默认内容；对应插槽优先于组件 `render*` 属性，组件属性优先于全局配置。RecycleList 与 MRecycleList 共用这些配置，渲染函数的参数带 `mobile`（MRecycleList 为 `true`）。详见 [RecycleList](../recycle-list/README.md)。
 
 | 配置项 | 具体作用 | 默认值 |
 | --- | --- | --- |
-| renderRefresh | 定制拉动刷新提示，接收 `{ status, type }` | `undefined` |
+| renderRefresh | 定制拉动刷新提示，接收 `{ status, type, mobile }` | `undefined` |
 | renderPlaceholder | 定制首次加载时的骨架占位内容 | `undefined` |
 | renderLoading | 定制列表加载中的内容 | `undefined` |
 | renderComplete | 定制加载完成、没有更多数据时的内容 | `undefined` |
@@ -475,11 +538,11 @@ VcInstance.configure({
 
 ### UploadPicker 全局配置
 
-接管桌面端默认资源选择入口；Editor 也将此配置作为资源选择的后备增强器。详见 [UploadPicker](../upload-picker/README.md)。
+接管默认资源选择入口，UploadPicker 与 MUploadPicker 共用；Editor 也将此配置作为资源选择的后备增强器。详见 [UploadPicker](../upload-picker/README.md)。
 
 | 配置项 | 具体作用 | 默认值 |
 | --- | --- | --- |
-| enhancer | 接收 `{ instance, type }`，同步返回真值时阻止原生选择；需要组件的 `enhancer` 为 `true`，移动端入口不使用此配置 | `undefined` |
+| enhancer | 接收 `{ instance, type, types }`，`type` 为这次要选的类型（桌面端多种类型一次选择时为空），`types` 为可选类型；同步返回真值时阻止原生选择；需要组件的 `enhancer` 为 `true` | `undefined` |
 
 ```js
 import { VcInstance } from '@deot/vc';

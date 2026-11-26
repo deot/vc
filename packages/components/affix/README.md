@@ -1,6 +1,8 @@
 ## 固钉（Affix）
 
-将内容固定在视口或滚动容器的顶部、底部。`MAffix` 为移动端版本，属性、事件、插槽与 `Affix` 相同，数字 `offset` 为 750 稿长度。
+将内容固定在视口或滚动容器的顶部、底部。
+
+移动端入口导出的 `MAffix` 与 `Affix` 的属性、事件、插槽相同，数字 `offset` 为 750 稿长度，随 `--vc-rem` 缩放，见 [移动端](#移动端)。
 
 ### 何时使用
 
@@ -9,12 +11,13 @@
 
 ### 基础用法
 
-`fixed` 默认为 `true`，内容固定在视口中。在局部滚动容器内设为 `false`，组件使用 `position: sticky` 吸附在滚动容器内：吸附由浏览器完成，滚动时不会抖动；吸附范围受父元素限制，父元素滚出可视区后固钉随之离开（此时 `active` 为 `false`）。需要在整个滚动容器内持续吸附时，把 `Affix` 直接放在滚动内容中，且与滚动容器之间不要有 `overflow` 非 `visible` 的元素。
+`fixed` 默认为 `true`，内容固定在视口中。在局部滚动容器内设为 `false`，组件使用 `position: sticky` 吸附在滚动容器内：吸附由浏览器完成，滚动时不会抖动；吸附范围受父元素限制，父元素滚出可视区后固钉随之离开（此时 `active` 为 `false`）。需要在整个滚动容器内持续吸附时，把 `Affix` 直接放在滚动内容中，且与滚动容器之间不要有 `overflow` 非 `visible` 的元素。`v-model` 与默认插槽的 `active` 都是当前的吸附状态。
 
 :::playground
 <!--
 <config lang="json5">
 {
+	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -22,10 +25,7 @@
 ```vue
 <template>
 	<div class="affix-demo">
-		<div class="affix-demo__status" :class="{ 'is-active': isActive }">
-			<span class="affix-demo__status-dot" aria-hidden="true" />
-			<span>当前状态：{{ isActive ? '已固定' : '未固定' }}</span>
-		</div>
+		<p class="affix-demo__result">当前状态：{{ isActive ? '已固定' : '未固定' }}</p>
 		<Scroller
 			class="affix-demo__scroller"
 			height="240px"
@@ -33,22 +33,17 @@
 			:native="false"
 		>
 			<div class="affix-demo__content">
-				<div class="affix-demo__spacer">
-					<span>向下滚动查看固定效果</span>
-					<span class="affix-demo__arrow" aria-hidden="true">↓</span>
-				</div>
+				<div class="affix-demo__spacer">向下滚动查看固定效果</div>
 				<Affix v-model="isActive" :fixed="false" :offset="8">
-					<template #default="{ active: isFixed }">
+					<template #default="{ active }">
 						<div class="affix-demo__action">
 							<Button type="primary">
-								{{ isFixed ? '已固定在容器顶部' : '等待固定' }}
+								{{ active ? '已固定在容器顶部' : '等待固定' }}
 							</Button>
 						</div>
 					</template>
 				</Affix>
-				<div class="affix-demo__spacer affix-demo__spacer--after">
-					<span>继续滚动，固钉保持在顶部</span>
-				</div>
+				<div class="affix-demo__spacer affix-demo__spacer--after">继续滚动，固钉保持在顶部</div>
 			</div>
 		</Scroller>
 	</div>
@@ -62,66 +57,192 @@ const isActive = ref(false);
 </script>
 
 <style scoped>
-.affix-demo__status {
-	display: inline-flex;
-	align-items: center;
-	gap: 8px;
-	margin-bottom: 12px;
-	padding: 6px 12px;
-	border-radius: 16px;
-	background: var(--vc-color-primary-lighter);
-	color: var(--vc-color-dark-lightest);
-	font-size: 13px;
+.affix-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
 }
 
-.affix-demo__status-dot {
-	width: 8px;
-	height: 8px;
-	border-radius: 50%;
-	background: var(--vc-color-dark-extralight);
-}
-
-.affix-demo__status.is-active {
-	color: var(--vc-color-dark);
-}
-
-.affix-demo__status.is-active .affix-demo__status-dot {
-	background: var(--vc-color-primary);
+.affix-demo__result {
+	margin: 0;
 }
 
 .affix-demo__scroller {
-	border: 1px solid var(--vc-color-primary-lighter);
+	border: 1px solid var(--vc-color-light-deeper);
 	border-radius: var(--vc-border-radius);
-	background: var(--vc-background-color-lightest);
 }
 
 .affix-demo__content {
-	min-height: 640px;
-	padding: 0 20px;
+	padding: 0 16px;
 }
 
 .affix-demo__spacer {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	gap: 6px;
 	height: 160px;
 	color: var(--vc-color-dark-lightest);
-	font-size: 13px;
 }
 
-.affix-demo__arrow {
-	color: var(--vc-color-primary);
-	font-size: 16px;
+.affix-demo__spacer--after {
+	height: 360px;
 }
 
 .affix-demo__action {
 	display: flex;
 	justify-content: center;
 }
+</style>
+```
+:::
 
-.affix-demo__spacer--after {
-	height: 360px;
+### 固定在视口与活动范围
+
+`fixed` 为 `true` 时内容固定在视口，滚动页面查看效果。`target` 是限制活动范围的 CSS 选择器：容器离开视口后不再吸附，固钉靠近容器边缘时被推出。`placement="bottom"` 吸附在底部，`zIndex` 设置固定状态下的层级；`disabled` 禁用固定，直接渲染默认插槽。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
+```vue
+<template>
+	<div class="affix-demo">
+		<div class="affix-demo__row">
+			<Switch v-model="isDisabled" />
+			<span>disabled</span>
+		</div>
+		<p class="affix-demo__result">吸顶：{{ isTop ? '已固定' : '未固定' }}；吸底：{{ isBottom ? '已固定' : '未固定' }}</p>
+		<div class="affix-demo__target affix-demo-range">
+			<Affix
+				v-model="isTop"
+				:offset="16"
+				:z-index="10"
+				:disabled="isDisabled"
+				target=".affix-demo-range"
+			>
+				<Button type="primary">在容器内吸顶</Button>
+			</Affix>
+			<div class="affix-demo__spacer">滚动页面，固钉只在虚线容器内活动</div>
+			<Affix
+				v-model="isBottom"
+				placement="bottom"
+				:offset="16"
+				:z-index="10"
+				:disabled="isDisabled"
+				target=".affix-demo-range"
+			>
+				<Button type="success">在容器内吸底</Button>
+			</Affix>
+		</div>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { Affix, Button, Switch } from '@deot/vc';
+
+const isTop = ref(false);
+const isBottom = ref(false);
+const isDisabled = ref(false);
+</script>
+
+<style scoped>
+.affix-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.affix-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+.affix-demo__result {
+	margin: 0;
+}
+
+.affix-demo__target {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	padding: 16px;
+	border: 1px dashed var(--vc-color-light-deeper);
+	border-radius: var(--vc-border-radius);
+}
+
+.affix-demo__spacer {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 480px;
+	color: var(--vc-color-dark-lightest);
+}
+</style>
+```
+:::
+
+## 移动端
+
+`MAffix` 的结构与 `Affix` 相同，根节点另有标记类 `.vcm-affix`（`.vc-affix.vcm-affix`），固定层为 `.vc-affix__fixed`。数字 `offset` 是 750 稿长度：样式写为 `calc(var(--vc-rem) * offset)`，随 `--vc-rem` 缩放（375 宽下 `offset=88` 即 44px），判断吸附同样读取测量节点，见 [CSS 长度](#css-长度)；字符串与 `Affix` 相同，原样使用。底栏切换 `rem` 可查看吸附位置随之缩放。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	mobile: true,
+	local: false,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
+</config>
+-->
+```vue
+<template>
+	<div class="m-affix-demo">
+		<p class="m-affix-demo__result">吸顶：{{ isActive ? '吸附中' : '未吸附' }}</p>
+		<p v-for="i in 6" :key="`a${i}`" class="m-affix-demo__item">第 {{ i }} 行</p>
+		<MAffix v-model="isActive" :offset="88">
+			<MButton type="primary" long>距顶部 88（750 稿）</MButton>
+		</MAffix>
+		<p v-for="i in 20" :key="`b${i}`" class="m-affix-demo__item">第 {{ i + 6 }} 行</p>
+		<MAffix placement="bottom" :offset="32">
+			<MButton type="success" long>距底部 32（750 稿）</MButton>
+		</MAffix>
+		<p v-for="i in 6" :key="`c${i}`" class="m-affix-demo__item">第 {{ i + 26 }} 行</p>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { MAffix, MButton } from '@deot/vc';
+
+const isActive = ref(false);
+</script>
+
+<style scoped>
+.m-affix-demo {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--vc-rem) * 16);
+	padding-inline: calc(var(--vc-rem) * 32);
+}
+
+.m-affix-demo__result,
+.m-affix-demo__item {
+	margin: 0;
+	font-size: calc(var(--vc-rem) * 28);
 }
 </style>
 ```
@@ -204,22 +325,6 @@ import { Affix, Button } from '@deot/vc';
 ```
 
 判断吸附时使用的 px 由根节点内一个不可见的测量节点（`.vc-affix__measurer`，宽度为 offset）给出：变量、`--vc-rem` 因主题、视口或局部覆盖而变化时，测量节点尺寸随之变化并重新读取，滚动时只用缓存的值。测量节点不占位，也不改变内容的定位参照。宽度不能为负，负的偏移只支持数字。
-
-### 移动端
-
-`MAffix` 的数字 `offset` 是 750 稿长度：样式写为 `calc(var(--vc-rem) * offset)`，随 `--vc-rem` 缩放（375 宽下 `offset=88` 即 44px），判断吸附同样读取测量节点，见 [CSS 长度](#css-长度)。字符串与 `Affix` 相同，原样使用。结构与 `Affix` 相同，根节点另有标记类 `.vcm-affix`（`.vc-affix.vcm-affix`），固定层为 `.vc-affix__fixed`。
-
-```vue
-<template>
-	<MAffix :offset="88">
-		<MButton type="primary">距顶部 88（750 稿）</MButton>
-	</MAffix>
-</template>
-
-<script setup>
-import { MAffix, MButton } from '@deot/vc';
-</script>
-```
 
 <!--
 ## 变更说明

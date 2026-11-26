@@ -4,25 +4,38 @@
 
 声明式组件收集引导参数、步骤和插槽，在 `modelValue=true` 时创建 Portal 引导实例，后续参数与插槽更新同步到当前实例；关闭或卸载时清理实例。`Tour.open(options)` 直接创建同一引导弹层，挂载后自动打开，无需传入 `modelValue` 或挂载 Tour/TourStep。
 
+移动端入口导出的 `MTour`、`MTourStep` 与 `Tour`、`TourStep` 是同一实现。
+
 ### 何时使用
 
 用于首次使用说明、功能入口介绍或按步骤完成操作。目标默认允许交互；开启 `disableActiveInteraction` 后禁止当前目标的指针和键盘交互，未提供 `element` 时居中展示。
 
 ### 基础用法
 
-用 `v-model` 控制打开状态，默认插槽中声明 `TourStep`。下面的两步引导隐藏上一步和关闭图标，目标按钮仍可正常操作。
+用 `v-model` 控制打开状态，默认插槽中声明 `TourStep`。`previousText` 为 `false` 隐藏上一步，`closable` 为 `false` 隐藏关闭图标；`placement` 设置卡片方向，目标按钮仍可正常操作。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 24, expandable: true }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16,
+	expandable: true
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="tour-example">
+	<div class="tour-demo">
 		<Button @click="handleStart">开始引导</Button>
-		<div ref="summaryPanel" class="summary-panel">条目概览：已完成 2 项 / 共 5 项</div>
+		<div ref="summaryPanel" class="tour-demo__panel">条目概览：已完成 2 项 / 共 5 项</div>
 		<Button ref="actionButton" type="primary" @click="handleAdd">＋ 创建条目（{{ itemCount }}）</Button>
 		<Tour
-			v-model="isActive" :previous-text="false" :closable="false"
-			@visible-change="handleVisibleChange" @close="handleClose"
+			v-model="isActive"
+			:previous-text="false"
+			:closable="false"
+			@visible-change="handleVisibleChange"
+			@close="handleClose"
 		>
 			<TourStep :element="() => actionButton?.$el" title="第一步、操作按钮" content="这里是创建条目的操作入口。" placement="right" />
 			<TourStep :element="() => summaryPanel" title="第二步、查看概览">
@@ -45,26 +58,33 @@ const actionButton = ref();
 const summaryPanel = ref();
 const playground = inject('docs:playground');
 const preview = playground.run(440);
+
 const handleVisibleChange = isVisible => isVisible && preview(true);
 const handleClose = () => preview(false);
-const handleStart = () => { isActive.value = true; };
-const handleAdd = () => { itemCount.value++; };
+
+const handleStart = () => {
+	isActive.value = true;
+};
+
+const handleAdd = () => {
+	itemCount.value++;
+};
 </script>
 
 <style scoped>
-.tour-example {
+.tour-demo {
 	display: flex;
 	flex-direction: column;
-	gap: 24px;
 	align-items: flex-start;
+	gap: 16px;
 }
 
-.summary-panel {
+.tour-demo__panel {
+	box-sizing: border-box;
 	width: 100%;
 	padding: 24px;
 	border: 1px solid var(--vc-border-color);
 	border-radius: 8px;
-	box-sizing: border-box;
 }
 </style>
 ```
@@ -72,19 +92,27 @@ const handleAdd = () => { itemCount.value++; };
 
 ### 静态调用与异步操作
 
-Tour 参数、事件回调和 Portal 的 `slots/components/uses/install/onDestroyed` 等配置放在同一个对象中。`Tour.open(options)` 同步返回可等待的 `PortalLeaf`，挂载后可以通过 `leaf.wrapper` 调用实例方法，结束后通过 `await leaf` 获取结果。
+Tour 参数、事件回调和 Portal 的 `slots/components/uses/install/onDestroyed` 等配置放在同一个对象中。`Tour.open(options)` 同步返回可等待的 `PortalLeaf`，挂载后可以通过 `leaf.wrapper` 调用实例方法，结束后通过 `await leaf` 获取结果；`Tour.destroy()` 强制清理默认 Portal 名称下的引导。
 
 静态调用通过 Portal 的 `element` 指定挂载容器，声明式组件使用 `to`，都支持选择器或 DOM 元素。默认挂载到 body。
 
 操作 `onClick(event, context)` 返回 `false`、抛错或 Promise 拒绝时保留当前步骤，其余结果继续。等待期间禁止其他导航和普通关闭。左右键、目标点击、蒙层推进和实例方法复用对应回调；`goTo` 和外部 `current` 更新直接请求指定步骤。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 24, expandable: true }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16,
+	expandable: true
+}
+</config>
+-->
 ```vue
 <template>
-	<div>
+	<div class="tour-demo">
 		<Button ref="targetButton" @click="handleOpen">静态调用</Button>
-		<p>结果：{{ resultType || '尚未结束' }}</p>
+		<p class="tour-demo__result">结果：{{ resultType || '尚未结束' }}</p>
 	</div>
 </template>
 
@@ -96,12 +124,13 @@ const targetButton = ref();
 const resultType = ref('');
 const playground = inject('docs:playground');
 const preview = playground.run(420);
-let tourLeaf;
 let timer;
+
 const handleVisibleChange = isVisible => isVisible && preview(true);
 const handleClose = () => preview(false);
+
 const handleOpen = async () => {
-	tourLeaf = Tour.open({
+	const leaf = Tour.open({
 		steps: [
 			{ element: () => targetButton.value?.$el, title: '异步检查', content: '下一步等待 600ms，期间不能重复切步或关闭。' },
 			{ title: '居中提示', content: '没有目标时居中展示。' }
@@ -114,10 +143,27 @@ const handleOpen = async () => {
 		onVisibleChange: handleVisibleChange,
 		onClose: handleClose
 	});
-	resultType.value = (await tourLeaf).type;
+	resultType.value = (await leaf).type;
 };
-onBeforeUnmount(() => { clearTimeout(timer); tourLeaf?.destroy(); });
+
+onBeforeUnmount(() => {
+	clearTimeout(timer);
+	Tour.destroy();
+});
 </script>
+
+<style scoped>
+.tour-demo {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 16px;
+}
+
+.tour-demo__result {
+	margin: 0;
+}
+</style>
 ```
 :::
 
@@ -125,26 +171,291 @@ onBeforeUnmount(() => { clearTimeout(timer); tourLeaf?.destroy(); });
 
 `advanceOnClick` 在保留目标原有点击行为的同时推进步骤；开启 `disableActiveInteraction` 后不响应目标点击。`maskClickBehavior="next"` 让蒙层点击执行下一步操作，`maskClosable` 只控制蒙层关闭。
 
-下面的示例使用圆点进度和窄视口，可以在打开前选择是否允许目标交互。
+下面的示例在移动端分栏中使用 `MTour`、`MTourStep` 与圆点进度（`progressType="dot"`），可以在打开前选择是否允许目标交互。
 
 :::playground
-<!-- <config lang="json5">{ viewport: 375, viewportOptions: ['auto', 375], previewInset: 20, expandable: true }</config> -->
+<!--
+<config lang="json5">
+{
+	mobile: true,
+	local: false,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="interaction-example">
-		<div class="interaction-toolbar">
-			<Button @click="handleStart">打开交互引导</Button>
-			<label><input v-model="isInteractionDisabled" type="checkbox"> 禁止目标交互</label>
+	<div class="m-tour-demo">
+		<div class="m-tour-demo__row">
+			<MButton type="primary" @click="handleStart">打开交互引导</MButton>
+			<MCheckbox v-model="isInteractionDisabled">禁止目标交互</MCheckbox>
 		</div>
-		<Button ref="targetButton" @click="handleTargetClick">目标按钮（{{ clickCount }}）</Button>
-		<p>允许交互时点击目标；禁止交互时点击蒙层推进。</p>
-		<Tour
-			v-model="isActive" advance-on-click :disable-active-interaction="isInteractionDisabled"
-			progress-type="dot" mask-click-behavior="next" :mask-closable="false"
-			@visible-change="handleVisibleChange" @close="handleClose"
+		<MButton ref="targetButton" @click="handleTargetClick">目标按钮（{{ clickCount }}）</MButton>
+		<p class="m-tour-demo__result">允许交互时点击目标；禁止交互时点击蒙层推进。</p>
+		<MTour
+			v-model="isActive"
+			advance-on-click
+			:disable-active-interaction="isInteractionDisabled"
+			progress-type="dot"
+			mask-click-behavior="next"
+			:mask-closable="false"
+			@visible-change="handleVisibleChange"
+			@close="handleClose"
 		>
-			<TourStep :element="() => targetButton?.$el" title="操作目标" content="目标点击保留计数行为，并进入下一步；蒙层点击也能推进。" />
-			<TourStep title="完成引导" content="无目标时居中显示，最后一步的推进操作会完成引导。" />
+			<MTourStep :element="() => targetButton?.$el" title="操作目标" content="目标点击保留计数行为，并进入下一步；蒙层点击也能推进。" />
+			<MTourStep title="完成引导" content="无目标时居中显示，最后一步的推进操作会完成引导。" />
+		</MTour>
+	</div>
+</template>
+
+<script setup>
+import { ref, inject } from 'vue';
+import { MTour, MTourStep, MButton, MCheckbox } from '@deot/vc';
+
+const isActive = ref(false);
+const isInteractionDisabled = ref(false);
+const targetButton = ref();
+const clickCount = ref(0);
+const playground = inject('docs:playground');
+const preview = playground.run(460);
+
+const handleVisibleChange = isVisible => isVisible && preview(true);
+const handleClose = () => preview(false);
+
+const handleStart = () => {
+	isActive.value = true;
+};
+
+const handleTargetClick = () => {
+	clickCount.value++;
+};
+</script>
+
+<style scoped>
+.m-tour-demo {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: calc(var(--vc-rem) * 32);
+	padding-inline: calc(var(--vc-rem) * 32);
+}
+
+.m-tour-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: calc(var(--vc-rem) * 16);
+}
+
+.m-tour-demo__result {
+	margin: 0;
+}
+</style>
+```
+:::
+
+### 外观、文案与按钮
+
+`width` 设置卡片宽度，`arrow` 控制箭头，`stagePadding`、`stageRadius` 调整高亮区域，`maskStyle` 用 `fill` 设置蒙层颜色，`wrapperStyle` 可写入 `--vc-tour-*` 变量，`contentStyle` 作用在卡片上。`nextText`、`finishText`、`skipText` 修改按钮文案，`*ButtonOptions` 传入 Button 属性；`progressFormatter` 格式化数字进度。
+
+步骤可以覆盖 Tour 的公共参数：第二步关闭蒙层（`mask`）与进度（`showProgress`），第三步关闭页脚（`footer`）。此外 `animated`、`duration` 控制动画，`keyboard`、`escClosable` 为 `false` 时不响应左右键与 ESC，`scrollIntoViewOptions` 为 `false` 时不自动滚动目标；`to`、`zIndex` 指定挂载容器与层级，`scrollable` 允许背景滚动。`header` 插槽替换完整标题区域。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16,
+	expandable: true
+}
+</config>
+-->
+```vue
+<template>
+	<div class="tour-demo">
+		<div class="tour-demo__row">
+			<Button type="primary" @click="handleStart">打开引导</Button>
+			<Button ref="firstTarget">目标一</Button>
+			<Button ref="secondTarget">目标二</Button>
+		</div>
+		<p class="tour-demo__result">{{ status }}</p>
+		<Tour
+			v-model="isActive"
+			:width="360"
+			:arrow="false"
+			:stage-padding="[16, 8]"
+			:stage-radius="12"
+			:mask-style="{ fill: 'rgb(0 0 0 / 60%)' }"
+			:wrapper-style="{ '--vc-tour-border-radius': '12px' }"
+			:content-style="{ lineHeight: '22px' }"
+			:progress-formatter="handleProgressFormat"
+			next-text="继续"
+			finish-text="完成"
+			skip-text="跳过引导"
+			:next-button-options="{ size: 'medium' }"
+			:previous-button-options="{ size: 'medium' }"
+			:finish-button-options="{ size: 'medium', type: 'success' }"
+			:skip-button-options="{ size: 'medium', type: 'text' }"
+			:duration="500"
+			:keyboard="false"
+			:esc-closable="false"
+			:scroll-into-view-options="false"
+			:z-index="2100"
+			to="body"
+			scrollable
+			@visible-change="handleVisibleChange"
+			@finish="handleFinish"
+			@skip="handleSkip"
+		>
+			<template #header="{ step }">
+				<div class="tour-demo__header">
+					<Icon type="success" />
+					<span>{{ step.title }}</span>
+				</div>
+			</template>
+			<TourStep :element="() => firstTarget?.$el" title="自定义外观" content="卡片加宽、无箭头，高亮区域扩大并加大圆角。" />
+			<TourStep
+				:element="() => secondTarget?.$el"
+				:mask="false"
+				:show-progress="false"
+				placement="right"
+				title="无蒙层"
+				content="这一步没有蒙层与进度，页面其余部分可以直接操作。"
+			/>
+			<TourStep :footer="false" :animated="false" title="无页脚" content="这一步没有页脚，点击右上角关闭；切换到这一步时不播放动画。" />
+		</Tour>
+	</div>
+</template>
+
+<script setup>
+import { ref, inject } from 'vue';
+import { Tour, TourStep, Button, Icon } from '@deot/vc';
+
+const isActive = ref(false);
+const firstTarget = ref();
+const secondTarget = ref();
+const status = ref('ESC 与左右键在本例中不生效');
+const playground = inject('docs:playground');
+const preview = playground.run(440);
+
+const handleProgressFormat = ({ current, total }) => `第 ${current} 步，共 ${total} 步`;
+
+const handleVisibleChange = isVisible => preview(isVisible);
+
+const handleStart = () => {
+	isActive.value = true;
+};
+
+const handleFinish = ({ source }) => {
+	status.value = `finish，来源：${source}`;
+};
+
+const handleSkip = ({ current }) => {
+	status.value = `skip，停在第 ${current + 1} 步`;
+};
+</script>
+
+<style scoped>
+.tour-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.tour-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+.tour-demo__header {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-weight: 600;
+}
+
+.tour-demo__result {
+	margin: 0;
+}
+</style>
+```
+:::
+
+### 插槽、实例方法与事件
+
+Tour 的 `title`、`content`、`progress` 插槽作用于所有步骤，步骤的同名插槽（及步骤 `default` 插槽）优先；插槽参数为步骤上下文和导航方法 `next/previous/goTo/finish/skip/close`。组件 ref 提供同名实例方法以及 `refresh`。`onOpen` 在打开前检查，返回 `false` 阻止打开。
+
+成功切步触发 `change(current, context)`，首次显示完成定位触发 `ready`；结束时 Tour 与当前步骤的 `TourStep` 都触发 `close`，操作回调抛错时触发 `error`。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16,
+	expandable: true
+}
+</config>
+-->
+```vue
+<template>
+	<div class="tour-demo">
+		<div class="tour-demo__row">
+			<Button type="primary" @click="handleStart">打开引导</Button>
+			<Button ref="firstTarget">目标一</Button>
+			<Button ref="secondTarget">目标二</Button>
+		</div>
+		<p class="tour-demo__result">{{ events.join(' → ') || '暂无事件' }}</p>
+		<Tour
+			ref="tour"
+			v-model="isActive"
+			:on-open="handleOpen"
+			:next-button-options="nextButtonOptions"
+			@visible-change="handleVisibleChange"
+			@ready="handleReady"
+			@change="handleChange"
+			@close="handleClose"
+			@error="handleError"
+		>
+			<template #title="{ step }">
+				<span>Tour 标题插槽 · {{ step.title }}</span>
+			</template>
+			<template #content="{ step }">
+				<p class="tour-demo__content">Tour 内容插槽：{{ step.content }}</p>
+			</template>
+			<template #progress="{ current, total }">
+				<span>{{ current + 1 }} / {{ total }}</span>
+			</template>
+			<TourStep :element="() => firstTarget?.$el" title="第一步" content="点击下一步时，操作回调会先抛出一次错误。" @close="handleStepClose" />
+			<TourStep :element="() => secondTarget?.$el" title="第二步">
+				<template #title>
+					<span>步骤标题插槽</span>
+				</template>
+				<template #default="{ previous, goTo, close }">
+					<div class="tour-demo__content">
+						<span>步骤默认插槽：导航方法与组件 ref 的方法。</span>
+						<div class="tour-demo__row">
+							<Button size="small" @click="previous">previous</Button>
+							<Button size="small" @click="goTo(2)">goTo(2)</Button>
+							<Button size="small" @click="close">close</Button>
+							<Button size="small" @click="handleRefresh">ref.refresh</Button>
+							<Button size="small" @click="handleFirst">ref.goTo(0)</Button>
+						</div>
+					</div>
+				</template>
+			</TourStep>
+			<TourStep title="第三步" content="居中步骤。">
+				<template #progress>
+					<span>步骤进度插槽</span>
+				</template>
+			</TourStep>
 		</Tour>
 	</div>
 </template>
@@ -153,31 +464,94 @@ onBeforeUnmount(() => { clearTimeout(timer); tourLeaf?.destroy(); });
 import { ref, inject } from 'vue';
 import { Tour, TourStep, Button } from '@deot/vc';
 
+const tour = ref();
 const isActive = ref(false);
-const isInteractionDisabled = ref(false);
-const targetButton = ref();
-const clickCount = ref(0);
+const firstTarget = ref();
+const secondTarget = ref();
+const events = ref([]);
 const playground = inject('docs:playground');
-const preview = playground.run(460);
-const handleVisibleChange = isVisible => isVisible && preview(true);
-const handleClose = () => preview(false);
-const handleStart = () => { isActive.value = true; };
-const handleTargetClick = () => { clickCount.value++; };
+const preview = playground.run(440);
+let hasThrown = false;
+
+const record = (name) => {
+	events.value = [...events.value, name].slice(-5);
+};
+
+const nextButtonOptions = {
+	onClick: (event, { current }) => {
+		if (current === 0 && !hasThrown) {
+			hasThrown = true;
+			throw new Error('第一次点击失败');
+		}
+	}
+};
+
+const handleOpen = ({ steps }) => {
+	record(`onOpen(${steps.length} 步)`);
+	return true;
+};
+
+const handleStart = () => {
+	hasThrown = false;
+	events.value = [];
+	isActive.value = true;
+};
+
+const handleVisibleChange = isVisible => preview(isVisible);
+
+const handleReady = ({ current }) => {
+	record(`ready(${current})`);
+};
+
+const handleChange = (current) => {
+	record(`change(${current})`);
+};
+
+const handleClose = ({ type }) => {
+	record(`close(${type})`);
+};
+
+const handleStepClose = () => {
+	record('第一步 close');
+};
+
+const handleError = ({ phase }) => {
+	record(`error(${phase})`);
+};
+
+const handleRefresh = () => {
+	tour.value.refresh();
+	record('refresh');
+};
+
+const handleFirst = () => {
+	tour.value.goTo(0);
+};
 </script>
 
 <style scoped>
-.interaction-example {
+.tour-demo {
 	display: flex;
 	flex-direction: column;
-	gap: 20px;
-	align-items: flex-start;
+	gap: 16px;
 }
 
-.interaction-toolbar {
+.tour-demo__row {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 12px;
 	align-items: center;
+	gap: 8px;
+}
+
+.tour-demo__content {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	margin: 0;
+}
+
+.tour-demo__result {
+	margin: 0;
 }
 </style>
 ```
@@ -185,28 +559,54 @@ const handleTargetClick = () => { clickCount.value++; };
 
 ### 等待目标、跳过与插槽
 
-`waitForElement` 指定等待毫秒数，等待期间保留上一张卡片，首次打开保持隐藏且不锁定滚动。超时后按 `skipMissingElement` 决定居中或跳过。主动不提供 `element` 的步骤不会跳过；全部无效时结果为 `empty`，已有有效步骤后剩余全部跳过时执行完成操作。
+`waitForElement` 指定等待毫秒数，等待期间保留上一张卡片，首次打开保持隐藏且不锁定滚动。超时后按 `skipMissingElement` 决定居中或跳过。主动不提供 `element` 的步骤不会跳过；全部无效时结果为 `empty`，已有有效步骤后剩余全部跳过时执行完成操作。`v-model:current` 同步实际步骤下标。
+
+下例用 Tour 的 `footer` 插槽替换所有步骤的页脚，最后一步用步骤自己的 `footer` 插槽覆盖；第一步的 `content` 插槽替换内容。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 24, expandable: true }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16,
+	expandable: true
+}
+</config>
+-->
 ```vue
 <template>
-	<div>
-		<div class="waiting-toolbar">
+	<div class="tour-demo">
+		<div class="tour-demo__row">
 			<Button @click="handleStart">等待新目标</Button>
 			<Button v-if="isTargetVisible" ref="targetButton">延迟出现的目标</Button>
 		</div>
-		<p>当前下标：{{ current }}；缺失的中间步骤会自动跳过。</p>
+		<p class="tour-demo__result">当前下标：{{ current }}；缺失的中间步骤会自动跳过。</p>
 		<Tour
-			v-model="isActive" v-model:current="current" skip-missing-element advance-on-click
-			@visible-change="handleVisibleChange" @close="handleClose"
+			v-model="isActive"
+			v-model:current="current"
+			skip-missing-element
+			advance-on-click
+			@visible-change="handleVisibleChange"
+			@close="handleClose"
 		>
+			<template #footer="{ current: index, total, next, skip }">
+				<div class="tour-demo__footer">
+					<span>Tour 页脚插槽 · {{ index + 1 }} / {{ total }}</span>
+					<Button size="small" @click="skip">跳过</Button>
+					<Button size="small" type="primary" @click="next">下一步</Button>
+				</div>
+			</template>
 			<TourStep :element="() => targetButton?.$el" :wait-for-element="1500" title="目标已出现">
-				<template #content><strong>内容插槽</strong><p>点击目标进入下一步。</p></template>
+				<template #content>
+					<strong>内容插槽</strong>
+					<p>点击目标进入下一步。</p>
+				</template>
 			</TourStep>
 			<TourStep element="#missing-tour-target" title="这个步骤被跳过" />
-			<TourStep title="自定义页脚">
-				<template #footer="{ finish: handleFinish }"><Button type="primary" @click="handleFinish">完成引导</Button></template>
+			<TourStep title="步骤页脚">
+				<template #footer="{ finish }">
+					<Button type="primary" @click="finish">完成引导</Button>
+				</template>
 			</TourStep>
 		</Tour>
 	</div>
@@ -223,24 +623,52 @@ const targetButton = ref();
 const playground = inject('docs:playground');
 const preview = playground.run(420);
 let timer;
+
 const handleVisibleChange = isVisible => isVisible && preview(true);
-const handleClose = () => { clearTimeout(timer); preview(false); };
+
+const handleClose = () => {
+	clearTimeout(timer);
+	preview(false);
+};
+
 const handleStart = () => {
 	isTargetVisible.value = false;
 	current.value = 0;
 	isActive.value = true;
 	clearTimeout(timer);
-	timer = setTimeout(() => { isTargetVisible.value = true; }, 500);
+	timer = setTimeout(() => {
+		isTargetVisible.value = true;
+	}, 500);
 };
+
 onBeforeUnmount(() => clearTimeout(timer));
 </script>
 
 <style scoped>
-.waiting-toolbar {
+.tour-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.tour-demo__row {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 16px;
 	align-items: center;
+	gap: 8px;
+}
+
+.tour-demo__footer {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 8px;
+	width: 100%;
+}
+
+.tour-demo__result {
+	margin: 0;
 }
 </style>
 ```
@@ -253,22 +681,30 @@ onBeforeUnmount(() => clearTimeout(timer));
 下面用页面内的 Set 演示缓存命中、全局开关和清除后重新打开。示例卸载时恢复原配置。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 24, expandable: true }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16,
+	expandable: true
+}
+</config>
+-->
 ```vue
 <template>
-	<div>
-		<div class="cache-toolbar">
+	<div class="tour-demo">
+		<div class="tour-demo__row">
 			<Button @click="handleOpen">打开缓存引导</Button>
 			<Button @click="handleClearCache">清除缓存</Button>
-			<label><input v-model="isCacheEnabled" type="checkbox" @change="handleCacheChange"> 全局允许缓存</label>
+			<Checkbox v-model="isCacheEnabled">全局允许缓存</Checkbox>
 		</div>
-		<p>结果：{{ resultType || '完成或跳过后再次打开，观察缓存命中' }}</p>
+		<p class="tour-demo__result">结果：{{ resultType || '完成或跳过后再次打开，观察缓存命中' }}</p>
 	</div>
 </template>
 
 <script setup>
-import { ref, inject, onBeforeUnmount } from 'vue';
-import { Tour, Button, VcInstance } from '@deot/vc';
+import { ref, inject, watch, onBeforeUnmount } from 'vue';
+import { Tour, Button, Checkbox, VcInstance } from '@deot/vc';
 
 const originalConfig = VcInstance.options.Tour;
 const cachedKeys = new Set();
@@ -278,18 +714,29 @@ const resultType = ref('');
 const playground = inject('docs:playground');
 const preview = playground.run(420);
 let tourLeaf;
-const configure = () => VcInstance.configure({ Tour: {
-	...originalConfig,
-	cache: isCacheEnabled.value,
-	cacheTypes: ['finish', 'skip'],
-	getCache: ({ cacheKey }) => cachedKeys.has(cacheKey),
-	setCache: ({ cacheKey }) => { cachedKeys.add(cacheKey); }
-} });
+
+const configure = () => VcInstance.configure({
+	Tour: {
+		...originalConfig,
+		cache: isCacheEnabled.value,
+		cacheTypes: ['finish', 'skip'],
+		getCache: ({ cacheKey: key }) => cachedKeys.has(key),
+		setCache: ({ cacheKey: key }) => {
+			cachedKeys.add(key);
+		}
+	}
+});
 configure();
-const handleCacheChange = () => configure();
+watch(isCacheEnabled, configure);
+
 const handleVisibleChange = isVisible => isVisible && preview(true);
 const handleClose = () => preview(false);
-const handleClearCache = () => { cachedKeys.delete(cacheKey); resultType.value = '缓存已清除'; };
+
+const handleClearCache = () => {
+	cachedKeys.delete(cacheKey);
+	resultType.value = '缓存已清除';
+};
+
 const handleOpen = async () => {
 	tourLeaf = Tour.open({
 		cache: cacheKey,
@@ -299,15 +746,29 @@ const handleOpen = async () => {
 	});
 	resultType.value = (await tourLeaf).type;
 };
-onBeforeUnmount(() => { tourLeaf?.destroy(); VcInstance.configure({ Tour: originalConfig }); });
+
+onBeforeUnmount(() => {
+	tourLeaf?.destroy();
+	VcInstance.configure({ Tour: originalConfig });
+});
 </script>
 
 <style scoped>
-.cache-toolbar {
+.tour-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.tour-demo__row {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 12px;
 	align-items: center;
+	gap: 8px;
+}
+
+.tour-demo__result {
+	margin: 0;
 }
 </style>
 ```
@@ -502,7 +963,6 @@ Tour.open({ cache: 'feature-guide-v1', steps: [{ element: '#feature-entry', titl
 - Portal 创建的 app 不继承调用方插件和 provide，需要通过 uses/components/install 显式注入，卡片与气泡内容都在该 app 中；Portal 配置用法见 [Portal](../portal/README.md)。
 - `to` 指向带 `transform` 等会改变 fixed 定位参照的容器时，气泡贴边仍以页面视口为准。
 - title / content 的字符串按文本渲染；需要 HTML 时传 `{ type: 'html', value }`，这类内容只应来自可信来源，或由全局的 `sanitize` 统一清洗，见 [Customer](../customer/README.md)。需要组合其他组件时使用渲染函数或插槽。
-- `MTour`、`MTourStep` 分别是 `Tour`、`TourStep` 的别名，使用同一实现与样式，可从 `@deot/vc` 导入。
 
 ### 完整示例
 

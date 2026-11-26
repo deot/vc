@@ -1,6 +1,8 @@
 ## 全局提示（Message）
 
-在页面顶部居中展示轻量级反馈，并在指定时间后自动关闭。`Message` 是带函数式调用方法的 `MessageView`；`MMessage` 与 `Message` 指向同一个组件。
+在页面顶部居中展示轻量级反馈，并在指定时间后自动关闭。`Message` 是带函数式调用方法的 `MessageView`。
+
+移动端入口导出的 `MMessage` 与 `Message` 是同一实现。
 
 ### 何时使用
 
@@ -15,33 +17,35 @@
 <!--
 <config lang="json5">
 {
-	viewport: 375,
-	viewportOptions: ['auto', 375],
-	previewInset: 16,
-	expandable: true
+	mobile: true,
+	local: false,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
 }
 </config>
 -->
 ```vue
 <template>
-	<div class="message-demo">
-		<Button
+	<div class="m-message-demo">
+		<MButton
 			v-for="item in messages"
 			:key="item.mode"
 			:wait="0"
 			@click="handleOpen(item)"
 		>
 			{{ item.label }}
-		</Button>
+		</MButton>
 	</div>
 </template>
 
 <script setup>
-import { inject, onUnmounted, ref } from 'vue';
-import { Button, Message } from '@deot/vc';
+import { onUnmounted } from 'vue';
+import { MButton, Message } from '@deot/vc';
 
-const playground = inject('docs:playground');
-const isVisible = ref(false);
 const messages = [
 	{ mode: 'info', label: '信息', content: '这是一条信息提示' },
 	{ mode: 'success', label: '成功', content: '操作已成功完成' },
@@ -50,19 +54,14 @@ const messages = [
 	{ mode: 'loading', label: '加载', content: '正在加载中' }
 ];
 
-const handleOpen = playground.run(220, { visible: isVisible }, (item) => {
-	isVisible.value = true;
-
-	const onClose = () => {
-		isVisible.value = false;
-	};
+const handleOpen = (item) => {
 	if (item.mode === 'loading') {
-		Message.loading({ content: item.content, duration: 1200, onClose });
+		Message.loading({ content: item.content, duration: 1200 });
 		return;
 	}
 
-	Message[item.mode]({ content: item.content, onClose });
-});
+	Message[item.mode]({ content: item.content });
+};
 
 onUnmounted(() => {
 	Message.destroy();
@@ -70,11 +69,12 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.message-demo {
+.m-message-demo {
 	display: flex;
 	flex-wrap: wrap;
-	align-items: flex-start;
-	gap: 8px;
+	align-items: center;
+	gap: calc(var(--vc-rem) * 16);
+	padding-inline: calc(var(--vc-rem) * 32);
 }
 </style>
 ```
@@ -82,40 +82,38 @@ onUnmounted(() => {
 
 ### 手动关闭
 
-将 `duration` 设为 `0` 可关闭自动计时，`closable` 会显示关闭入口。`onBeforeClose` 在点击关闭入口或遮罩时调用，并支持等待 Promise。
+将 `duration` 设为 `0` 可关闭自动计时，`closable` 会显示关闭入口。`onBeforeClose` 在点击关闭入口或遮罩时调用，并支持等待 Promise；关闭完成后调用 `onClose`。
 
 :::playground
 <!--
 <config lang="json5">
 {
-	viewport: 375,
-	viewportOptions: ['auto', 375],
-	previewInset: 16,
-	expandable: true
+	mobile: true,
+	local: false,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
 }
 </config>
 -->
 ```vue
 <template>
-	<div class="message-close-demo">
-		<Button :wait="0" @click="handleOpen">
-			显示可关闭提示
-		</Button>
-		<span>{{ status }}</span>
+	<div class="m-message-demo">
+		<MButton :wait="0" @click="handleOpen">显示可关闭提示</MButton>
+		<p class="m-message-demo__result">{{ status }}</p>
 	</div>
 </template>
 
 <script setup>
-import { inject, onUnmounted, ref } from 'vue';
-import { Button, Message } from '@deot/vc';
+import { onUnmounted, ref } from 'vue';
+import { MButton, Message } from '@deot/vc';
 
-const playground = inject('docs:playground');
-const isVisible = ref(false);
 const status = ref('尚未关闭');
 
-const handleOpen = playground.run(220, { visible: isVisible }, () => {
-	isVisible.value = true;
-
+const handleOpen = () => {
 	status.value = '等待关闭';
 	Message.info({
 		content: '点击右侧图标关闭，关闭前等待 500ms',
@@ -124,10 +122,9 @@ const handleOpen = playground.run(220, { visible: isVisible }, () => {
 		onBeforeClose: () => new Promise(resolve => setTimeout(resolve, 500)),
 		onClose: () => {
 			status.value = '提示已关闭';
-			isVisible.value = false;
 		}
 	});
-});
+};
 
 onUnmounted(() => {
 	Message.destroy();
@@ -135,11 +132,16 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.message-close-demo {
+.m-message-demo {
 	display: flex;
-	align-items: center;
-	gap: 12px;
-	font-size: 14px;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: calc(var(--vc-rem) * 32);
+	padding-inline: calc(var(--vc-rem) * 32);
+}
+
+.m-message-demo__result {
+	margin: 0;
 }
 </style>
 ```
@@ -153,44 +155,107 @@ onUnmounted(() => {
 <!--
 <config lang="json5">
 {
-	viewport: 375,
-	viewportOptions: ['auto', 375],
-	previewInset: 16,
-	expandable: true
+	mobile: true,
+	local: false,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
 }
 </config>
 -->
 ```vue
 <template>
-	<Button :wait="0" @click="handleSave">
-		保存
-	</Button>
+	<div class="m-message-demo">
+		<MButton type="primary" :wait="0" @click="handleSave">保存</MButton>
+	</div>
 </template>
 
 <script setup>
-import { inject, onUnmounted, ref } from 'vue';
-import { Button, Message } from '@deot/vc';
+import { onUnmounted } from 'vue';
+import { MButton, Message } from '@deot/vc';
 
-const playground = inject('docs:playground');
-const isVisible = ref(false);
-
-const handleSave = playground.run(220, { visible: isVisible }, () => {
-	isVisible.value = true;
-	const message = Message.loading({
-		content: '正在保存',
-		onClose: () => (isVisible.value = false)
-	});
+const handleSave = () => {
+	const message = Message.loading({ content: '正在保存' });
 	setTimeout(() => {
 		message.wrapper.setMode('success');
 		message.wrapper.setContent('保存成功');
 		message.wrapper.setDuration(3000);
 	}, 1200);
-});
+};
 
 onUnmounted(() => {
 	Message.destroy();
 });
 </script>
+
+<style scoped>
+.m-message-demo {
+	display: flex;
+	padding-inline: calc(var(--vc-rem) * 32);
+}
+</style>
+```
+:::
+
+### 位置与遮罩
+
+`top` 设置第一条提示距离页面顶部的距离（px）。固定定位时默认渲染透明遮罩，点击遮罩会关闭提示：`mask` 设为 `false` 不渲染遮罩，页面可继续操作；`maskClosable` 设为 `false` 时点击遮罩不关闭。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
+```vue
+<template>
+	<div class="message-demo">
+		<Button :wait="0" @click="handleTop">距顶部 120px</Button>
+		<Button :wait="0" @click="handleNoMask">无遮罩</Button>
+		<Button :wait="0" @click="handleMaskLocked">遮罩不可关闭</Button>
+	</div>
+</template>
+
+<script setup>
+import { onUnmounted } from 'vue';
+import { Button, Message } from '@deot/vc';
+
+const handleTop = () => {
+	Message.info({ content: '这条提示距顶部 120px', top: 120 });
+};
+
+const handleNoMask = () => {
+	Message.info({ content: '没有遮罩，可以继续点击页面', mask: false });
+};
+
+const handleMaskLocked = () => {
+	Message.warning({
+		content: '点击遮罩不会关闭，请点击右侧图标',
+		duration: 0,
+		closable: true,
+		maskClosable: false
+	});
+};
+
+onUnmounted(() => {
+	Message.destroy();
+});
+</script>
+
+<style scoped>
+.message-demo {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+</style>
 ```
 :::
 
@@ -199,6 +264,167 @@ onUnmounted(() => {
 `content` 的字符串按文本渲染；需要 HTML 时传 `{ type: 'html', value }`，这类内容只应来自可信来源，或由全局的 `sanitize` 统一清洗，见 [Customer](../customer/README.md)。`{ type, value }` 始终是内容而不是配置对象，后面可以继续跟位置参数或配置对象，例如 `Message.info({ type: 'html', value }, 3000)`。需要渲染 VNode 时，应在外部导入 Vue 的 `h` 并在函数中调用。
 
 函数式方法既支持配置对象，也支持 `Message.info(content, duration, onClose)` 形式；最后一个参数为配置对象时，会与前面的参数合并，例如 `Message.info('提示内容', { closable: true, duration: 0 })`。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
+```vue
+<template>
+	<div class="message-demo">
+		<div class="message-demo__row">
+			<Button :wait="0" @click="handleHtml">HTML 内容</Button>
+			<Button :wait="0" @click="handleRender">渲染函数</Button>
+			<Button :wait="0" @click="handlePositional">位置参数</Button>
+			<Button :wait="0" @click="handleMerge">合并配置</Button>
+		</div>
+		<p class="message-demo__result">{{ status }}</p>
+	</div>
+</template>
+
+<script setup>
+import { h, onUnmounted, ref } from 'vue';
+import { Button, Message } from '@deot/vc';
+
+const status = ref('等待操作');
+
+const handleHtml = () => {
+	Message.success({ type: 'html', value: '已完成 <b>3</b> 项' }, 3000);
+};
+
+const handleRender = () => {
+	Message.info({
+		content: () => h('span', ['渲染函数：', h('b', '第 1 行')])
+	});
+};
+
+const handlePositional = () => {
+	status.value = '等待关闭';
+	Message.info('1.5 秒后关闭', 1500, () => {
+		status.value = '位置参数提示已关闭';
+	});
+};
+
+const handleMerge = () => {
+	Message.warning('不自动关闭，点击右侧图标关闭', { closable: true, duration: 0 });
+};
+
+onUnmounted(() => {
+	Message.destroy();
+});
+</script>
+
+<style scoped>
+.message-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.message-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+.message-demo__result {
+	margin: 0;
+}
+</style>
+```
+:::
+
+### 内嵌展示
+
+作为组件使用并设置 `fixed` 为 `false` 时，提示在原位置渲染，不渲染遮罩，也不应用 `top`。`mode` 设置状态；提示离场完成后触发 `close` 事件。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
+```vue
+<template>
+	<div class="message-demo">
+		<div class="message-demo__row">
+			<Button :wait="0" @click="handleReset">重新显示</Button>
+		</div>
+		<div :key="seed" class="message-demo__list">
+			<Message
+				v-for="item in modes"
+				:key="item.mode"
+				:fixed="false"
+				:mode="item.mode"
+				:content="item.content"
+				:duration="0"
+				closable
+				@close="handleClose(item)"
+			/>
+		</div>
+		<p class="message-demo__result">{{ status }}</p>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { Button, Message } from '@deot/vc';
+
+const seed = ref(0);
+const status = ref('点击提示右侧图标关闭');
+const modes = [
+	{ mode: 'info', content: '信息提示' },
+	{ mode: 'success', content: '成功提示' },
+	{ mode: 'warning', content: '警告提示' },
+	{ mode: 'error', content: '错误提示' },
+	{ mode: 'loading', content: '加载提示' }
+];
+
+const handleClose = (item) => {
+	status.value = `close：${item.content}`;
+};
+
+const handleReset = () => {
+	seed.value++;
+	status.value = '点击提示右侧图标关闭';
+};
+</script>
+
+<style scoped>
+.message-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.message-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.message-demo__list {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 8px;
+}
+
+.message-demo__result {
+	margin: 0;
+}
+</style>
+```
+:::
 
 ## 主题与局部覆盖
 
@@ -239,7 +465,7 @@ onUnmounted(() => {
 | top | 固定定位时第一条提示距离页面顶部的距离，单位为 px；同一 `top` 的多条提示依次向下排列，间距 7px | `number` | - | `30` |
 | closable | 是否显示关闭入口 | `boolean` | - | `false` |
 | mode | 提示状态；`loading` 使用加载指示器，其余状态使用对应图标 | `'info' \| 'loading' \| 'success' \| 'warning' \| 'error'` | `info`、`loading`、`success`、`warning`、`error` | `info` |
-| onBeforeClose | 点击关闭入口或遮罩前调用；Promise resolve 后关闭 | `(event: Event) => any` | - | `undefined` |
+| onBeforeClose | 点击关闭入口或遮罩前调用；Promise resolve 后关闭，reject 时保持显示 | `(event: Event) => any` | - | `undefined` |
 
 ### 事件
 

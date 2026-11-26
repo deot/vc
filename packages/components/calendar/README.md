@@ -10,20 +10,23 @@
 
 ### 基础用法
 
-头部自带翻页箭头和「今天」按钮；点击标题在月视图和年视图之间切换，年视图里点击某个月回到该月。点中日期后发出 `update:modelValue`，值按 `format` 格式化。
+头部自带翻页箭头和「今天」按钮；点击标题在月视图和年视图之间切换，年视图里点击某个月回到该月。点中日期后发出 `update:modelValue` 与 `change`，值按 `format` 格式化。
 
 :::playground
 <!--
 <config lang="json5">
 {
+	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
 -->
 ```vue
 <template>
-	<Calendar v-model="value" />
-	<p>值：{{ value }}</p>
+	<div class="calendar-demo">
+		<Calendar v-model="value" format="YYYY/MM/DD" @change="handleChange" />
+		<p class="calendar-demo__result">值：{{ value || '-' }}；change 触发 {{ count }} 次</p>
+	</div>
 </template>
 
 <script setup>
@@ -31,28 +34,48 @@ import { ref } from 'vue';
 import { Calendar } from '@deot/vc';
 
 const value = ref('');
+const count = ref(0);
+
+const handleChange = () => {
+	count.value++;
+};
 </script>
+
+<style scoped>
+.calendar-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.calendar-demo__result {
+	margin: 0;
+}
+</style>
 ```
 :::
 
 ### 区间与多选
 
-`type="daterange"` 时，第一次点选起点、第二次点选终点（早于起点时自动交换），选完后提交 `[起, 止]`；选择中鼠标悬停会预览区间。`multiple` 时再次点选会取消该日期，只在 `type="date"` 时生效。值的格式与 DatePicker 相同。
+`type="daterange"` 时，第一次点选起点、第二次点选终点（早于起点时自动交换），选完后提交 `[起, 止]`；选择中鼠标悬停会预览区间。`multiple` 时再次点选会取消该日期，只在 `type="date"` 时生效。值的格式与 DatePicker 相同。`disabledDate` 按天禁用日期。
 
 :::playground
 <!--
 <config lang="json5">
 {
+	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
 -->
 ```vue
 <template>
-	<Calendar v-model="range" type="daterange" :disabled-date="disabledDate" />
-	<p>区间：{{ range }}</p>
-	<Calendar v-model="dates" multiple />
-	<p>多选：{{ dates }}</p>
+	<div class="calendar-demo">
+		<Calendar v-model="range" type="daterange" :disabled-date="disabledDate" />
+		<p class="calendar-demo__result">区间：{{ range }}</p>
+		<Calendar v-model="dates" multiple />
+		<p class="calendar-demo__result">多选：{{ dates }}</p>
+	</div>
 </template>
 
 <script setup>
@@ -64,31 +87,44 @@ const dates = ref([]);
 // 周末不可选
 const disabledDate = date => date.getDay() === 0 || date.getDay() === 6;
 </script>
+
+<style scoped>
+.calendar-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.calendar-demo__result {
+	margin: 0;
+}
+</style>
 ```
 :::
 
 ### 日期内容与农历
 
-`content` 插槽显示在日期数字下方，适合放日程、价格等内容，放不下时在格子内滚动（`Scroller`，移动端为 `MScroller`）；`cell` 插槽替换整个格子。`lunar` 在 `zh-CN` 下于数字旁显示一行文字，优先级为节日 > 节气 > 农历日，农历初一显示月名。`readonly` 用于纯展示：不可选中，点击仍发出 `date-click`。
+`content` 插槽显示在日期数字下方，适合放日程、价格等内容，放不下时在格子内滚动（`Scroller`，移动端为 `MScroller`）；`cell` 插槽替换整个格子，见下方「自定义头部、星期与格子」。`lunar` 在 `zh-CN` 下于数字旁显示一行文字，优先级为节日 > 节气 > 农历日，农历初一显示月名。`readonly` 用于纯展示：不可选中，点击仍发出 `date-click`。
 
 :::playground
 <!--
 <config lang="json5">
 {
+	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
 -->
 ```vue
 <template>
-	<Calendar lunar readonly @date-click="handleClick">
-		<template #content="{ value }">
-			<div v-for="item in events[value]" :key="item" class="calendar-event">
-				{{ item }}
-			</div>
-		</template>
-	</Calendar>
-	<p>点击：{{ clicked }}</p>
+	<div class="calendar-demo">
+		<Calendar lunar readonly @date-click="handleClick">
+			<template #content="{ value }">
+				<div v-for="item in events[value]" :key="item" class="calendar-demo__event">{{ item }}</div>
+			</template>
+		</Calendar>
+		<p class="calendar-demo__result">点击：{{ clicked || '-' }}</p>
+	</div>
 </template>
 
 <script setup>
@@ -110,11 +146,21 @@ const handleClick = ({ value }) => {
 </script>
 
 <style scoped>
-.calendar-event {
+.calendar-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.calendar-demo__event {
 	overflow: hidden;
 	line-height: 20px;
 	text-overflow: ellipsis;
 	white-space: nowrap;
+}
+
+.calendar-demo__result {
+	margin: 0;
 }
 </style>
 ```
@@ -122,35 +168,172 @@ const handleClick = ({ value }) => {
 
 ### 周起始日与相邻整周
 
-`firstDayOfWeek` 使用 `1` 至 `7` 表示周一至周日，默认 `7`（周日）；未传时读取全局 `VcInstance.options.Calendar.firstDayOfWeek`，见[全局配置](../vc/README.md)。`showAdjacentWeeks` 控制首尾整周都不属于当前月份时是否保留。
+`firstDayOfWeek` 使用 `1` 至 `7` 表示周一至周日，默认 `7`（周日）；未传时读取全局 `VcInstance.options.Calendar.firstDayOfWeek`，见[全局配置](../vc/README.md)。`showAdjacentWeeks` 控制首尾整周都不属于当前月份时是否保留。实例方法 `previous`、`next` 在外部翻页。
 
 :::playground
 <!--
 <config lang="json5">
 {
+	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
 -->
 ```vue
 <template>
-	<Calendar
-		:first-day-of-week="1"
-		:show-adjacent-weeks="[false, false]"
-	/>
+	<div class="calendar-demo">
+		<div class="calendar-demo__row">
+			<Button size="small" @click="handlePrevious">previous()</Button>
+			<Button size="small" @click="handleNext">next()</Button>
+		</div>
+		<Calendar
+			ref="calendar"
+			:first-day-of-week="1"
+			:show-adjacent-weeks="[false, false]"
+		/>
+	</div>
 </template>
 
 <script setup>
-import { Calendar } from '@deot/vc';
+import { ref } from 'vue';
+import { Button, Calendar } from '@deot/vc';
+
+const calendar = ref();
+
+const handlePrevious = () => {
+	calendar.value.previous();
+};
+
+const handleNext = () => {
+	calendar.value.next();
+};
 </script>
+
+<style scoped>
+.calendar-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.calendar-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+</style>
 ```
 :::
 
-### 移动端
+### 自定义头部、星期与格子
 
-`MCalendar` 与 `Calendar` 结构相同，根节点另有标记类 `.vcm-calendar`。差异如下：
+`header` 插槽替换头部，参数提供 `title`、`mode` 以及 `previous`、`next`、`today`、`setMode`；`week` 插槽替换星期行；`cell` 插槽替换整个日期格子。`v-model:panelDate` 与 `v-model:mode` 同步当前月份与视图；`yearRange` 限定可选年份，范围外的日期禁用，翻页到边界停住。
 
-- 尺寸按 750 稿书写，随 `--vc-rem` 缩放：
+:::playground
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
+```vue
+<template>
+	<div class="calendar-demo">
+		<Calendar v-model="value" v-model:panel-date="panelDate" v-model:mode="mode" :year-range="[2020, 2030]">
+			<template #header="{ title, previous, next, today, setMode }">
+				<div class="calendar-demo__row">
+					<Button size="small" icon="arrow-left" aria-label="上一页" @click="previous" />
+					<strong>{{ title }}</strong>
+					<Button size="small" icon="arrow-right" aria-label="下一页" @click="next" />
+					<Button size="small" @click="today">今天</Button>
+					<Button size="small" @click="setMode(mode === 'month' ? 'year' : 'month')">切换视图</Button>
+				</div>
+			</template>
+			<template #week="{ weekdays }">
+				<div class="calendar-demo__week">
+					<span v-for="item in weekdays" :key="item">{{ item }}</span>
+				</div>
+			</template>
+			<template #cell="{ day, selected, today: isToday, type }">
+				<div
+					class="calendar-demo__cell"
+					:class="{ 'is-selected': selected, 'is-today': isToday, 'is-muted': type !== 'current' }"
+				>
+					{{ day }}
+				</div>
+			</template>
+		</Calendar>
+		<p class="calendar-demo__result">panelDate：{{ panelText }}；mode：{{ mode }}；值：{{ value || '-' }}</p>
+	</div>
+</template>
+
+<script setup>
+import { computed, ref } from 'vue';
+import { Button, Calendar } from '@deot/vc';
+
+const value = ref('');
+const panelDate = ref(new Date());
+const mode = ref('month');
+const panelText = computed(() => `${panelDate.value.getFullYear()}-${panelDate.value.getMonth() + 1}`);
+</script>
+
+<style scoped>
+.calendar-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.calendar-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+.calendar-demo__week {
+	display: grid;
+	grid-template-columns: repeat(7, 1fr);
+	text-align: center;
+	color: var(--vc-color-dark-extralight);
+}
+
+.calendar-demo__cell {
+	height: 40px;
+	line-height: 40px;
+	text-align: center;
+	border-radius: 4px;
+}
+
+.calendar-demo__cell.is-today {
+	font-weight: 600;
+	color: var(--vc-color-primary);
+}
+
+.calendar-demo__cell.is-selected {
+	color: #fff;
+	background: var(--vc-color-primary);
+}
+
+.calendar-demo__cell.is-muted {
+	opacity: .4;
+}
+
+.calendar-demo__result {
+	margin: 0;
+}
+</style>
+```
+:::
+
+## 移动端
+
+`MCalendar` 与 `Calendar` 的属性、事件、插槽、结构相同，根节点另有标记类 `.vcm-calendar`。差异如下：
+
+- 尺寸按 750 稿书写，写为 `calc(var(--vc-rem) * n)`，随 `--vc-rem` 缩放：
   - 不画格线；
   - 数字居中，日期圆 64；
   - 农历在数字下方；
@@ -159,23 +342,100 @@ import { Calendar } from '@deot/vc';
 - 在日期区域左右滑动可以翻页，纵向滑动交给页面滚动。
 - 「今天」按钮使用 `MButton`；触屏上没有悬停态，区间选择没有悬停预览。
 
+下例可切换单选、区间、多选与农历，`content` 插槽在有事项的日期下方画一个圆点；底栏切换 `rem` 可查看不同屏宽下的效果。
+
 :::playground
 <!--
 <config lang="json5">
-{ viewport: 375 }
+{
+	mobile: true,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
 </config>
 -->
 ```vue
 <template>
-	<MCalendar v-model="value" type="daterange" lunar />
+	<div class="m-calendar-demo">
+		<div class="m-calendar-demo__row">
+			<MButton size="small" @click="handleKind">{{ LABELS[kind] }}</MButton>
+			<MButton size="small" @click="handleLunar">农历：{{ isLunar ? '开' : '关' }}</MButton>
+		</div>
+		<MCalendar
+			:key="kind"
+			v-model="value"
+			:type="kind === 'daterange' ? 'daterange' : 'date'"
+			:multiple="kind === 'multiple'"
+			:lunar="isLunar"
+		>
+			<template #content="{ value: day }">
+				<span v-if="dots[day]" class="m-calendar-demo__dot" />
+			</template>
+		</MCalendar>
+		<p class="m-calendar-demo__result">值：{{ value }}</p>
+	</div>
 </template>
 
 <script setup>
 import { ref } from 'vue';
-import { MCalendar } from '@deot/vc';
+import { MButton, MCalendar } from '@deot/vc';
 
-const value = ref([]);
+const KINDS = ['date', 'daterange', 'multiple'];
+const LABELS = { date: '单选', daterange: '区间', multiple: '多选' };
+const kind = ref('date');
+const value = ref('');
+const isLunar = ref(true);
+
+const now = new Date();
+const toKey = (offset) => {
+	const date = new Date(now.getFullYear(), now.getMonth(), now.getDate() + offset);
+	return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+};
+const dots = { [toKey(1)]: true, [toKey(3)]: true, [toKey(8)]: true };
+
+const handleKind = () => {
+	kind.value = KINDS[(KINDS.indexOf(kind.value) + 1) % KINDS.length];
+	value.value = kind.value === 'date' ? '' : [];
+};
+
+const handleLunar = () => {
+	isLunar.value = !isLunar.value;
+};
 </script>
+
+<style scoped>
+.m-calendar-demo {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--vc-rem) * 16);
+}
+
+.m-calendar-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: calc(var(--vc-rem) * 16);
+	padding-inline: calc(var(--vc-rem) * 32);
+}
+
+.m-calendar-demo__dot {
+	display: inline-block;
+	width: calc(var(--vc-rem) * 8);
+	height: calc(var(--vc-rem) * 8);
+	background: var(--vc-color-primary);
+	border-radius: 50%;
+}
+
+.m-calendar-demo__result {
+	padding-inline: calc(var(--vc-rem) * 32);
+	margin: 0;
+	font-size: calc(var(--vc-rem) * 24);
+	word-break: break-all;
+}
+</style>
 ```
 :::
 
@@ -192,27 +452,69 @@ const value = ref([]);
 
 确认方式：
 
-- `confirm` 默认 `'bottom'`，在底部放「确定」按钮。
+- `confirm` 默认 `'bottom'`，在底部放「确定」按钮；`'top'` 时放在标题栏右侧。
 - `confirm: false` 时不显示按钮：
   - 单选点一下即提交并关闭；
   - 区间选完终点后提交并关闭；
   - 多选每次点选都提交，弹层保持打开。
 
+下例中，`label`、`labelWidth`、`arrow` 传给触发区，`extra` 为没有值时的文字，`separator`、`formatter` 控制显示文字；`title`、`okText`、`cancelText` 设置弹层文字；默认插槽可替换触发区。弹层的 `ok`、`cancel`、`visible-change`、`close`、`date-click` 写入下方读数。
+
 :::playground
 <!--
 <config lang="json5">
-{ viewport: 375 }
+{
+	mobile: true,
+	local: false,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
 </config>
 -->
 ```vue
 <template>
-	<MCalendarPicker v-model="date" label="日期" />
-	<MCalendarPicker v-model="range" label="区间" type="daterange" lunar />
-	<MCalendarPicker v-model="price" label="价格" type="daterange" :confirm="false" :disabled-date="disabledDate">
-		<template #content="{ date: day, disabled }">
-			<span v-if="!disabled" class="price">¥{{ 100 + (day.getDate() % 5) * 20 }}</span>
-		</template>
-	</MCalendarPicker>
+	<div class="m-calendar-demo">
+		<MCalendarPicker v-model="date" label="日期" :label-width="160" extra="未选择" />
+		<MCalendarPicker
+			v-model="range"
+			label="区间"
+			type="daterange"
+			separator=" 至 "
+			title="选择区间"
+			confirm="top"
+			ok-text="完成"
+			cancel-text="关闭"
+			lunar
+			@ok="handleEvent('ok')"
+			@cancel="handleEvent('cancel')"
+			@visible-change="handleVisible"
+			@close="handleEvent('close')"
+		/>
+		<MCalendarPicker v-model="dates" label="多选" multiple :formatter="formatter" />
+		<MCalendarPicker
+			v-model="limited"
+			label="即选即提交"
+			type="daterange"
+			:confirm="false"
+			:arrow="false"
+			:disabled-date="disabledDate"
+			@date-click="handleDateClick"
+		>
+			<template #content="{ date: day, disabled }">
+				<span v-if="!disabled" class="m-calendar-demo__mark">余 {{ day.getDate() % 5 }}</span>
+			</template>
+		</MCalendarPicker>
+		<MCalendarPicker v-model="custom">
+			<template #default="{ label }">
+				<div class="m-calendar-demo__trigger">自定义触发区：{{ label }}</div>
+			</template>
+		</MCalendarPicker>
+		<p class="m-calendar-demo__result">事件：{{ log.join('、') || '-' }}</p>
+	</div>
 </template>
 
 <script setup>
@@ -221,16 +523,50 @@ import { MCalendarPicker } from '@deot/vc';
 
 const date = ref('');
 const range = ref([]);
-const price = ref([]);
+const dates = ref([]);
+const limited = ref([]);
+const custom = ref('');
+const log = ref([]);
 const now = new Date();
 // 今天以前不可选
 const disabledDate = day => day < new Date(now.getFullYear(), now.getMonth(), now.getDate());
+const formatter = value => (value && value.length ? `已选 ${value.length} 天` : '');
+
+const handleEvent = (name) => {
+	log.value = [...log.value.slice(-4), name];
+};
+
+const handleVisible = (visible) => {
+	handleEvent(`visible-change:${visible}`);
+};
+
+const handleDateClick = ({ value }) => {
+	handleEvent(`date-click:${value}`);
+};
 </script>
 
 <style scoped>
-.price {
+.m-calendar-demo {
+	display: flex;
+	flex-direction: column;
+}
+
+.m-calendar-demo__mark {
 	font-size: calc(var(--vc-rem) * 18);
 	color: var(--vc-color-error);
+}
+
+.m-calendar-demo__trigger {
+	padding: calc(var(--vc-rem) * 24) calc(var(--vc-rem) * 32);
+	font-size: calc(var(--vc-rem) * 28);
+	color: var(--vc-color-primary);
+}
+
+.m-calendar-demo__result {
+	padding: calc(var(--vc-rem) * 32) calc(var(--vc-rem) * 32) 0;
+	margin: 0;
+	font-size: calc(var(--vc-rem) * 24);
+	word-break: break-all;
 }
 </style>
 ```
@@ -240,20 +576,34 @@ const disabledDate = day => day < new Date(now.getFullYear(), now.getMonth(), no
 
 `MCalendarPicker.open(options)` 接受与组件相同的属性（`value` 可代替 `modelValue`），插槽通过 `slots` 传入。返回的实例可以 `await`：确定后得到 `{ value }`，取消或关闭时拒绝。
 
-弹层里的列表是 `MCalendarPickerView`（也可以写成 `MCalendarPicker.View`），可以单独放进页面或自定义弹层。它的高度由 `--vc-calendar-picker-height` 决定。
+弹层里的列表是 `MCalendarPickerView`（也可以写成 `MCalendarPicker.View`），可以单独放进页面或自定义弹层。它的高度由 `--vc-calendar-picker-height` 决定；`scrollToDate(date)` 滚动到日期所在的月份。
 
 :::playground
 <!--
 <config lang="json5">
-{ viewport: 375 }
+{
+	mobile: true,
+	local: false,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
 </config>
 -->
 ```vue
 <template>
-	<MButton @click="handleOpen">选择区间</MButton>
-	<p>{{ text }}</p>
-	<MCalendarPickerView v-model="range" type="daterange" style="--vc-calendar-picker-height: 360px;" />
-	<p>{{ range }}</p>
+	<div class="m-calendar-demo">
+		<div class="m-calendar-demo__row">
+			<MButton size="small" @click="handleOpen">选择区间</MButton>
+			<MButton size="small" @click="handleToday">列表回到本月</MButton>
+		</div>
+		<p class="m-calendar-demo__result">open：{{ text || '-' }}</p>
+		<MCalendarPickerView ref="view" v-model="range" type="daterange" class="m-calendar-demo__view" />
+		<p class="m-calendar-demo__result">列表：{{ range }}</p>
+	</div>
 </template>
 
 <script setup>
@@ -262,6 +612,7 @@ import { MButton, MCalendarPicker, MCalendarPickerView } from '@deot/vc';
 
 const text = ref('');
 const range = ref([]);
+const view = ref();
 
 const handleOpen = async () => {
 	try {
@@ -271,7 +622,37 @@ const handleOpen = async () => {
 		text.value = '已取消';
 	}
 };
+
+const handleToday = () => {
+	view.value.scrollToDate(new Date());
+};
 </script>
+
+<style scoped>
+.m-calendar-demo {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--vc-rem) * 16);
+}
+
+.m-calendar-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: calc(var(--vc-rem) * 16);
+	padding-inline: calc(var(--vc-rem) * 32);
+}
+
+.m-calendar-demo__view {
+	--vc-calendar-picker-height: calc(var(--vc-rem) * 720);
+}
+
+.m-calendar-demo__result {
+	padding-inline: calc(var(--vc-rem) * 32);
+	margin: 0;
+	font-size: calc(var(--vc-rem) * 24);
+	word-break: break-all;
+}
+</style>
 ```
 :::
 
@@ -318,6 +699,7 @@ const handleOpen = async () => {
 | mini-week-padding / mini-week-font-size | 迷你月的星期 | `6px 0` / `12px` | `4 0` / `16` |
 | mini-row-height / mini-day-size / mini-day-font-size | 迷你月的日期 | `26px` / `22px` / `14px` | `36` / `32` / `18` |
 | slide-offset | 翻页过渡的位移 | `24px` | `48` |
+| picker-height | `MCalendarPickerView` 的高度（含 MCalendarPicker 弹层） | - | `70vh` |
 
 ## API
 
@@ -394,7 +776,7 @@ const handleOpen = async () => {
 | 属性 | 说明 | 类型 | 可选值 | 默认值 |
 | --- | --- | --- | --- | --- |
 | confirm | 「确定」的位置，同 MPickerPopup；`false` 时选完即提交 | `boolean \| string` | `top` \| `bottom` \| `true` \| `false` | `bottom` |
-| title | 弹层标题 | `string` | - | `选择日期` |
+| title | 弹层标题，取值同 [Customer](../customer/README.md) | `string \| number \| Function \| { type: string; value: any }` | - | `选择日期` |
 | cancelText / okText | 按钮文字 | `string` | - | `取消` / `确定` |
 | label / labelWidth / arrow | 触发区 MListItem 的属性 | - | - | - |
 | extra | 没有值时显示的文字 | `string` | - | `请选择` |

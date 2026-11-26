@@ -2,50 +2,68 @@
 
 在一组可见的备选项中选择一个选项，支持独立使用、互斥分组、按钮、卡片、胶囊、文字、圆角等分组样式和四档尺寸。
 
+移动端入口导出的 `MRadio`、`MRadioGroup`、`MRadioButton` 与桌面端的数据和事件约定相同，尺寸按 750 稿随 `--vc-rem` 缩放，见 [移动端](#移动端)。
+
 ### 何时使用
 
 选项数量较少且需要直接比较时使用。选项较多时可使用 Select。
 
 ### 基础用法
 
-独立使用时，`v-model` 与 `trueValue` 严格相等表示选中。点击后写入 `trueValue`；原生单选框再次点击不会取消，可从外部修改绑定值。
+独立使用时，`v-model` 与 `trueValue` 严格相等表示选中。点击后写入 `trueValue`；原生单选框再次点击不会取消，可从外部修改绑定值。`change` 只在用户选择后触发，外部修改不触发。
 
 :::playground
 <!--
 <config lang="json5">
-{ previewInset: 16 }
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
 </config>
 -->
 ```vue
 <template>
-	<div class="demo">
-		<Radio v-model="isSelected">选择此项</Radio>
-		<p>当前值：{{ isSelected }}</p>
-		<div class="actions">
-			<button type="button" @click="handleReset">重置</button>
+	<div class="radio-demo">
+		<div class="radio-demo__row">
+			<Radio v-model="isSelected" name="single" @change="handleChange">选择此项</Radio>
+			<Button size="small" @click="handleReset">重置</Button>
 		</div>
+		<p class="radio-demo__result">当前值：{{ isSelected }}，change 触发 {{ count }} 次</p>
 	</div>
 </template>
 
 <script setup>
 import { ref } from 'vue';
-import { Radio } from '@deot/vc';
+import { Radio, Button } from '@deot/vc';
 
 const isSelected = ref(false);
+const count = ref(0);
+
+const handleChange = () => {
+	count.value++;
+};
+
 const handleReset = () => {
 	isSelected.value = false;
 };
 </script>
 
 <style scoped>
-.demo {
-	display: grid;
-	gap: 12px;
+.radio-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
 }
-.actions {
+
+.radio-demo__row {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 12px;
+	align-items: center;
+	gap: 8px;
+}
+
+.radio-demo__result {
+	margin: 0;
 }
 </style>
 ```
@@ -53,21 +71,26 @@ const handleReset = () => {
 
 ### 禁用与自定义选中值
 
-`disabled` 禁止用户操作；`trueValue/falseValue` 只用于独立使用，不影响组内选项的值。
+`disabled` 禁止用户操作；`trueValue`、`falseValue` 只用于独立使用，不影响组内选项的值。
 
 :::playground
 <!--
 <config lang="json5">
-{ previewInset: 16 }
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
 </config>
 -->
 ```vue
 <template>
-	<div class="demo">
-		<Radio :model-value="false" disabled>未选中禁用</Radio>
-		<Radio :model-value="true" disabled>已选中禁用</Radio>
-		<Radio v-model="status" true-value="enabled" false-value="idle">启用</Radio>
-		<p>当前值：{{ status }}</p>
+	<div class="radio-demo">
+		<div class="radio-demo__row">
+			<Radio :model-value="false" disabled>未选中禁用</Radio>
+			<Radio :model-value="true" disabled>已选中禁用</Radio>
+			<Radio v-model="status" true-value="enabled" false-value="idle">启用</Radio>
+		</div>
+		<p class="radio-demo__result">当前值：{{ status }}</p>
 	</div>
 </template>
 
@@ -79,14 +102,21 @@ const status = ref('idle');
 </script>
 
 <style scoped>
-.demo {
-	display: grid;
-	gap: 12px;
+.radio-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
 }
-.actions {
+
+.radio-demo__row {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 12px;
+	align-items: center;
+	gap: 8px;
+}
+
+.radio-demo__result {
+	margin: 0;
 }
 </style>
 ```
@@ -94,23 +124,30 @@ const status = ref('idle');
 
 ### 组合使用
 
-使用具名导出的 `RadioGroup` 管理互斥选择。`value` 用于选择，`label` 用于显示；其中一项为 `undefined` 或空字符串时回退到另一项。默认插槽优先于自动标签，可用于自定义内容。组内监听分组的事件。
+使用具名导出的 `RadioGroup` 管理互斥选择。`value` 用于选择，`label` 用于显示；其中一项为 `undefined` 或空字符串时回退到另一项。默认插槽优先于自动标签，可用于自定义内容。组内监听分组的 `change`；`name` 设置组内原生 input 共享的 name，`disabled` 禁用整组。
 
 :::playground
 <!--
 <config lang="json5">
-{ previewInset: 16 }
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
 </config>
 -->
 ```vue
 <template>
-	<div class="demo">
-		<RadioGroup v-model="selectedOption" vertical>
+	<div class="radio-demo">
+		<RadioGroup v-model="selectedOption" name="options" vertical @change="handleChange">
 			<Radio value="option-a" label="选项 A" disabled />
 			<Radio value="option-b" label="选项 B" />
 			<Radio value="option-c">选项 C（自定义内容）</Radio>
 		</RadioGroup>
-		<p>当前选项：{{ selectedOption }}</p>
+		<p class="radio-demo__result">当前选项：{{ selectedOption }}；{{ log }}</p>
+		<RadioGroup model-value="option-a" disabled>
+			<Radio value="option-a" label="整组禁用 A" />
+			<Radio value="option-b" label="整组禁用 B" />
+		</RadioGroup>
 	</div>
 </template>
 
@@ -119,17 +156,22 @@ import { ref } from 'vue';
 import { Radio, RadioGroup } from '@deot/vc';
 
 const selectedOption = ref('option-a');
+const log = ref('尚未切换');
+
+const handleChange = (value) => {
+	log.value = `change：${value}`;
+};
 </script>
 
 <style scoped>
-.demo {
-	display: grid;
-	gap: 12px;
-}
-.actions {
+.radio-demo {
 	display: flex;
-	flex-wrap: wrap;
-	gap: 12px;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.radio-demo__result {
+	margin: 0;
 }
 </style>
 ```
@@ -151,14 +193,17 @@ const selectedOption = ref('option-a');
 :::playground
 <!--
 <config lang="json5">
-{ previewInset: 16 }
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
 </config>
 -->
 ```vue
 <template>
-	<div class="demo">
-		<div v-for="type in types" :key="type" class="row">
-			<span class="name">{{ type }}</span>
+	<div class="radio-demo">
+		<div v-for="type in types" :key="type" class="radio-demo__row">
+			<span class="radio-demo__name">{{ type }}</span>
 			<RadioGroup v-model="selectedGroup" :type="type">
 				<Radio label="分组 A" />
 				<Radio label="分组 B" />
@@ -166,8 +211,8 @@ const selectedOption = ref('option-a');
 				<Radio label="分组 D" />
 			</RadioGroup>
 		</div>
-		<div class="row">
-			<span class="name">RadioButton</span>
+		<div class="radio-demo__row">
+			<span class="radio-demo__name">RadioButton</span>
 			<RadioGroup v-model="selectedGroup">
 				<RadioButton label="分组 A" />
 				<RadioButton label="分组 B" />
@@ -175,7 +220,7 @@ const selectedOption = ref('option-a');
 				<Radio label="分组 D" />
 			</RadioGroup>
 		</div>
-		<p>当前分组：{{ selectedGroup }}</p>
+		<p class="radio-demo__result">当前分组：{{ selectedGroup }}</p>
 	</div>
 </template>
 
@@ -188,17 +233,25 @@ const selectedGroup = ref('分组 A');
 </script>
 
 <style scoped>
-.demo {
-	display: grid;
-	gap: 12px;
-}
-.row {
+.radio-demo {
 	display: flex;
-	align-items: center;
+	flex-direction: column;
 	gap: 16px;
 }
-.name {
+
+.radio-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+.radio-demo__name {
 	width: 96px;
+}
+
+.radio-demo__result {
+	margin: 0;
 }
 </style>
 ```
@@ -211,12 +264,15 @@ const selectedGroup = ref('分组 A');
 :::playground
 <!--
 <config lang="json5">
-{ previewInset: 16 }
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
 </config>
 -->
 ```vue
 <template>
-	<div class="demo">
+	<div class="radio-demo">
 		<RadioGroup v-model="size" type="capsule" :size="size">
 			<Radio v-for="item in sizes" :key="item" :label="item" />
 		</RadioGroup>
@@ -224,18 +280,68 @@ const selectedGroup = ref('分组 A');
 			<Radio value="option-a" label="选项 A" />
 			<Radio value="option-b" label="选项 B" />
 		</RadioGroup>
-		<RadioGroup v-model="selectedOption" type="button" :size="size">
+		<RadioGroup
+			v-for="type in types"
+			:key="type"
+			v-model="selectedOption"
+			:type="type"
+			:size="size"
+		>
 			<Radio value="option-a" label="选项 A" />
 			<Radio value="option-b" label="选项 B" />
+			<Radio value="option-c" label="自身 large" size="large" />
 		</RadioGroup>
-		<RadioGroup v-model="selectedOption" type="card" :size="size">
-			<Radio value="option-a" label="选项 A" />
-			<Radio value="option-b" label="选项 B" />
+		<RadioButton v-model="isStandalone" :size="size">独立的 RadioButton</RadioButton>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { Radio, RadioButton, RadioGroup } from '@deot/vc';
+
+const sizes = ['mini', 'small', 'medium', 'large'];
+const types = ['button', 'card', 'round'];
+const size = ref('medium');
+const selectedOption = ref('option-a');
+const isStandalone = ref(false);
+</script>
+
+<style scoped>
+.radio-demo {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 16px;
+}
+</style>
+```
+:::
+
+### 只保留联动（styleless）
+
+`styleless` 不渲染分组容器，保留选择联动；各项的分组样式仍生效，容器上的排列与胶囊底色不生效，选项可以放进任意布局。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
+```vue
+<template>
+	<div class="radio-demo">
+		<RadioGroup v-model="selected" styleless>
+			<div class="radio-demo__grid">
+				<div v-for="item in items" :key="item.value" class="radio-demo__cell">
+					<Radio :value="item.value" :label="item.label" />
+					<span class="radio-demo__hint">{{ item.hint }}</span>
+				</div>
+			</div>
 		</RadioGroup>
-		<RadioGroup v-model="selectedOption" type="round" :size="size">
-			<Radio value="option-a" label="选项 A" />
-			<Radio value="option-b" label="选项 B" />
-		</RadioGroup>
+		<p class="radio-demo__result">当前选项：{{ selected }}</p>
 	</div>
 </template>
 
@@ -243,26 +349,129 @@ const selectedGroup = ref('分组 A');
 import { ref } from 'vue';
 import { Radio, RadioGroup } from '@deot/vc';
 
-const sizes = ['mini', 'small', 'medium', 'large'];
-const size = ref('medium');
-const selectedOption = ref('option-a');
+const items = [
+	{ value: 1, label: '选项一', hint: '说明一' },
+	{ value: 2, label: '选项二', hint: '说明二' },
+	{ value: 3, label: '选项三', hint: '说明三' }
+];
+const selected = ref(1);
 </script>
 
 <style scoped>
-.demo {
+.radio-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.radio-demo__grid {
 	display: grid;
-	justify-items: start;
-	gap: 12px;
+	grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+	gap: 8px;
+}
+
+.radio-demo__cell {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 8px 16px;
+	border: 1px solid var(--vc-border-color);
+	border-radius: 4px;
+}
+
+.radio-demo__hint {
+	color: var(--vc-color-dark-extralight);
+}
+
+.radio-demo__result {
+	margin: 0;
 }
 </style>
 ```
 :::
 
-### 移动端
+## 移动端
 
-`MRadio` 默认使用圆形勾选标记，与圆形 `MCheckbox` 外观一致，`MRadioGroup` 支持垂直排列。
+`MRadio`、`MRadioGroup`、`MRadioButton` 的属性、事件、插槽与桌面端相同，根节点为 `.vcm-radio`、`.vcm-radio-group`。`MRadio` 使用圆形勾选标记，与圆形 `MCheckbox` 外观一致。尺寸按 750 稿设计，写为 `calc(var(--vc-rem) * n)`，随 `--vc-rem` 缩放；底栏切换 `rem` 可查看不同屏宽下的效果。
 
-尺寸使用 750 稿单位，随 `--vc-rem` 缩放：
+:::playground
+<!--
+<config lang="json5">
+{
+	mobile: true,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
+</config>
+-->
+```vue
+<template>
+	<div class="m-radio-demo">
+		<MRadioGroup v-model="selectedOption" vertical>
+			<MRadio value="option-a" label="选项 A" />
+			<MRadio value="option-b" label="选项 B" />
+			<MRadio value="option-c" label="选项 C（暂不可用）" disabled />
+		</MRadioGroup>
+		<MRadioGroup
+			v-for="type in types"
+			:key="type"
+			v-model="selectedOption"
+			:type="type"
+		>
+			<MRadio value="option-a" label="选项 A" />
+			<MRadio value="option-b" label="选项 B" />
+			<MRadio value="option-c" label="选项 C" disabled />
+		</MRadioGroup>
+		<MRadioGroup
+			v-for="size in sizes"
+			:key="size"
+			v-model="selectedOption"
+			type="button"
+			:size="size"
+		>
+			<MRadio value="option-a" :label="size" />
+			<MRadio value="option-b" label="选项 B" />
+		</MRadioGroup>
+		<MRadioGroup v-model="selectedOption">
+			<MRadioButton value="option-a" label="按钮 A" />
+			<MRadioButton value="option-b" label="按钮 B" />
+			<MRadio value="option-c" label="圆点 C" />
+		</MRadioGroup>
+		<p class="m-radio-demo__result">已选值：{{ selectedOption }}</p>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { MRadio, MRadioGroup, MRadioButton } from '@deot/vc';
+
+const types = ['button', 'card', 'capsule', 'text', 'round'];
+const sizes = ['mini', 'small', 'medium', 'large'];
+const selectedOption = ref('option-a');
+</script>
+
+<style scoped>
+.m-radio-demo {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: calc(var(--vc-rem) * 32);
+	padding-inline: calc(var(--vc-rem) * 32);
+}
+
+.m-radio-demo__result {
+	margin: 0;
+	font-size: calc(var(--vc-rem) * 28);
+}
+</style>
+```
+:::
+
+尺寸（750 稿单位）：
 - 图标盒 40，圆形直径 36；
 - 图标与文字间距 16，字号 32，行高 1.4；
 - 分组横排间距 48；纵向排列时每行至少高 84。
@@ -274,56 +483,6 @@ const selectedOption = ref('option-a');
 - 四档高度在 375 宽下依次为 24 / 28 / 32 / 36（与桌面端相同），字号为 14 / 14 / 14 / 16（比桌面端大 2）；
 - `button`、`round` 选项多时换行，横竖间距相同；
 - 没有悬停样式和焦点光晕；`size` 只作用于分组样式，不改变勾选标记。
-
-:::playground
-<!--
-<config lang="json5">
-{ previewInset: 16, viewport: 375, viewportOptions: ['auto', 375] }
-</config>
--->
-```vue
-<template>
-	<div class="demo">
-		<MRadioGroup v-model="selectedOption" vertical>
-			<MRadio value="option-a" label="选项 A" />
-			<MRadio value="option-b" label="选项 B" />
-			<MRadio value="option-c" label="选项 C（暂不可用）" disabled />
-		</MRadioGroup>
-		<MRadioGroup v-model="selectedOption" type="button">
-			<MRadio value="option-a" label="选项 A" />
-			<MRadio value="option-b" label="选项 B" />
-			<MRadio value="option-c" label="选项 C" disabled />
-		</MRadioGroup>
-		<MRadioGroup v-model="selectedOption" type="capsule">
-			<MRadio value="option-a" label="选项 A" />
-			<MRadio value="option-b" label="选项 B" />
-			<MRadio value="option-c" label="选项 C" />
-		</MRadioGroup>
-		<p>已选值：{{ selectedOption }}</p>
-	</div>
-</template>
-
-<script setup>
-import { ref } from 'vue';
-import { MRadio, MRadioGroup } from '@deot/vc';
-
-const selectedOption = ref('option-a');
-</script>
-
-<style scoped>
-.demo {
-	display: grid;
-	gap: 12px;
-	justify-items: start;
-}
-.actions {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 12px;
-}
-</style>
-```
-:::
 
 ## 主题与局部覆盖
 
@@ -370,7 +529,7 @@ const selectedOption = ref('option-a');
 | name | 原生 input 的 name，组内由 RadioGroup.name 决定 | `string` | - | `undefined` |
 | size | 尺寸，作用于分组样式（含 RadioButton / MRadioButton），不改变移动端勾选标记；不设时取分组的 size | `string` | `'mini'` / `'small'` / `'medium'` / `'large'` | `undefined`（按 `'medium'` 显示） |
 
-自动标签按真值判断，`0`、`false` 等内容请使用默认插槽显示。分组的选择比较使用严格相等，数字 `1` 与字符串 `'1'` 不相等。
+自动标签显示字符串与数字（含 `0`），布尔值不显示，需要时使用默认插槽。分组的选择比较使用严格相等，数字 `1` 与字符串 `'1'` 不相等。
 
 ### Radio 事件
 

@@ -2,6 +2,8 @@
 
 渲染一份由调用方提供的内容：渲染函数、插槽、字符串、数字或 `{ type, value }`，并统一处理包裹元素与 HTML。
 
+移动端入口导出的 `MCustomer` 与 `Customer` 是同一实现。
+
 ### 何时使用
 
 - 需要在模板中以组件形式调用渲染函数，或为列表项提供独立的组件更新边界。
@@ -14,17 +16,20 @@
 :::playground
 <!--
 <config lang="json5">
-{ previewInset: 16 }
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
 </config>
 -->
 ```vue
 <template>
-	<div class="demo-counter">
+	<div class="customer-demo">
 		<Customer :render="renderCount" :count="count" after-text=" 次" />
-		<div class="demo-actions">
-			<Button type="primary" @click="count++">增加</Button>
-			<Button :disabled="count === 0" @click="count--">减少</Button>
-			<Button :disabled="count === 0" @click="count = 0">重置</Button>
+		<div class="customer-demo__row">
+			<Button type="primary" @click="handleIncrease">增加</Button>
+			<Button :disabled="count === 0" @click="handleDecrease">减少</Button>
+			<Button :disabled="count === 0" @click="handleReset">重置</Button>
 		</div>
 	</div>
 </template>
@@ -34,31 +39,40 @@ import { h, ref } from 'vue';
 import { Button, Customer } from '@deot/vc';
 
 const count = ref(0);
-const renderCount = attrs => h('p', { 'class': 'demo-count', 'aria-live': 'polite' }, `已点击 ${attrs.count}${attrs['after-text']}`);
+const renderCount = attrs => h('p', { 'class': 'customer-demo__count', 'aria-live': 'polite' }, `已点击 ${attrs.count}${attrs['after-text']}`);
+
+const handleIncrease = () => {
+	count.value++;
+};
+
+const handleDecrease = () => {
+	count.value--;
+};
+
+const handleReset = () => {
+	count.value = 0;
+};
 </script>
 
 <style scoped>
-.demo-counter {
-	display: grid;
-	gap: 18px;
-	padding: 18px;
-	border: 1px solid var(--vc-color-border, #e5e7eb);
-	border-radius: 10px;
-	background: var(--vc-color-fill, transparent);
+.customer-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
 }
 
-.demo-count {
-	margin: 0;
-	color: var(--vc-color-primary, #409eff);
-	font-size: 22px;
-	font-weight: 600;
-	line-height: 1.4;
-}
-
-.demo-actions {
+.customer-demo__row {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 10px;
+	align-items: center;
+	gap: 8px;
+}
+
+.customer-demo :deep(.customer-demo__count) {
+	margin: 0;
+	font-size: 22px;
+	font-weight: 600;
+	color: var(--vc-color-primary, #456cf6);
 }
 </style>
 ```
@@ -71,19 +85,22 @@ const renderCount = attrs => h('p', { 'class': 'demo-count', 'aria-live': 'polit
 :::playground
 <!--
 <config lang="json5">
-{ previewInset: 16 }
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
 </config>
 -->
 ```vue
 <template>
-	<div class="demo-events">
+	<div class="customer-demo">
 		<Customer :render="renderContent" :count="count" @increase="handleIncrease">
-			<p class="demo-slot">内容来自默认插槽</p>
+			<p class="customer-demo__item">内容来自默认插槽</p>
 			<template #content="{ current }">
-				<p class="demo-slot">作用域插槽收到的计数：{{ current }}</p>
+				<p class="customer-demo__item">作用域插槽收到的计数：{{ current }}</p>
 			</template>
 		</Customer>
-		<p class="demo-result" aria-live="polite">父组件收到的计数：{{ count }}</p>
+		<p class="customer-demo__result" aria-live="polite">父组件收到的计数：{{ count }}</p>
 	</div>
 </template>
 
@@ -92,10 +109,12 @@ import { h, ref } from 'vue';
 import { Button, Customer } from '@deot/vc';
 
 const count = ref(0);
+
 const handleIncrease = (value) => {
 	count.value = value;
 };
-const renderContent = (attrs, { slots, emit }) => h('div', [
+
+const renderContent = (attrs, { slots, emit }) => h('div', { class: 'customer-demo__group' }, [
 	slots.default?.(),
 	slots.content?.({ current: attrs.count }),
 	h(Button, {
@@ -106,28 +125,25 @@ const renderContent = (attrs, { slots, emit }) => h('div', [
 </script>
 
 <style scoped>
-.demo-events {
-	display: grid;
-	gap: 14px;
-	padding: 18px;
-	border: 1px solid var(--vc-color-border, #e5e7eb);
-	border-radius: 10px;
-	background: var(--vc-color-fill, transparent);
+.customer-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
 }
 
-.demo-slot {
-	margin: 5px 0;
-	padding: 10px 12px;
-	border-radius: 6px;
-	background: var(--vc-color-fill-light, rgba(64, 158, 255, 0.08));
-	line-height: 1.5;
+.customer-demo :deep(.customer-demo__group) {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 8px;
 }
 
-.demo-result {
-	margin: 4px 0 0;
-	padding-top: 12px;
-	border-top: 1px solid var(--vc-color-border, #e5e7eb);
-	font-weight: 600;
+.customer-demo__item {
+	margin: 0;
+}
+
+.customer-demo__result {
+	margin: 0;
 }
 </style>
 ```
@@ -138,25 +154,35 @@ const renderContent = (attrs, { slots, emit }) => h('div', [
 组件的标题、内容等属性通常同时支持插槽、渲染函数和字符串。插槽本身就是函数，和渲染函数一样通过 `render` 传入，由调用方决定先后，例如 `slots.title || props.title`。
 
 - 字符串和数字放进 `tag` 指定的包裹元素，`class`、`style` 和事件监听器只作用于这个元素。
-- 函数（渲染函数或插槽）的内容原样输出，不加包裹元素；需要包裹时开启 `wrap`。
+- 函数（渲染函数或插槽）的内容原样输出，不加包裹元素；需要包裹时开启 `wrap`，此时 `class` 落在包裹元素上。
 - 除 `class`、`style` 和事件监听器外，写在组件上的其他属性都是函数的参数，不会出现在 DOM 上。
 - `render`、`tag`、`wrap` 是组件自己的属性，不能用作参数名。
 
 :::playground
 <!--
 <config lang="json5">
-{ previewInset: 16 }
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
 </config>
 -->
 ```vue
 <template>
-	<div class="demo-slot">
-		<Customer tag="p" class="demo-slot__item" render="字符串内容" />
+	<div class="customer-demo">
+		<Customer tag="p" class="customer-demo__item" render="字符串内容" />
 		<Customer :render="renderContent" :index="1" />
+		<Customer
+			tag="section"
+			class="customer-demo__item"
+			wrap
+			:render="renderText"
+			:index="2"
+		/>
 		<DemoTitle title="属性提供的标题" />
 		<DemoTitle title="有插槽时不显示">
 			<template #title="{ index }">
-				<p class="demo-slot__item">插槽内容，index：{{ index }}</p>
+				<p class="customer-demo__item">插槽内容，index：{{ index }}</p>
 			</template>
 		</DemoTitle>
 	</div>
@@ -166,30 +192,31 @@ const renderContent = (attrs, { slots, emit }) => h('div', [
 import { h } from 'vue';
 import { Customer } from '@deot/vc';
 
-const renderContent = ({ index }) => h('p', { class: 'demo-slot__item' }, `渲染函数内容，index：${index}`);
+const renderContent = ({ index }) => h('p', { class: 'customer-demo__item' }, `渲染函数内容，index：${index}`);
+const renderText = ({ index }) => `wrap 包裹的渲染函数内容，index：${index}`;
 
 // 组件内部的典型写法：插槽与属性二选一后交给 Customer
 const DemoTitle = (props, { slots }) => h(Customer, {
 	tag: 'p',
-	class: 'demo-slot__item',
+	class: 'customer-demo__item',
 	render: slots.title || props.title,
-	index: 2
+	index: 3
 });
 DemoTitle.props = ['title'];
 </script>
 
 <style scoped>
-.demo-slot {
-	display: grid;
-	gap: 10px;
+.customer-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
 }
 
-.demo-slot__item {
+.customer-demo :deep(.customer-demo__item) {
 	margin: 0;
-	padding: 10px 12px;
-	border-radius: 6px;
-	background: var(--vc-color-fill-light, rgba(64, 158, 255, 0.08));
-	line-height: 1.5;
+	padding: 8px 12px;
+	border-radius: 4px;
+	background: var(--vc-background-color-light, #f7f8fa);
 }
 </style>
 ```
@@ -202,12 +229,15 @@ DemoTitle.props = ['title'];
 :::playground
 <!--
 <config lang="json5">
-{ previewInset: 16 }
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
 </config>
 -->
 ```vue
 <template>
-	<div class="demo-html">
+	<div class="customer-demo">
 		<Customer :render="markup" />
 		<Customer :render="{ type: 'html', value: markup }" />
 		<Customer :render="{ type: 'text', value: markup }" />
@@ -221,10 +251,10 @@ const markup = '<b>加粗</b>的内容';
 </script>
 
 <style scoped>
-.demo-html {
-	display: grid;
-	gap: 10px;
-	line-height: 1.5;
+.customer-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
 }
 </style>
 ```
@@ -280,7 +310,7 @@ VcInstance.configure({
 
 | 属性 | 说明 | 类型 | 可选值 | 默认值 |
 | --- | --- | --- | --- | --- |
-| render | 内容。字符串和数字按文本渲染，HTML 与自定义类型用 `{ type, value }`；函数（渲染函数或插槽）的第一个参数为除 `class`、`style`、事件监听器以外的属性，第二个参数为 Vue 的 `SetupContext` | `string \| number \| ((attrs: object, context: SetupContext) => any) \| { type: string; value: any }` | - | - |
+| render | 内容。字符串和数字按文本渲染，HTML 与自定义类型用 `{ type, value }`；函数（渲染函数或插槽）的第一个参数为除 `class`、`style`、事件监听器及 `tag`、`wrap` 以外的属性，第二个参数为 Vue 的 `SetupContext` | `string \| number \| ((attrs: object, context: SetupContext) => any) \| { type: string; value: any }` | - | - |
 | tag | 包裹元素，可以是标签名或组件 | `string \| Component` | - | `'div'` |
 | wrap | 函数的内容也放进包裹元素，且没有内容时仍渲染包裹元素 | `boolean` | - | `false` |
 | 其他属性 | 传给函数的参数；`class`、`style`、事件监听器除外，它们落在包裹元素上 | - | - | - |
@@ -303,7 +333,7 @@ VcInstance.configure({
 
 | 配置项 | 说明 | 类型 | 默认值 |
 | --- | --- | --- | --- |
-| sanitize | 写入 HTML 前的清洗，返回清洗后的 HTML；`instance` 是当前的 Customer 实例，`instance.parent` 为使用它的组件 | `(data: { value: string; instance: object }) => string` | - |
+| sanitize | 写入 HTML 前的清洗，返回清洗后的 HTML；仅在内容含 `<` 或 `&` 时调用；`instance` 是当前的 Customer 实例，`instance.parent` 为使用它的组件 | `(data: { value: string; instance: object }) => string` | - |
 | Customer.formatter | 渲染前转换 `{ type, value }` 的内容，返回值作为最终内容；`instance` 同上 | `(data: { type: string; value: any; instance: object }) => any` | - |
 
 ### 渲染行为
@@ -329,7 +359,3 @@ VcInstance.configure({
 - RadioButton 的 `label` 为 `0` 时正常显示。
 - 移动端 Tabs 的标签（包括渲染函数与插槽）统一放在一个 `span` 内。
 - Select、Picker 的 render 类属性只应传函数；传入其它类型的值不再被忽略。
-
-### 移动端
-
-`MCustomer` 是 `Customer` 的别名，可从 `@deot/vc` 导入，属性及渲染行为完全相同。

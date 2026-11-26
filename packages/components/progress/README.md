@@ -13,29 +13,51 @@
 挂载时进度从 0 过渡到当前值，之后每次变化也有过渡。这一效果依赖 CSS `@starting-style`，不支持的浏览器直接显示当前值。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 20 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
 	<div class="progress-demo">
-		<div class="progress-item"><span>进行中</span><Progress :percent="40" /></div>
-		<div class="progress-item"><span>已完成</span><Progress :percent="100" /></div>
-		<div class="progress-item"><span>失败</span><Progress :percent="30" status="error" /></div>
-		<div class="progress-item"><span>隐藏文本</span><Progress :percent="60" :stroke-width="16" :show-text="false" /></div>
+		<div class="progress-demo__item">
+			<span>进行中</span>
+			<Progress :percent="40" />
+		</div>
+		<div class="progress-demo__item">
+			<span>已完成</span>
+			<Progress :percent="100" />
+		</div>
+		<div class="progress-demo__item">
+			<span>失败</span>
+			<Progress :percent="30" status="error" />
+		</div>
+		<div class="progress-demo__item">
+			<span>隐藏文本</span>
+			<Progress :percent="60" :stroke-width="16" :show-text="false" />
+		</div>
 	</div>
 </template>
+
 <script setup>
 import { Progress } from '@deot/vc';
 </script>
+
 <style scoped>
 .progress-demo {
 	display: grid;
-	gap: 20px;
+	gap: 16px;
 }
-.progress-item {
+
+.progress-demo__item {
 	display: grid;
 	grid-template-columns: 72px 1fr;
 	align-items: center;
-	gap: 12px;
+	gap: 8px;
 }
 </style>
 ```
@@ -46,31 +68,50 @@ import { Progress } from '@deot/vc';
 更新 `percent` 即可改变进度。`animated` 为线形进度条增加循环高光动画。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 20 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
 	<div class="progress-demo">
 		<Progress :percent="percent" animated />
-		<div class="progress-actions">
-			<Button @click="percent = Math.max(0, percent - 10)">减少进度</Button>
-			<Button @click="percent = Math.min(100, percent + 10)">增加进度</Button>
+		<div class="progress-demo__actions">
+			<Button @click="handleDecrease">减少进度</Button>
+			<Button @click="handleIncrease">增加进度</Button>
 		</div>
 	</div>
 </template>
+
 <script setup>
 import { ref } from 'vue';
-import { Progress, Button } from '@deot/vc';
+import { Button, Progress } from '@deot/vc';
 
 const percent = ref(30);
+
+const handleDecrease = () => {
+	percent.value = Math.max(0, percent.value - 10);
+};
+
+const handleIncrease = () => {
+	percent.value = Math.min(100, percent.value + 10);
+};
 </script>
+
 <style scoped>
 .progress-demo {
 	display: grid;
-	gap: 20px;
+	gap: 16px;
 }
-.progress-actions {
+
+.progress-demo__actions {
 	display: flex;
-	gap: 12px;
+	flex-wrap: wrap;
+	gap: 8px;
 }
 </style>
 ```
@@ -83,7 +124,14 @@ const percent = ref(30);
 - `disabled`：进度和文字改用 `foreground-color-inactive`，忽略 `color`，并停止 `animated`。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 20 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
 	<div class="progress-demo">
@@ -96,13 +144,15 @@ const percent = ref(30);
 		<Progress :percent="60" disabled />
 	</div>
 </template>
+
 <script setup>
 import { Progress } from '@deot/vc';
 </script>
+
 <style scoped>
 .progress-demo {
 	display: grid;
-	gap: 20px;
+	gap: 16px;
 }
 </style>
 ```
@@ -112,38 +162,62 @@ import { Progress } from '@deot/vc';
 
 `color` 可以传一个统一的颜色，也可以传按 `default`、`success`、`error` 取值的对象，对象里缺少的状态使用主题色。`trackColor` 控制轨道颜色。
 
-圆形中心的默认文字字号为 `size` 的 20%，可以通过 `textClass` / `textStyle` 覆盖；中心内容也可以通过默认插槽替换。进度为 0 时不绘制进度弧。
+圆形中心的默认文字字号为 `size` 的 20%，可以通过 `textClass` / `textStyle` 覆盖（只作用于默认百分比文本）；中心内容也可以通过默认插槽替换。进度为 0 时不绘制进度弧。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 20 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="progress-circles">
-		<div class="progress-card"><span>自定义颜色</span><Progress type="circle" :percent="50" :stroke-width="10" color="#ed4014" /></div>
+	<div class="progress-demo">
+		<div class="progress-demo__card">
+			<span>自定义颜色</span>
+			<Progress type="circle" :percent="50" :stroke-width="10" color="#ed4014" track-color="#fde2e2" />
+		</div>
 		<Progress
 			type="circle"
 			:percent="100"
 			:color="{ default: '#456cf6', success: '#1db88c', error: '#f04134' }"
+		/>
+		<Progress
+			type="circle"
+			:percent="75"
+			text-class="progress-demo__text"
+			:text-style="{ fontSize: '28px' }"
 		/>
 		<Progress type="circle" :percent="60" :size="150">
 			<span>已完成 60%</span>
 		</Progress>
 	</div>
 </template>
+
 <script setup>
 import { Progress } from '@deot/vc';
 </script>
+
 <style scoped>
-.progress-circles {
+.progress-demo {
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
-	gap: 20px;
+	gap: 16px;
 }
-.progress-card {
+
+.progress-demo__card {
 	display: grid;
 	justify-items: center;
-	gap: 12px;
+	gap: 8px;
+}
+
+.progress-demo :deep(.progress-demo__text) {
+	font-weight: 700;
+	color: var(--vc-color-primary);
 }
 </style>
 ```
@@ -153,7 +227,81 @@ import { Progress } from '@deot/vc';
 
 `MProgress` 的属性、插槽、结构都与 `Progress` 相同，根节点另有标记类 `.vcm-progress`；结构样式、颜色与主题参数共用。
 
-尺寸按 750 稿设计：数字 `strokeWidth`（线形）和数字 `size` 为 750 稿长度，写为 `calc(var(--vc-rem) * n)`，随 `--vc-rem` 缩放。圆形的 `strokeWidth` 仍是 SVG 坐标系中的宽度，两端相同。
+尺寸按 750 稿设计：数字 `strokeWidth`（线形）和数字 `size` 为 750 稿长度，写为 `calc(var(--vc-rem) * n)`，随 `--vc-rem` 缩放。圆形的 `strokeWidth` 仍是 SVG 坐标系中的宽度，两端相同。底栏切换 `rem` 可查看不同屏宽下的效果。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	mobile: true,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
+</config>
+-->
+```vue
+<template>
+	<div class="m-progress-demo">
+		<MProgress :percent="percent" />
+		<MProgress :percent="30" status="error" />
+		<MProgress :percent="100" />
+		<MProgress :percent="percent" :stroke-width="16" animated />
+		<MProgress :percent="percent" text-inside />
+		<MProgress :percent="percent">
+			<template #default="{ percent: value }">
+				<span>{{ Math.round(value) }} / 100</span>
+			</template>
+		</MProgress>
+		<MProgress :percent="percent" disabled />
+		<MProgress :percent="percent" color="#ff5722" />
+		<div class="m-progress-demo__row">
+			<MProgress :percent="percent" type="circle" />
+			<MProgress :percent="100" type="circle" />
+			<MProgress :percent="percent" type="circle" :size="96" :show-text="false" />
+		</div>
+		<div class="m-progress-demo__row">
+			<MButton size="small" @click="handleDecrease">减少</MButton>
+			<MButton size="small" @click="handleIncrease">增加</MButton>
+		</div>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { MButton, MProgress } from '@deot/vc';
+
+const percent = ref(60);
+
+const handleDecrease = () => {
+	percent.value = Math.max(0, percent.value - 10);
+};
+
+const handleIncrease = () => {
+	percent.value = Math.min(100, percent.value + 10);
+};
+</script>
+
+<style scoped>
+.m-progress-demo {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--vc-rem) * 32);
+	padding-inline: calc(var(--vc-rem) * 32);
+}
+
+.m-progress-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: calc(var(--vc-rem) * 32);
+}
+</style>
+```
+:::
 
 | 项 | 移动端（括号内为 375 宽下的 px） | 桌面端 |
 | --- | --- | --- |
@@ -164,17 +312,6 @@ import { Progress } from '@deot/vc';
 | 文字颜色 | 同进度色 | `color-dark-lightest` |
 | `textInside` 文字左右间距 | 12（6） | 6px |
 | 圆形尺寸 | 136（68） | 120px |
-
-```vue
-<template>
-	<MProgress :percent="60" />
-	<MProgress type="circle" :percent="60" />
-</template>
-
-<script setup>
-import { MProgress } from '@deot/vc';
-</script>
-```
 
 ## 主题与局部覆盖
 

@@ -9,21 +9,28 @@
 
 ### 基础用法
 
-把内容放进默认插槽，`value` 为数字时在右上角显示徽标。`dot` 显示为小圆点，`dot` 插槽自定义徽标（白底圆角）。
+把内容放进默认插槽，`value` 为数字时在右上角显示徽标。`dot` 显示为小圆点，`dot` 插槽自定义徽标（白底圆角），`dotStyle` 设置徽标元素的样式。右上角徽标会溢出内容约半个徽标，demo 中带徽标的内容之间用 `32px` 间距，避免徽标压到相邻内容。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="demo">
+	<div class="badge-demo">
 		<Badge :value="9">
-			<span class="box" />
+			<span class="badge-demo__box" />
 		</Badge>
 		<Badge dot :dot-style="{ width: '10px', height: '10px' }">
-			<span class="box" />
+			<span class="badge-demo__box" />
 		</Badge>
 		<Badge :dot-style="{ width: '16px', height: '16px', fontSize: '14px' }">
-			<span class="box" />
+			<span class="badge-demo__box" />
 			<template #dot>
 				<Icon type="time" />
 			</template>
@@ -36,12 +43,14 @@ import { Badge, Icon } from '@deot/vc';
 </script>
 
 <style scoped>
-.demo {
+.badge-demo {
 	display: flex;
+	flex-wrap: wrap;
 	align-items: center;
-	gap: 40px;
+	gap: 32px;
 }
-.box {
+
+.badge-demo__box {
 	display: block;
 	width: 40px;
 	height: 40px;
@@ -54,15 +63,22 @@ import { Badge, Icon } from '@deot/vc';
 
 ### 独立使用
 
-没有默认插槽时，徽标在行内显示。
+没有默认插槽时，徽标在行内显示。`dotClass` 给徽标元素加类名，可在外部样式中改写颜色。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="demo">
+	<div class="badge-demo">
 		<Badge :value="2" />
-		<Badge :value="2" :dot-style="{ background: '#E5E6EB', color: '#86909C' }" />
+		<Badge :value="2" dot-class="badge-demo__muted" />
 		<Badge :value="16" />
 		<Badge :value="1000" />
 	</div>
@@ -73,10 +89,16 @@ import { Badge } from '@deot/vc';
 </script>
 
 <style scoped>
-.demo {
+.badge-demo {
 	display: flex;
+	flex-wrap: wrap;
 	align-items: center;
-	gap: 40px;
+	gap: 8px;
+}
+
+.badge-demo :deep(.badge-demo__muted) {
+	color: #86909C;
+	background: #E5E6EB;
 }
 </style>
 ```
@@ -87,27 +109,34 @@ import { Badge } from '@deot/vc';
 `value` 为字符串时原样显示。数字超过 `max` 时显示为 `${max}+`，`max` 默认为 `99`，`0` 表示不限。数字小于等于 `0` 时不显示徽标。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="demo">
+	<div class="badge-demo">
 		<Badge value="NEW">
-			<span class="box" />
+			<span class="badge-demo__box" />
 		</Badge>
 		<Badge value="HOT">
-			<span class="box" />
+			<span class="badge-demo__box" />
 		</Badge>
 		<Badge :value="100" :max="10">
-			<span class="box" />
+			<span class="badge-demo__box" />
 		</Badge>
 		<Badge :value="100">
-			<span class="box" />
+			<span class="badge-demo__box" />
 		</Badge>
 		<Badge :value="1000" :max="999">
-			<span class="box" />
+			<span class="badge-demo__box" />
 		</Badge>
 		<Badge :value="1000" :max="0">
-			<span class="box" />
+			<span class="badge-demo__box" />
 		</Badge>
 	</div>
 </template>
@@ -117,13 +146,14 @@ import { Badge } from '@deot/vc';
 </script>
 
 <style scoped>
-.demo {
+.badge-demo {
 	display: flex;
-	align-items: center;
 	flex-wrap: wrap;
-	gap: 40px;
+	align-items: center;
+	gap: 16px 40px;
 }
-.box {
+
+.badge-demo__box {
 	display: block;
 	width: 40px;
 	height: 40px;
@@ -139,18 +169,28 @@ import { Badge } from '@deot/vc';
 `offset` 为 `[水平, 垂直]`，单位为 px（`MBadge` 中为 750 稿长度），正值向右、向下；数字表示两个方向相同。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="demo">
+	<div class="badge-demo">
 		<Badge dot :offset="[6, -2]">
 			<a href="javascript:void(0)">链接</a>
 		</Badge>
 		<Badge dot :offset="[2, -2]">
-			<Icon type="message" class="icon" />
+			<Icon type="message" class="badge-demo__icon" />
 		</Badge>
 		<Badge :value="5" :offset="[-6, 6]">
-			<span class="box" />
+			<span class="badge-demo__box" />
+		</Badge>
+		<Badge :value="5" :offset="4">
+			<span class="badge-demo__box" />
 		</Badge>
 	</div>
 </template>
@@ -160,16 +200,19 @@ import { Badge, Icon } from '@deot/vc';
 </script>
 
 <style scoped>
-.demo {
+.badge-demo {
 	display: flex;
+	flex-wrap: wrap;
 	align-items: center;
-	gap: 40px;
+	gap: 32px;
 }
-.icon {
+
+.badge-demo__icon {
 	font-size: 18px;
 	color: #888;
 }
-.box {
+
+.badge-demo__box {
 	display: block;
 	width: 40px;
 	height: 40px;
@@ -182,20 +225,28 @@ import { Badge, Icon } from '@deot/vc';
 
 ### 状态点
 
-设置 `status` 显示为状态点：`default` 默认、`pending` 进行中、`success` 成功、`warning` 提醒、`error` 错误。`label` 为状态点旁的文字，只传 `label` 时状态按 `default`。
+设置 `status` 显示为状态点：`default` 默认、`pending` 进行中、`success` 成功、`warning` 提醒、`error` 错误。`label` 为状态点旁的文字，只传 `label` 时状态按 `default`；`label` 插槽自定义文字。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="demo">
-		<div class="row">
+	<div class="badge-demo">
+		<div class="badge-demo__row">
 			<Badge v-for="status in STATUSES" :key="status" :status="status" />
 		</div>
-		<div class="row">
+		<div class="badge-demo__row">
 			<Badge v-for="status in STATUSES" :key="status" :status="status" :label="status" />
+			<Badge label="只传 label" />
 		</div>
-		<div class="row">
+		<div class="badge-demo__row">
 			<span>状态：</span>
 			<Badge status="success">
 				<template #label>
@@ -213,15 +264,17 @@ const STATUSES = ['default', 'pending', 'success', 'warning', 'error'];
 </script>
 
 <style scoped>
-.demo {
+.badge-demo {
 	display: flex;
 	flex-direction: column;
-	gap: 24px;
+	gap: 16px;
 }
-.row {
+
+.badge-demo__row {
 	display: flex;
+	flex-wrap: wrap;
 	align-items: baseline;
-	gap: 24px;
+	gap: 8px 16px;
 }
 </style>
 ```
@@ -232,19 +285,26 @@ const STATUSES = ['default', 'pending', 'success', 'warning', 'error'];
 `color` 接受任意 CSS 颜色，作用于数字、文字、圆点与状态点，不改变徽标的形态。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="demo">
-		<div class="row">
+	<div class="badge-demo">
+		<div class="badge-demo__row">
 			<Badge v-for="color in COLORS" :key="color" :color="color" :label="color" />
 		</div>
-		<div class="row">
+		<div class="badge-demo__row">
 			<Badge :value="8" color="var(--vc-color-primary)">
-				<span class="box" />
+				<span class="badge-demo__box" />
 			</Badge>
 			<Badge dot color="var(--vc-color-success)">
-				<span class="box" />
+				<span class="badge-demo__box" />
 			</Badge>
 		</div>
 	</div>
@@ -257,18 +317,20 @@ const COLORS = ['#F53F3F', '#7816FF', '#00B42A', '#165DFF', '#FF7D00', '#EB0AA4'
 </script>
 
 <style scoped>
-.demo {
+.badge-demo {
 	display: flex;
 	flex-direction: column;
-	gap: 24px;
+	gap: 16px;
 }
-.row {
+
+.badge-demo__row {
 	display: flex;
-	align-items: center;
 	flex-wrap: wrap;
-	gap: 24px 40px;
+	align-items: center;
+	gap: 16px 32px;
 }
-.box {
+
+.badge-demo__box {
 	display: block;
 	width: 40px;
 	height: 40px;
@@ -284,22 +346,31 @@ const COLORS = ['#F53F3F', '#7816FF', '#00B42A', '#165DFF', '#FF7D00', '#EB0AA4'
 徽标出现、隐藏与形态切换时缩放过渡；数字变化时文字重新缩放。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="demo">
-		<div class="row">
+	<div class="badge-demo">
+		<div class="badge-demo__row">
 			<Badge :dot="isDot" :value="isDot ? count : 0">
-				<span class="box" />
+				<span class="badge-demo__box" />
 			</Badge>
 			<Switch v-model="isDot" />
 		</div>
-		<div class="row">
+		<div class="badge-demo__row">
 			<Badge :value="count">
-				<span class="box" />
+				<span class="badge-demo__box" />
 			</Badge>
-			<Button @click="count++">+1</Button>
-			<Button @click="count = Math.max(count - 1, 0)">-1</Button>
+			<div class="badge-demo__actions">
+				<Button @click="handleIncrease">+1</Button>
+				<Button @click="handleDecrease">-1</Button>
+			</div>
 		</div>
 	</div>
 </template>
@@ -310,24 +381,39 @@ import { Badge, Button, Switch } from '@deot/vc';
 
 const isDot = ref(true);
 const count = ref(12);
+
+const handleIncrease = () => {
+	count.value++;
+};
+
+const handleDecrease = () => {
+	count.value = Math.max(count.value - 1, 0);
+};
 </script>
 
 <style scoped>
-.demo {
+.badge-demo {
 	display: flex;
 	flex-direction: column;
-	gap: 24px;
-}
-.row {
-	display: flex;
-	align-items: center;
 	gap: 16px;
 }
-.box {
+
+.badge-demo__row {
+	display: flex;
+	align-items: center;
+	gap: 32px;
+}
+
+.badge-demo__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.badge-demo__box {
 	display: block;
 	width: 40px;
 	height: 40px;
-	margin-right: 24px;
 	background: var(--vc-color-neutral);
 	border-radius: 4px;
 }
@@ -335,9 +421,133 @@ const count = ref(12);
 ```
 :::
 
-### 移动端
+## 移动端
 
-`MBadge` 的结构、显示规则和样式都与 `Badge` 相同，根元素另有标记类 `.vcm-badge`。尺寸写为 `calc(var(--vc-rem) * n)`（n 为 750 稿长度），随 `--vc-rem` 缩放；`offset` 同样是 750 稿长度。
+`MBadge` 的结构、显示规则和样式都与 `Badge` 相同，根元素另有标记类 `.vcm-badge`。尺寸写为 `calc(var(--vc-rem) * n)`（n 为 750 稿长度），随 `--vc-rem` 缩放；`offset` 同样是 750 稿长度。底栏切换 `rem` 可查看不同屏宽下的效果。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	mobile: true,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
+</config>
+-->
+```vue
+<template>
+	<div class="m-badge-demo">
+		<div class="m-badge-demo__row">
+			<MBadge :value="2">
+				<span class="m-badge-demo__box" />
+			</MBadge>
+			<MBadge :value="100">
+				<span class="m-badge-demo__box" />
+			</MBadge>
+			<MBadge dot>
+				<span class="m-badge-demo__box" />
+			</MBadge>
+			<MBadge value="NEW">
+				<span class="m-badge-demo__box" />
+			</MBadge>
+		</div>
+		<div class="m-badge-demo__row">
+			<MBadge :value="2" />
+			<MBadge :value="16" />
+			<MBadge :value="1000" :max="999" />
+			<MBadge value="NEW" />
+			<MBadge dot />
+		</div>
+		<div class="m-badge-demo__row">
+			<MBadge>
+				<span class="m-badge-demo__box" />
+				<template #dot>
+					<MIcon type="time" :size="[32, 24]" color="var(--vc-foreground-color-light)" />
+				</template>
+			</MBadge>
+			<MBadge :value="8" color="var(--vc-color-primary)">
+				<span class="m-badge-demo__box" />
+			</MBadge>
+			<MBadge :value="5" :offset="[-12, 12]">
+				<span class="m-badge-demo__box" />
+			</MBadge>
+			<MBadge dot :offset="[8, -4]">
+				<span class="m-badge-demo__text">文字</span>
+			</MBadge>
+		</div>
+		<div class="m-badge-demo__row">
+			<MBadge :value="count">
+				<span class="m-badge-demo__box" />
+			</MBadge>
+			<MButton size="small" @click="handleIncrease">加一</MButton>
+			<MButton size="small" @click="handleDecrease">减一</MButton>
+		</div>
+		<div class="m-badge-demo__column">
+			<MBadge status="default" label="默认" />
+			<MBadge status="pending" label="进行中" />
+			<MBadge status="success" label="成功" />
+			<MBadge status="warning" label="警告" />
+			<MBadge status="error" label="失败" />
+		</div>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { MBadge, MButton, MIcon } from '@deot/vc';
+
+const count = ref(3);
+
+const handleIncrease = () => {
+	count.value++;
+};
+
+const handleDecrease = () => {
+	count.value = Math.max(0, count.value - 1);
+};
+</script>
+
+<style scoped>
+.m-badge-demo {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--vc-rem) * 48);
+	padding-inline: calc(var(--vc-rem) * 32);
+}
+
+/* 右上角徽标会溢出内容，横向间距放宽到 48 */
+.m-badge-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: calc(var(--vc-rem) * 32) calc(var(--vc-rem) * 48);
+}
+
+.m-badge-demo__column {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--vc-rem) * 16);
+}
+
+.m-badge-demo__box {
+	display: block;
+	width: calc(var(--vc-rem) * 80);
+	height: calc(var(--vc-rem) * 80);
+	background-color: var(--vc-background-color-light);
+	border-radius: calc(var(--vc-rem) * 8);
+}
+
+.m-badge-demo__text {
+	font-size: calc(var(--vc-rem) * 28);
+}
+</style>
+```
+:::
 
 两端的尺寸都写成局部变量 `--vc-badge-<键>`，桌面端的默认值为 px，移动端在 `.vcm-badge` 上覆盖，与样式的加载顺序无关。键为 `height`、`padding`、`font-size`、`dot`、`inset`、`ring`、`label-font-size`、`label-line-height`、`label-gap`。
 
@@ -349,19 +559,6 @@ const count = ref(12);
 | 圆点、状态点 | `6px` | `16` | `8px` |
 | 外圈宽度 | `2px` | `4` | `2px` |
 | 状态点旁文字的字号 / 行高 / 间距 | `14px` / `22px` / `8px` | `28` / `44` / `16` | `14px` / `22px` / `8px` |
-
-```vue
-<template>
-	<MBadge :value="5" :offset="[-12, 12]">
-		<span class="box" />
-	</MBadge>
-	<MBadge status="success" label="成功" />
-</template>
-
-<script setup>
-import { MBadge } from '@deot/vc';
-</script>
-```
 
 ## 主题与局部覆盖
 
@@ -382,7 +579,19 @@ import { MBadge } from '@deot/vc';
 
 ### 局部
 
-当前组件没有额外的局部 CSS 主题参数。
+尺寸写成局部变量 `--vc-badge-<键>`，桌面端的默认值在括号内，设在徽标或其祖先上；`MBadge` 的取值见 [移动端](#移动端)：
+
+| 键 | 说明 |
+| --- | --- |
+| height | 数字的高、最小宽、行高与圆角（20px） |
+| padding | 数字左右内边距（6px） |
+| font-size | 数字字号（12px） |
+| dot | 圆点与状态点尺寸（6px） |
+| inset | 角标向内的偏移（2px） |
+| ring | 描边宽度（2px） |
+| label-font-size | 状态文字字号（14px） |
+| label-line-height | 状态文字行高（22px） |
+| label-gap | 状态点与文字的间距（8px） |
 
 ## API
 

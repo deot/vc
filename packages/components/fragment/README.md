@@ -2,6 +2,8 @@
 
 渲染默认插槽中的内容，不增加外层 DOM 元素。
 
+移动端入口导出的 `MFragment` 与 `Fragment` 是同一实现。
+
 ### 何时使用
 
 需要用组件标签对多个同级节点进行语义分组，同时保留父容器的直接子元素布局时使用。Vue 3 原生支持多根节点，普通多根模板无需额外使用此组件。
@@ -14,6 +16,7 @@
 <!--
 <config lang="json5">
 {
+	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -37,7 +40,7 @@ import { Fragment } from '@deot/vc';
 .fragment-demo {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 16px;
+	gap: 8px;
 }
 </style>
 ```
@@ -52,7 +55,3 @@ import { Fragment } from '@deot/vc';
 | default | 要渲染的子节点；未提供时不渲染可见内容 | - |
 
 组件没有自定义属性、事件或公开方法。需要设置样式或监听 DOM 事件时，请将 `class`、`style` 和事件监听器直接绑定到插槽中的实际元素上。
-
-### 移动端
-
-`MFragment` 是 `Fragment` 的别名，使用相同实现和默认插槽，可从 `@deot/vc` 导入。

@@ -1,6 +1,8 @@
 ## 上传（Upload）
 
-选择或拖拽文件，通过 XHR 上传，支持异步预处理、串并行调度和任务浮层。移动端使用 `MUpload`，属性、事件和方法与 `Upload` 相同。
+选择或拖拽文件，通过 XHR 上传，支持异步预处理、串并行调度和任务浮层。
+
+移动端入口导出的 `MUpload` 与 `Upload` 是同一实现，属性、事件和方法相同，只是错误与加载提示改用 `MToast`。
 
 ### 何时使用
 
@@ -8,18 +10,27 @@
 
 ### 基础用法
 
-点击选择或拖入文件，每次最多 3 个。此示例不发送网络请求：`request` 清除上传地址，`response` 返回本地文件信息。接入服务时设置 `url`，并移除示例中的这两个 Hook。
+点击选择或拖入文件，`max` 限制每次最多 3 个。此示例不发送网络请求：`request` 清除上传地址，`response` 返回本地文件信息，批次结束时触发 `complete`。接入服务时设置 `url`，并移除示例中的这两个 Hook。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
 	<div class="upload-demo">
 		<Upload :max="3" @request="handleRequest" @response="handleResponse" @complete="handleComplete">
 			<Button>选择文件（也可拖入）</Button>
 		</Upload>
-		<p>{{ summary }}</p>
-		<ul><li v-for="(name, index) in names" :key="index">{{ name }}</li></ul>
+		<p class="upload-demo__result">{{ summary }}</p>
+		<ul class="upload-demo__list">
+			<li v-for="(name, index) in names" :key="index">{{ name }}</li>
+		</ul>
 	</div>
 </template>
 
@@ -29,8 +40,10 @@ import { Upload, Button } from '@deot/vc';
 
 const names = ref([]);
 const summary = ref('等待选择文件');
+
 const handleRequest = ({ requestOptions }) => ({ ...requestOptions, url: undefined });
 const handleResponse = ({ requestOptions }) => requestOptions.file.name;
+
 const handleComplete = ({ result }) => {
 	names.value = result.responses;
 	summary.value = `已完成 ${result.completed} 个，成功 ${result.succeeded} 个`;
@@ -38,19 +51,38 @@ const handleComplete = ({ result }) => {
 </script>
 
 <style scoped>
-.upload-demo { line-height: 1.6; }
-.upload-demo p { margin: 12px 0; }
-.upload-demo ul { margin: 0; padding-left: 20px; }
+.upload-demo {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 16px;
+}
+
+.upload-demo__result {
+	margin: 0;
+}
+
+.upload-demo__list {
+	margin: 0;
+	padding-left: 20px;
+}
 </style>
 ```
 :::
 
 ### 串行预处理与任务浮层
 
-下面用三个本地文件演示串行处理。第二个文件被 `file-before` 返回的 `false` 取消，计入失败，但不触发 `file-error`。延迟发生在预处理阶段，用于观察等待状态；真实上传百分比由 XHR 的 progress 事件提供。
+下面用三个本地文件演示串行处理（`parallel` 为 `false`），`showTask` 展示任务浮层，组件 ref 的 `uploadFiles` 直接启动一批上传。第二个文件被 `file-before` 返回的 `false` 取消，计入失败，但不触发 `file-error`。延迟发生在预处理阶段，用于观察等待状态；真实上传百分比由 XHR 的 progress 事件提供。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 24 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
 	<div class="upload-demo">
@@ -65,7 +97,7 @@ const handleComplete = ({ result }) => {
 			@complete="handleComplete"
 		/>
 		<Button :disabled="isRunning" @click="handleStart">运行串行示例</Button>
-		<p>{{ summary }}</p>
+		<p class="upload-demo__result">{{ summary }}</p>
 	</div>
 </template>
 
@@ -76,17 +108,21 @@ import { Upload, Button } from '@deot/vc';
 const upload = ref();
 const isRunning = ref(false);
 const summary = ref('预期：2 个成功，1 个取消');
+
 const handleRequest = ({ requestOptions }) => ({ ...requestOptions, url: undefined });
 const handleResponse = ({ requestOptions }) => ({ name: requestOptions.file.name });
+
 const handleFileBefore = async ({ file }) => {
 	await new Promise(resolve => setTimeout(resolve, 700));
 	return file.name === 'skip.txt' ? false : file;
 };
+
 const handleStart = () => {
 	isRunning.value = true;
 	summary.value = '处理中，可在右下角查看任务';
 	upload.value.uploadFiles(['first.txt', 'skip.txt', 'last.txt'].map(name => new File(['demo'], name)));
 };
+
 const handleComplete = ({ result }) => {
 	isRunning.value = false;
 	summary.value = `成功 ${result.succeeded}，失败 ${result.failed}，总数 ${result.total}`;
@@ -94,35 +130,184 @@ const handleComplete = ({ result }) => {
 </script>
 
 <style scoped>
-.upload-demo { line-height: 1.6; }
-.upload-demo p { margin: 12px 0 0; }
+.upload-demo {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 16px;
+}
+
+.upload-demo__result {
+	margin: 0;
+}
 </style>
 ```
 :::
 
 多个 Upload 共用一个任务浮层，但分别保存自己的任务记录。关闭 `showTask` 或卸载组件只移除自身记录；关闭浮层不会取消上传。任务视图属于内部能力，没有公开 `Upload.Task` 或 `UploadTask` API。
 
-### 编程式调用与移动端
+### 限制、请求参数与生命周期事件
 
-`Upload.open()` 和 `MUpload.open()` 返回可等待的 Portal leaf。默认自动打开原生选择器；`silent: true` 可通过 `leaf.wrapper?.uploadFiles(files)` 启动。下面直接生成本地文件，演示移动端调用及结果结算。
+`accept` 过滤文件类型，`size` 限制单文件大小（MB），`directory` 改为选择文件夹，`disabled` 禁用点击与拖拽；`name`、`body`、`headers` 组成请求参数，可在 `request` 中看到。`enhancer` 返回 `true` 时跳过原生选择器（下例改为直接生成文件），实例方法 `click` 则直接打开原生选择器；`tag` 设置外层标签。
+
+一批文件依次触发 `begin`、`file-start`，之后是 `file-success` 或 `file-error`。下例的第二个文件超过 `size`，触发 `file-error`；`message` 可以改写错误文案，`error` 收到处理后的错误，`showError` 为 `false` 时不弹出提示。`file-progress` 只在真实 XHR 上传时触发。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 24, viewport: 375 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
 	<div class="upload-demo">
-		<Button :disabled="isRunning" @click="handleOpen">运行 MUpload.open</Button>
-		<p>{{ summary }}</p>
+		<div class="upload-demo__row">
+			<Upload
+				ref="upload"
+				tag="div"
+				:max="3"
+				:size="0.001"
+				:disabled="isDisabled"
+				:directory="isDirectory"
+				:enhancer="handleEnhancer"
+				:show-error="false"
+				accept=".txt,text/plain"
+				name="attachment"
+				:body="{ scene: 'demo' }"
+				:headers="{ 'X-Demo': '1' }"
+				@request="handleRequest"
+				@response="handleResponse"
+				@begin="handleBegin"
+				@file-start="handleFileStart"
+				@file-progress="handleFileProgress"
+				@file-success="handleFileSuccess"
+				@file-error="handleFileError"
+				@message="handleMessage"
+				@error="handleError"
+			>
+				<Button :disabled="isDisabled">生成两个文件（enhancer）</Button>
+			</Upload>
+			<Button :disabled="isDisabled" @click="handleClick">打开原生选择器（click）</Button>
+		</div>
+		<div class="upload-demo__row">
+			<Checkbox v-model="isDisabled">disabled</Checkbox>
+			<Checkbox v-model="isDirectory">directory</Checkbox>
+		</div>
+		<p class="upload-demo__result">{{ request }}</p>
+		<ul class="upload-demo__list">
+			<li v-for="(item, index) in events" :key="index">{{ item }}</li>
+		</ul>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { Upload, Button, Checkbox } from '@deot/vc';
+
+const upload = ref();
+const isDisabled = ref(false);
+const isDirectory = ref(false);
+const request = ref('request：-');
+const events = ref([]);
+
+const record = (text) => {
+	events.value = [...events.value, text].slice(-6);
+};
+
+const handleEnhancer = () => {
+	events.value = [];
+	upload.value.uploadFiles([
+		new File(['demo'], 'small.txt', { type: 'text/plain' }),
+		new File(['x'.repeat(2048)], 'large.txt', { type: 'text/plain' })
+	]);
+	return true;
+};
+
+const handleClick = () => {
+	upload.value.click();
+};
+
+const handleRequest = ({ requestOptions }) => {
+	const { headers, body } = requestOptions;
+	request.value = `request：headers ${JSON.stringify(headers)}，body ${JSON.stringify(body)}`;
+	return { ...requestOptions, url: undefined };
+};
+
+const handleResponse = ({ requestOptions }) => requestOptions.file.name;
+const handleBegin = ({ files }) => record(`begin：${files.length} 个文件`);
+const handleFileStart = ({ file }) => record(`file-start：${file.name}`);
+const handleFileProgress = ({ progress, file }) => record(`file-progress：${file.name} ${progress.percent}%`);
+const handleFileSuccess = ({ file }) => record(`file-success：${file.name}`);
+const handleFileError = ({ file, message }) => record(`file-error：${file.name}，${message}`);
+const handleMessage = ({ message }) => `已改写：${message}`;
+const handleError = ({ cause }) => record(`error：${cause.message}`);
+</script>
+
+<style scoped>
+.upload-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.upload-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+.upload-demo__result {
+	margin: 0;
+	overflow-wrap: anywhere;
+}
+
+.upload-demo__list {
+	margin: 0;
+	padding-left: 20px;
+}
+</style>
+```
+:::
+
+### 编程式调用与移动端
+
+`Upload.open()` 和 `MUpload.open()` 返回可等待的 Portal leaf。默认自动打开原生选择器；`silent: true` 可通过 `leaf.wrapper?.uploadFiles(files)` 启动。下面直接生成本地文件，演示移动端调用、`showLoading` 的加载提示及结果结算。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	mobile: true,
+	local: false,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
+</config>
+-->
+```vue
+<template>
+	<div class="m-upload-demo">
+		<MButton type="primary" :disabled="isRunning" @click="handleOpen">运行 MUpload.open</MButton>
+		<p class="m-upload-demo__result">{{ summary }}</p>
 	</div>
 </template>
 
 <script setup>
 import { ref, onBeforeUnmount } from 'vue';
-import { MUpload, Button } from '@deot/vc';
+import { MUpload, MButton } from '@deot/vc';
 
 const isRunning = ref(false);
 const summary = ref('本地模拟，无需上传接口');
 let leaf;
+
 const handleOpen = async () => {
 	isRunning.value = true;
 	leaf = MUpload.open({
@@ -144,12 +329,23 @@ const handleOpen = async () => {
 		isRunning.value = false;
 	}
 };
+
 onBeforeUnmount(() => leaf?.destroy());
 </script>
 
 <style scoped>
-.upload-demo { line-height: 1.6; }
-.upload-demo p { margin: 12px 0 0; overflow-wrap: anywhere; }
+.m-upload-demo {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: calc(var(--vc-rem) * 32);
+	padding-inline: calc(var(--vc-rem) * 32);
+}
+
+.m-upload-demo__result {
+	margin: 0;
+	overflow-wrap: anywhere;
+}
 </style>
 ```
 :::
@@ -275,7 +471,7 @@ interface UploadCycleResult {
 
 内置提示使用 `vc.Upload` 语言数据。任务标题、列名、等待/上传状态与统计随 locale 切换；错误消息和 Loading 在产生时使用当前语言，业务提供的消息保留原值。
 
-浮层使用 `upload-task` CSS namespace，可覆盖 `--vc-upload-task-color-primary`、`--vc-upload-task-border-color`、`--vc-upload-task-result-color`、`--vc-upload-task-progress-background` 和 `--vc-upload-task-box-shadow`。浮层挂载在 Portal 中，变量应设在根节点或其他能覆盖浮层的祖先上。
+浮层使用 `upload-task` CSS namespace，可通过 `--vc-upload-task-<参数>` 覆盖：`color-dark`（文字）、`color-dark-lighter`（列名）、`color-neutral-light`（分隔线）、`color-primary`（结果栏背景）、`color-contrast-light`（结果栏文字）、`color-primary-light`（进度条，按 8% 混合；浏览器不支持 `color-mix` 时改用 `color-primary-lighter`）、`color-success` / `color-error`（成功 / 失败状态）、`background-color-lightest`（浮层背景）和 `box-shadow`（浮层阴影）；未覆盖时回退到同名全局变量 `--vc-<参数>`。浮层挂载在 Portal 中，变量应设在根节点或其他能覆盖浮层的祖先上。
 
 ### 旧版迁移
 

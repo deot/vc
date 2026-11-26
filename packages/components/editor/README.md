@@ -2,6 +2,8 @@
 
 基于 Quill 的 HTML 富文本编辑器，提供格式工具栏、图片预览和上传扩展；EditorView 用于展示 HTML 内容。
 
+移动端入口导出的 `MEditor`、`MEditorView` 与 `Editor`、`EditorView` 的属性、事件、插槽相同，工具栏、选择项与尺寸按移动端重做，见 [移动端](#移动端)。
+
 ### 何时使用
 
 - 编辑包含标题、列表、链接和媒体的内容。
@@ -9,26 +11,36 @@
 
 ### 基础用法
 
-输入内容后，下方预览会同步更新。`disabled` 控制编辑区域是否可编辑；通过 `options.toolbar` 选择需要的工具。
+输入内容后，下方预览会同步更新。`disabled` 控制编辑区域是否可编辑；通过 `options.toolbar` 选择需要的工具。`ready` 在 Quill 初始化完成后触发，`input`、`change`、`focus`、`blur` 的参数都是 `{ value, editor }`。`EditorView` 按 HTML 渲染 `value`，`previewable`（默认开启）时点击图片打开预览。
 
 :::playground
 <!--
 <config lang="json5">
-{ previewInset: 16 }
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
 </config>
 -->
 ```vue
 <template>
 	<div class="editor-demo">
-		<div class="editor-demo__actions">
+		<div class="editor-demo__row">
 			<Button @click="handleToggle">{{ isDisabled ? '启用编辑' : '禁用编辑' }}</Button>
 			<Button @click="handleClear">清空内容</Button>
 		</div>
-		<Editor v-model="value" :disabled="isDisabled" :options="options" class="editor-demo__input" />
-		<section>
-			<h4>内容预览</h4>
-			<EditorView :value="value" />
-		</section>
+		<Editor
+			v-model="value"
+			:disabled="isDisabled"
+			:options="options"
+			class="editor-demo__input"
+			@ready="handleReady"
+			@focus="handleFocus"
+			@blur="handleBlur"
+			@change="handleChange"
+		/>
+		<p class="editor-demo__result">{{ status }}，change 触发 {{ changeCount }} 次</p>
+		<EditorView :value="value" class="editor-demo__view" />
 	</div>
 </template>
 
@@ -36,8 +48,14 @@
 import { ref } from 'vue';
 import { Button, Editor, EditorView } from '@deot/vc';
 
-const value = ref('<p>试试选中文字，再点击<strong>加粗</strong>工具。</p>');
+const image = 'data:image/svg+xml,' + encodeURIComponent(
+	'<svg xmlns="http://www.w3.org/2000/svg" width="240" height="120"><rect width="240" height="120" fill="#5b8ff9"/></svg>'
+);
+
+const value = ref(`<p>试试选中文字，再点击<strong>加粗</strong>工具。</p><p><img src="${image}"></p>`);
 const isDisabled = ref(false);
+const status = ref('初始化中');
+const changeCount = ref(0);
 const options = {
 	toolbar: [
 		['bold', 'italic', 'underline'],
@@ -45,26 +63,59 @@ const options = {
 		['link', 'undo', 'redo']
 	]
 };
-const handleToggle = () => (isDisabled.value = !isDisabled.value);
-const handleClear = () => (value.value = '');
+
+const handleToggle = () => {
+	isDisabled.value = !isDisabled.value;
+};
+
+const handleClear = () => {
+	value.value = '';
+};
+
+const handleReady = () => {
+	status.value = '已就绪';
+};
+
+const handleFocus = () => {
+	status.value = '已聚焦';
+};
+
+const handleBlur = () => {
+	status.value = '已失焦';
+};
+
+const handleChange = () => {
+	changeCount.value++;
+};
 </script>
 
 <style scoped>
 .editor-demo {
-	display: grid;
-	gap: 20px;
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
 }
-.editor-demo__actions {
+
+.editor-demo__row {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 12px;
+	align-items: center;
+	gap: 8px;
 }
+
 .editor-demo__input {
 	width: 100%;
 	height: 240px;
 }
-h4 {
-	margin: 0 0 12px;
+
+.editor-demo__result {
+	margin: 0;
+}
+
+.editor-demo__view {
+	padding: 12px;
+	border: 1px solid var(--vc-color-light-deeper);
+	border-radius: 8px;
 }
 </style>
 ```
@@ -76,13 +127,143 @@ h4 {
 
 工具栏上传前会调用 `enhancer({ instance, type, types })`（`types` 为 `[type]`，与 UploadPicker 的签名一致），异步返回真值时终止默认上传。可在自定义资源选择完成后调用组件实例的 `add()` 插入资源。粘贴或拖入文件走默认上传流程，不经过工具栏 enhancer。
 
-```text
-editorRef.value.add([
-	{ value: 'https://example.com/manual.pdf', target: { name: 'manual.pdf' } }
-]);
-```
-
 资源类型根据 `target.name` 识别；省略 `target` 时从地址推导文件名。两者分别读取全局 `VcInstance.options.FilePreview.getFileType`、`getFileName`，未配置或返回空值时使用内置规则（按扩展名识别；取地址最后一段，去掉 `?`、`#` 之后的部分并解码）。普通文件插入链接，图片、音频和视频插入对应媒体元素。应在 `ready` 后调用。
+
+下例中 `enhancer` 拦截工具栏上传，改为插入示例图片；`extend` 插槽在默认工具栏末尾追加按钮；`poster` 为插入的视频设置封面；`previewable` 为 `false` 时点击编辑区内的图片不打开预览；`register` 在创建编辑器前拿到 Quill 构造器，用于注册扩展；组件 ref 的 `editor` 为 Quill 实例。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
+```vue
+<template>
+	<div class="editor-demo">
+		<Editor
+			ref="editorRef"
+			v-model="value"
+			:options="options"
+			:enhancer="handleEnhancer"
+			:poster="handlePoster"
+			:previewable="false"
+			:register="handleRegister"
+			class="editor-demo__input"
+		>
+			<template #extend>
+				<Button size="small" @click="handleAddFile">插入附件</Button>
+			</template>
+		</Editor>
+		<p class="editor-demo__result">{{ status }}</p>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { Button, Editor } from '@deot/vc';
+
+const createImage = color => 'data:image/svg+xml,' + encodeURIComponent(
+	`<svg xmlns="http://www.w3.org/2000/svg" width="240" height="120"><rect width="240" height="120" fill="${color}"/></svg>`
+);
+
+const editorRef = ref();
+const value = ref('<p>点击工具栏的图片按钮，或末尾的「插入附件」。</p>');
+const status = ref('');
+const options = {
+	toolbar: [['bold', 'italic'], ['upload/image', 'upload/video']]
+};
+
+const handleRegister = (QuillClass) => {
+	status.value = `已加载 Quill ${QuillClass.version || ''}`;
+};
+
+const handlePoster = () => createImage('#023047');
+
+const handleEnhancer = async ({ type }) => {
+	if (type !== 'image') return false;
+	editorRef.value.add([{ value: createImage('#47cb89'), target: { name: '示例.png' } }]);
+	status.value = '已由 enhancer 插入图片';
+	return true;
+};
+
+const handleAddFile = () => {
+	editorRef.value.add([{ value: 'https://example.com/manual.pdf', target: { name: 'manual.pdf' } }]);
+	status.value = `已插入附件，当前 ${editorRef.value.editor.getLength()} 个字符`;
+};
+</script>
+
+<style scoped>
+.editor-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.editor-demo__input {
+	width: 100%;
+	height: 240px;
+}
+
+.editor-demo__result {
+	margin: 0;
+}
+</style>
+```
+:::
+
+### 自定义工具栏
+
+`toolbar` 插槽替换默认工具栏，参数 `formats` 为当前选区的格式，`format(name, value?, toggle?)` 应用格式（`toggle` 为 `true` 时与当前取值相同则清除），`editor` 为 Quill 实例。使用 `toolbar` 插槽时不渲染 `extend`。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
+```vue
+<template>
+	<div class="editor-demo">
+		<Editor v-model="value" class="editor-demo__input">
+			<template #toolbar="{ formats, format }">
+				<div class="editor-demo__toolbar">
+					<Button size="small" :type="formats.bold ? 'primary' : 'default'" @click="format('bold', true, true)">加粗</Button>
+					<Button size="small" :type="formats.italic ? 'primary' : 'default'" @click="format('italic', true, true)">斜体</Button>
+					<Button size="small" :type="formats.header === 2 ? 'primary' : 'default'" @click="format('header', 2, true)">标题</Button>
+				</div>
+			</template>
+		</Editor>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { Button, Editor } from '@deot/vc';
+
+const value = ref('<p>选中文字后点击上方按钮。</p>');
+</script>
+
+<style scoped>
+.editor-demo__input {
+	width: 100%;
+	height: 200px;
+}
+
+.editor-demo__toolbar {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	padding: 8px;
+}
+</style>
+```
+:::
 
 ### 提及
 
@@ -93,33 +274,194 @@ editorRef.value.add([
 - 输出的 HTML 为 `<span class="vc-editor-mention" data-value="…" data-prefix="@">@文字</span>`；回填、粘贴同样的 HTML 时还原为提及节点。EditorView 按同样的样式显示。配置了全局 `sanitize` 时，需要保留这个 class 与 `data-value`、`data-prefix`（DOMPurify 默认保留）。
 - `Editor.getMentions(html)` 按出现顺序取出 `[{ value, prefix, label }]`，如提交时得到要通知的成员。
 - `mentionOptions` 的字段同 Mention 的同名属性：`data`、`prefix`、`loadData(keyword, instance, { prefix })`、`virtualized`、`renderOption`、`renderLabel`、`renderOptionGroup`、`placement`、`portal`、`portalClass`。传入固定的对象（不要在模板里每次渲染新建），列表才不会随父组件重渲染而重新过滤。
+- 选中后触发 `mention-select`，参数为 `{ value, item, prefix, editor }`。
 
+:::playground
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<Editor v-model="value" :mention-options="mentionOptions" @mention-select="handleSelect" />
+	<div class="editor-demo">
+		<Editor
+			v-model="value"
+			:mention-options="mentionOptions"
+			class="editor-demo__input"
+			@mention-select="handleSelect"
+		/>
+		<p class="editor-demo__result">mention-select：{{ selected || '-' }}</p>
+		<p class="editor-demo__result">Editor.getMentions：{{ mentions }}</p>
+	</div>
 </template>
+
 <script setup>
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { Editor } from '@deot/vc';
 
-const USERS = [{ value: 'u1', label: '成员甲' }, { value: 'u2', label: '成员乙' }];
-const TOPICS = [{ value: 't1', label: '话题一' }];
+const USERS = Array.from({ length: 30 }, (_, index) => ({ value: `u${index + 1}`, label: `成员${index + 1}` }));
+const TOPICS = [{ value: 't1', label: '话题一' }, { value: 't2', label: '话题二' }];
 
-const value = ref('');
+const value = ref('<p>已有的提及会还原：<span class="vc-editor-mention" data-value="u2" data-prefix="@">@成员2</span> 你好</p>');
+const selected = ref('');
+const mentions = computed(() => JSON.stringify(Editor.getMentions(value.value)));
+
+// 按前缀返回不同的数据；Promise 解析为数组时直接作为结果
 const mentionOptions = {
 	prefix: ['@', '#'],
-	// 按前缀返回不同的数据；Promise 解析为数组时直接作为结果
+	virtualized: true,
 	loadData: (keyword, instance, { prefix }) => Promise.resolve(
 		(prefix === '#' ? TOPICS : USERS).filter(item => item.label.includes(keyword))
 	)
 };
-// 当前内容里的提及：[{ value, prefix, label }]，如提交时取出要通知的成员
-const mentions = ref([]);
-const handleSelect = () => {
-	mentions.value = Editor.getMentions(value.value);
+
+const handleSelect = ({ value: id, prefix, item }) => {
+	selected.value = `${prefix}${item.label}（${id}）`;
 };
 </script>
+
+<style scoped>
+.editor-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.editor-demo__input {
+	width: 100%;
+	height: 240px;
+}
+
+.editor-demo__result {
+	margin: 0;
+	word-break: break-all;
+}
+</style>
 ```
+:::
+
+## 移动端
+
+`MEditor`、`MEditorView` 与桌面端结构相同，属性、事件、插槽一致；根节点另有标记类 `vcm-editor` / `vcm-editor-view`，尺寸随 `--vc-rem` 缩放（750 稿）。
+
+- 正文字号 32（375 宽下 16px，iOS 聚焦时不放大页面）。
+- 工具栏单行横向滚动：按钮 72 见方、图标 40，工具栏高 88；分组之间为竖线。
+- 选择项（标题、字体、字号、对齐、行高、字间距）用动作面板，当前值高亮；文字颜色、背景色用底部弹出层的色块网格（色块 64）。
+- 链接、视频、公式的输入用底部弹出层；光标停在链接里时仍以浮层显示预览。
+- `toolbarPlacement` 默认 `keyboard`：聚焦时工具栏固定在虚拟键盘上方，按 `visualViewport` 计算位置，原位置保留占位；光标被工具栏挡住时滚动页面。失焦或禁用时回到编辑区顶部。
+- 停靠时工具栏移到 `body` 下（脱离编辑器的层叠上下文，不会被页面上后面的内容盖住）；移动端工具栏的尺寸变量写在工具栏的标记类 `vcm-editor-toolbar` 上，覆盖时设置在它上面。
+- 提及（`mentionOptions`）同样是跟随光标的下拉，750 稿尺寸，按可视区翻转、限高；点按选中，不默认高亮。
+- 点击图片用移动端查看器预览；`enhancer` 收到的 `mobile` 为 `true`。
+
+下例第一个编辑器使用默认的 `toolbarPlacement="keyboard"`，第二个固定在顶部并精简工具，第三个开启提及；最后用 `MEditorView` 展示内容。工具栏停靠、动作面板与弹出层都挂到 `body`，因此在独立页面中预览。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	mobile: true,
+	local: false,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
+</config>
+-->
+```vue
+<template>
+	<div class="m-editor-demo">
+		<MEditor v-model="value" :disabled="isDisabled" class="m-editor-demo__input" />
+		<div class="m-editor-demo__row">
+			<MButton size="small" @click="handleToggle">{{ isDisabled ? '启用' : '禁用' }}</MButton>
+			<MButton size="small" @click="handleClear">清空</MButton>
+		</div>
+		<MEditor
+			v-model="value"
+			toolbar-placement="top"
+			:options="options"
+			class="m-editor-demo__input"
+		/>
+		<MEditor v-model="mentionValue" :mention-options="mentionOptions" class="m-editor-demo__input" />
+		<MEditorView :value="value" class="m-editor-demo__view" />
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { MButton, MEditor, MEditorView } from '@deot/vc';
+
+const image = 'data:image/svg+xml,' + encodeURIComponent(
+	'<svg xmlns="http://www.w3.org/2000/svg" width="300" height="200"><rect width="300" height="200" fill="#5b8ff9"/></svg>'
+);
+
+const value = ref([
+	'<h2>标题</h2>',
+	'<p>选中文字后点击工具栏的<strong>加粗</strong>、颜色或链接。</p>',
+	'<ol><li>第一项</li><li>第二项</li></ol>',
+	`<p><img src="${image}"></p>`
+].join(''));
+const isDisabled = ref(false);
+const options = {
+	toolbar: [['bold', 'italic', 'underline'], [{ list: 'ordered' }, { list: 'bullet' }], ['color', 'link', 'upload/image']]
+};
+const mentionValue = ref('');
+const mentionOptions = {
+	data: Array.from({ length: 20 }, (_, index) => ({ value: `u${index + 1}`, label: `成员${index + 1}` }))
+};
+
+const handleToggle = () => {
+	isDisabled.value = !isDisabled.value;
+};
+
+const handleClear = () => {
+	value.value = '';
+};
+</script>
+
+<style scoped>
+.m-editor-demo {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--vc-rem) * 32);
+	padding-inline: calc(var(--vc-rem) * 32);
+}
+
+.m-editor-demo__input {
+	width: 100%;
+	height: calc(var(--vc-rem) * 560);
+}
+
+.m-editor-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: calc(var(--vc-rem) * 16);
+}
+
+.m-editor-demo__view {
+	padding: calc(var(--vc-rem) * 24);
+	border-radius: calc(var(--vc-rem) * 8);
+}
+</style>
+```
+:::
+
+移动端覆盖的局部变量（`.vcm-editor` 上；弹出层在 `body` 下，各自设置）：
+
+| 参数 | 值（750 稿） |
+| --- | --- |
+| font-size | 32（MEditorView 同） |
+| toolbar-padding / toolbar-font-size | `8 16` / 28 |
+| group-gap / divider-height / tool-gap | 24 / 32 / 4 |
+| tool-size / tool-padding / tool-radius | 72 / `0 16` / 8 |
+| icon-size / color-bar-height | 40 / 4 |
+| color-size / color-gap（颜色弹出层） | 64 / 24 |
 
 ## 主题与局部覆盖
 
@@ -135,6 +477,7 @@ const handleSelect = () => {
 | color-neutral-light | 工具栏下边线、内容表格、引用块及链接预览的分隔线 | 亮色：`#EDEFF1`；暗色：`#3B4354` |
 | color-primary | 链接、激活与悬停的工具 | `#456CF6` |
 | background-color | 代码及代码块背景 | 亮色：`#F5F6FA`；暗色：`#252B3A` |
+| background-color-primary-light | 激活与悬停工具的底色 | 亮色：`#E6F7FF`；暗色：`#273E5E` |
 | background-color-lightest | 编辑区背景及上传时的遮罩 | 亮色：`#FFFFFF`；暗色：`#252B3A` |
 | border-color | 编辑区外框及默认色块边框 | `#D5D9E1` |
 | foreground-color | 正文、代码、工具栏图标与文字、选中色块的边框 | 亮色：`#080F20`；暗色：`#F8F8F8` |
@@ -232,31 +575,7 @@ const handleSelect = () => {
 
 EditorView 没有公开事件、插槽或方法。`previewable` 开启时，点击内容中的图片会打开预览，预览列表为内容内的全部图片。
 
-## 移动端
-
-`MEditor`、`MEditorView` 与桌面端结构相同，属性、事件、插槽一致；根节点另有标记类 `vcm-editor` / `vcm-editor-view`，尺寸随 `--vc-rem` 缩放（750 稿）。
-
-- 正文字号 32（375 宽下 16px，iOS 聚焦时不放大页面）。
-- 工具栏单行横向滚动：按钮 72 见方、图标 40，工具栏高 88；分组之间为竖线。
-- 选择项（标题、字体、字号、对齐、行高、字间距）用动作面板，当前值高亮；文字颜色、背景色用底部弹出层的色块网格（色块 64）。
-- 链接、视频、公式的输入用底部弹出层；光标停在链接里时仍以浮层显示预览。
-- `toolbarPlacement` 默认 `keyboard`：聚焦时工具栏固定在虚拟键盘上方，按 `visualViewport` 计算位置，原位置保留占位；光标被工具栏挡住时滚动页面。失焦或禁用时回到编辑区顶部。
-- 停靠时工具栏移到 `body` 下（脱离编辑器的层叠上下文，不会被页面上后面的内容盖住）；移动端工具栏的尺寸变量写在工具栏的标记类 `vcm-editor-toolbar` 上，覆盖时设置在它上面。
-- 提及（`mentionOptions`）同样是跟随光标的下拉，750 稿尺寸，按可视区翻转、限高；点按选中，不默认高亮。
-- 点击图片用移动端查看器预览；`enhancer` 收到的 `mobile` 为 `true`。
-
-移动端覆盖的局部变量（`.vcm-editor` 上；弹出层在 `body` 下，各自设置）：
-
-| 参数 | 值（750 稿） |
-| --- | --- |
-| font-size | 32（MEditorView 同） |
-| toolbar-padding / toolbar-font-size | `8 16` / 28 |
-| group-gap / divider-height / tool-gap | 24 / 32 / 4 |
-| tool-size / tool-padding / tool-radius | 72 / `0 16` / 8 |
-| icon-size / color-bar-height | 40 / 4 |
-| color-size / color-gap（颜色弹出层） | 64 / 24 |
-
-### 注意事项
+## 注意事项
 
 - EditorView 的内容按 HTML 渲染，组件本身不清洗；展示外部内容前应由业务侧完成可信校验，或配置全局的 `sanitize` 统一清洗（钩子里可用 `instance.parent` 识别 EditorView，为富文本放行更多标签），见 [Customer](../customer/README.md)。
 - 旧的 `imageUploadOptions`、`videoUploadOptions`、`uploadOptions` 不属于当前公开属性。

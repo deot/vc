@@ -2,98 +2,152 @@
 
 为渲染目标上的事件处理函数添加防抖，减少连续操作导致的重复执行。
 
+移动端入口导出的 `MDebounce` 与 `Debounce` 是同一实现。
+
 ### 何时使用
 
 需要在首次点击时立即响应，并忽略短时间内的重复点击时使用，例如提交按钮或操作入口。
 
 ### 基础用法
 
-首次触发立即执行。连续触发会延长等待窗口，直到停止触发满 `wait` 毫秒后，下一次触发才会再次执行；窗口结束时不会补执行。下面两种渲染目标的计数彼此独立。
+首次触发立即执行。连续触发会延长等待窗口，直到停止触发满 `wait` 毫秒后，下一次触发才会再次执行；窗口结束时不会补执行。`tag` 可以是组件或原生标签，下面两种渲染目标的计数彼此独立。
 
 :::playground
 <!--
 <config lang="json5">
-{ previewInset: 16 }
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
 </config>
 -->
 ```vue
 <template>
-	<div class="demo">
-		<div class="demo__actions">
-			<Debounce :tag="Button" :wait="1000" @click="componentCount++">
-				<span class="demo__button-label">组件按钮</span>
-				<span class="demo__button-count">{{ componentCount }} 次</span>
+	<div class="debounce-demo">
+		<div class="debounce-demo__row">
+			<Debounce :tag="Button" :wait="1000" @click="handleComponentClick">
+				组件按钮：{{ componentCount }} 次
 			</Debounce>
-			<Debounce tag="button" :wait="1000" @click="nativeCount++">
-				<span class="demo__button-label">原生按钮</span>
-				<span class="demo__button-count">{{ nativeCount }} 次</span>
+			<Debounce tag="button" :wait="1000" @click="handleNativeClick">
+				原生按钮：{{ nativeCount }} 次
 			</Debounce>
 		</div>
-		<p class="demo__hint">快速连续点击，停止点击 1 秒后再试。</p>
+		<p class="debounce-demo__result">快速连续点击，停止点击 1 秒后再试。</p>
 	</div>
 </template>
+
 <script setup>
 import { ref } from 'vue';
 import { Debounce, Button } from '@deot/vc';
 
 const nativeCount = ref(0);
 const componentCount = ref(0);
+
+const handleNativeClick = () => {
+	nativeCount.value++;
+};
+
+const handleComponentClick = () => {
+	componentCount.value++;
+};
 </script>
 
 <style scoped>
-.demo {
-	max-width: 420px;
+.debounce-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
 }
 
-.demo__actions {
-	display: grid;
-	grid-template-columns: repeat(2, minmax(0, 1fr));
-	gap: 12px;
-	align-items: start;
+.debounce-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
 }
 
-.demo__button-label {
-	font-size: 13px;
-	font-weight: 600;
-}
-
-.demo__button-count {
-	font-size: 12px;
-	opacity: 0.85;
-}
-
-.demo__hint {
-	margin: 12px 0 0;
-	color: #64748b;
-	font-size: 13px;
+.debounce-demo__result {
+	margin: 0;
 }
 </style>
 ```
 :::
 
-### 排除指定事件
+### 筛选事件
 
-`include` 和 `exclude` 匹配的是监听器属性名，例如 `onClick`，而非 `click`。匹配 `exclude` 的函数不做防抖，即使它同时匹配 `include`。
+`include` 和 `exclude` 匹配的是监听器属性名，例如 `onClick`，而非 `click`。只有匹配 `include` 的函数做防抖；匹配 `exclude` 的函数不做防抖，即使它同时匹配 `include`。下面使用原生按钮，避免 `Button` 自身的 `wait` 干扰计数。
 
 :::playground
 <!--
 <config lang="json5">
-{ previewInset: 16 }
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
 </config>
 -->
 ```vue
 <template>
-	<Debounce tag="button" :exclude="/^onClick$/" @click="count++">
-		不防抖的点击：{{ count }} 次
-	</Debounce>
+	<div class="debounce-demo">
+		<div class="debounce-demo__row">
+			<Debounce
+				tag="button"
+				:wait="1000"
+				:include="/^onClick$/"
+				@click="handleClick"
+				@dblclick="handleDoubleClick"
+			>
+				只对 click 防抖
+			</Debounce>
+			<Debounce tag="button" :exclude="/^onClick$/" @click="handleExcludedClick">
+				click 不防抖
+			</Debounce>
+		</div>
+		<p class="debounce-demo__result">
+			防抖的 click：{{ clickCount }} 次；dblclick：{{ doubleClickCount }} 次；不防抖的 click：{{ excludedCount }} 次
+		</p>
+	</div>
 </template>
 
 <script setup>
 import { ref } from 'vue';
 import { Debounce } from '@deot/vc';
 
-const count = ref(0);
+const clickCount = ref(0);
+const doubleClickCount = ref(0);
+const excludedCount = ref(0);
+
+const handleClick = () => {
+	clickCount.value++;
+};
+
+const handleDoubleClick = () => {
+	doubleClickCount.value++;
+};
+
+const handleExcludedClick = () => {
+	excludedCount.value++;
+};
 </script>
+
+<style scoped>
+.debounce-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.debounce-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+.debounce-demo__result {
+	margin: 0;
+}
+</style>
 ```
 :::
 
@@ -116,10 +170,9 @@ const count = ref(0);
 
 | 名称 | 说明 | 参数 |
 | --- | --- | --- |
-| default | 渲染目标的子内容 | - |
+| default | 渲染目标的子内容；`tag` 为组件时，全部插槽原样传给该组件 | - |
 
 ### 使用注意
 
 - 监听器应绑定在 `Debounce` 上；组件不会改写默认插槽中子元素自身的事件处理函数。
 - 当前实现仅在筛选出的监听器数量变化时替换防抖函数集合。动态修改 `wait`、`include`、`exclude` 或监听器函数不能保证更新已创建的防抖函数，建议初始化时确定配置；需要切换时可通过 `key` 重建组件。
-- `MDebounce` 是 `Debounce` 的公开别名，属性和行为相同。

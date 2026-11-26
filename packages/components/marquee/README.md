@@ -2,30 +2,33 @@
 
 在固定宽度区域内从右向左循环滚动内容。
 
+移动端入口导出的 `MMarquee` 与 `Marquee` 的属性、事件和插槽相同，首尾间距按 750 稿随 `--vc-rem` 缩放，见 [移动端](#移动端)。
+
 ### 何时使用
+
 在一小块内容展示通知类的信息时使用。
 
 ### 基础用法
+
 支持 `content` 和默认插槽，插槽优先。内容超出容器时滚动，两份内容首尾相接无缝循环；未超出时静止显示。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="v-marquee-basic">
-		<Marquee
-			class="_normal"
-		>
+	<div class="marquee-demo">
+		<Marquee class="marquee-demo__item">
 			<span>{{ text }}</span>
 		</Marquee>
-		<Marquee
-			:content="text"
-			class="_normal"
-		/>
-		<Marquee
-			:content="text.repeat(3)"
-			class="_normal"
-		/>
+		<Marquee :content="text" class="marquee-demo__item" />
+		<Marquee :content="text.repeat(3)" class="marquee-demo__item" />
 	</div>
 </template>
 
@@ -33,15 +36,21 @@
 import { ref } from 'vue';
 import { Marquee } from '@deot/vc';
 
-const text = ref('ABCDEFG');
+const text = ref('ABCDEFG ');
 </script>
-<style>
-.v-marquee-basic > ._normal {
-	width: min(100%, 240px);
+
+<style scoped>
+.marquee-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.marquee-demo__item {
 	display: block;
+	width: min(100%, 240px);
 	padding: 8px 12px;
 	background: #f6f8fa;
-	margin: 0 0 8px;
 	border-radius: 4px;
 }
 </style>
@@ -49,35 +58,54 @@ const text = ref('ABCDEFG');
 :::
 
 ### 方向与间距
-`direction` 设置滚动方向（`up` / `down` 需要给容器设高度），`gap` 设置首尾两份内容的间距；`always` 让未超出的内容也滚动。
+
+`direction` 设置滚动方向（`up` / `down` 需要给容器设高度），`gap` 设置首尾两份内容的间距；`always` 让未超出的内容也滚动；`pauseOnHover` 设为 `false` 后悬停不暂停。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="v-marquee-direction">
-		<Marquee :content="text.repeat(4)" direction="right" class="_normal" />
-		<Marquee :content="text" always :gap="80" class="_normal" />
-		<Marquee direction="up" class="_normal _vertical">
+	<div class="marquee-demo">
+		<Marquee :content="text.repeat(4)" direction="right" class="marquee-demo__item" />
+		<Marquee :content="text" always :gap="80" :pause-on-hover="false" class="marquee-demo__item" />
+		<Marquee direction="up" class="marquee-demo__item marquee-demo__item--vertical">
 			<div v-for="item in 3" :key="item">第 {{ item }} 条通知</div>
+		</Marquee>
+		<Marquee direction="down" class="marquee-demo__item marquee-demo__item--vertical">
+			<div v-for="item in 3" :key="item">第 {{ item }} 条消息</div>
 		</Marquee>
 	</div>
 </template>
+
 <script setup>
 import { ref } from 'vue';
 import { Marquee } from '@deot/vc';
 
 const text = ref('ABCDEFG ');
 </script>
-<style>
-.v-marquee-direction > ._normal {
+
+<style scoped>
+.marquee-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.marquee-demo__item {
 	width: min(100%, 240px);
 	padding: 8px 12px;
 	background: #f6f8fa;
-	margin: 0 0 8px;
 	border-radius: 4px;
 }
-.v-marquee-direction > ._vertical {
+
+.marquee-demo__item--vertical {
 	height: 40px;
 	line-height: 20px;
 }
@@ -86,25 +114,36 @@ const text = ref('ABCDEFG ');
 :::
 
 ### 暂停与事件
-`animated` 控制滚动，默认鼠标悬停时暂停（`pauseOnHover`）；`delay` 设置开始前停留的毫秒数；每滚完一轮触发 `loop`。
+
+`animated` 控制滚动，默认鼠标悬停时暂停（`pauseOnHover`）；`speed` 设置每秒移动的像素数，`delay` 设置开始前停留的毫秒数；每滚完一轮触发 `loop`。
 
 :::playground
-<!-- <config lang="json5">{ previewInset: 16 }</config> -->
+<!--
+<config lang="json5">
+{
+	views: ['runtime', 'files'],
+	previewInset: 16
+}
+</config>
+-->
 ```vue
 <template>
-	<div class="v-marquee-animated">
+	<div class="marquee-demo">
 		<Marquee
 			:content="text.repeat(4)"
 			:animated="isAnimated"
 			:delay="1000"
 			:speed="100"
-			class="_normal"
-			@loop="count++"
+			class="marquee-demo__item"
+			@loop="handleLoop"
 		/>
-		<Button @click="isAnimated = !isAnimated">切换滚动状态</Button>
-		<span>已滚动 {{ count }} 轮</span>
+		<div class="marquee-demo__row">
+			<Button @click="handleToggle">切换滚动状态</Button>
+		</div>
+		<p class="marquee-demo__result">已滚动 {{ count }} 轮</p>
 	</div>
 </template>
+
 <script setup>
 import { ref } from 'vue';
 import { Marquee, Button } from '@deot/vc';
@@ -112,14 +151,97 @@ import { Marquee, Button } from '@deot/vc';
 const text = ref('ABCDEFG ');
 const isAnimated = ref(true);
 const count = ref(0);
+
+const handleToggle = () => {
+	isAnimated.value = !isAnimated.value;
+};
+
+const handleLoop = () => {
+	count.value++;
+};
 </script>
-<style>
-.v-marquee-animated > ._normal {
+
+<style scoped>
+.marquee-demo {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.marquee-demo__item {
 	width: min(100%, 240px);
 	padding: 8px 12px;
 	background: #f6f8fa;
-	margin-bottom: 8px;
 	border-radius: 4px;
+}
+
+.marquee-demo__row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.marquee-demo__result {
+	margin: 0;
+}
+</style>
+```
+:::
+
+## 移动端
+
+`MMarquee` 与 `Marquee` 的属性、事件、插槽相同，根节点另有标记类 `.vcm-marquee`，只覆盖局部变量 `--vc-marquee-gap`：首尾间距为 750 稿 64（375 宽下 32px），随 `--vc-rem` 缩放；`gap` 属性仍按 px 计算。
+
+:::playground
+<!--
+<config lang="json5">
+{
+	mobile: true,
+	previewInset: [12, 0],
+	previewVariables: [{
+		name: '--rem',
+		label: 'rem',
+		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
+	}]
+}
+</config>
+-->
+```vue
+<template>
+	<div class="m-marquee-demo">
+		<MMarquee :content="text.repeat(5)" class="m-marquee-demo__item" />
+		<MMarquee direction="up" class="m-marquee-demo__item m-marquee-demo__item--vertical">
+			<div v-for="item in 3" :key="item">第 {{ item }} 条通知</div>
+		</MMarquee>
+	</div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import { MMarquee } from '@deot/vc';
+
+const text = ref('ABCDEFG ');
+</script>
+
+<style scoped>
+.m-marquee-demo {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--vc-rem) * 32);
+	padding-inline: calc(var(--vc-rem) * 32);
+}
+
+.m-marquee-demo__item {
+	padding: calc(var(--vc-rem) * 16) calc(var(--vc-rem) * 24);
+	font-size: calc(var(--vc-rem) * 28);
+	background: #f7f7f7;
+	border-radius: calc(var(--vc-rem) * 8);
+}
+
+.m-marquee-demo__item--vertical {
+	height: calc(var(--vc-rem) * 40);
+	line-height: calc(var(--vc-rem) * 40);
+	box-sizing: content-box;
 }
 </style>
 ```
@@ -164,4 +286,3 @@ const count = ref(0);
 - 容器与内容的尺寸变化（包括插槽内容、渲染函数依赖变化、在弹窗或隐藏状态下挂载）都会自动重新测量。
 - 系统开启「减少动态效果」时不滚动，水平方向溢出部分显示省略号。
 - `content` 的字符串按文本渲染；需要 HTML 时传 `{ type: 'html', value }`，这类内容只应来自可信来源，或由全局的 `sanitize` 统一清洗，见 [Customer](../customer/README.md)。
-- 移动端导出 `MMarquee`，与 `Marquee` API 相同，根节点另有 `vcm-marquee`，间距按 750 稿缩放。
