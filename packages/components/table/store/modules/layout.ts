@@ -116,6 +116,8 @@ export class Layout {
 
 		if (flexColumns.length > 0 && fit) {
 			flattenColumns.forEach((column) => {
+				// 定宽列复位：全是定宽列时撑满列吸收过剩余宽度（见下方 else 分支），弹性列重新出现后要还原
+				typeof column.states.width === 'number' && (column.states.realWidth = column.states.width);
 				bodyMinWidth += column.states.width || column.states.minWidth || 80;
 			});
 

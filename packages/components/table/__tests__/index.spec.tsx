@@ -4200,6 +4200,34 @@ describe('Additional source-path coverage', () => {
 		[w1, w2, w3, w4, w5].forEach(w => w.unmount());
 	});
 
+	it('Layout.updateColumnsWidth：弹性列重新出现后，吸收过剩余宽度的定宽列还原为 width', async () => {
+		const tableRef = ref<any>();
+		const show = ref(false);
+		const wrapper = mount(() => (
+			<Table ref={tableRef} data={buildData(1)} fit>
+				<TableColumn label="A" prop="name" width={60} />
+				<TableColumn label="B" prop="count" width={180} />
+				{show.value && <TableColumn label="C" prop="address" />}
+			</Table>
+		), { attachTo: document.body });
+		await flush();
+		const measure = () => {
+			const restore = defineGetter(tableRef.value!.$.vnode.el as HTMLElement, 'clientWidth', 800);
+			tableRef.value!.layout.updateColumnsWidth();
+			restore();
+			return tableRef.value!.store.states.columns.map((column: any) => column.states.realWidth);
+		};
+
+		// 全是定宽列：撑满列（最后一列 B）吸收剩余宽度
+		expect(measure()).toEqual([60, 740]);
+
+		// 弹性列出现：B 还原为 180，剩余宽度交给 C
+		show.value = true;
+		await flush();
+		expect(measure()).toEqual([60, 180, 560]);
+		wrapper.unmount();
+	});
+
 	it('Layout.updateColumnsWidth：fit 且全部设宽度时，剩余宽度交给最后一个非固定列', async () => {
 		const measure = async (vm: any, bodyWidth: number) => {
 			const restore = defineGetter(vm.$.vnode.el as HTMLElement, 'clientWidth', bodyWidth);
