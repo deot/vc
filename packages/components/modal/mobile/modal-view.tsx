@@ -15,7 +15,7 @@ import { MCustomer } from '../../customer/index.m';
 import { useLocale } from '../../locale';
 
 import { props as modalProps } from './modal-view-props';
-import { toRem } from '@deot/vc-shared';
+import { toRem, Utils } from '@deot/vc-shared';
 
 const COMPONENT_NAME = 'vcm-modal';
 
@@ -44,17 +44,8 @@ export const MModalView = defineComponent({
 		const handleBefore = (e: any, hook: any) => {
 			if (!isActive.value) return;
 
-			// 2.x使用的是callback
-			const fn = hook && hook(e);
-			if (fn && fn.then) {
-				return fn
-					.then((res: any) => {
-						isActive.value = false;
-						return res;
-					});
-			} else if (!fn) {
-				isActive.value = false;
-			}
+			// 规则与 Modal 相同：同步返回假值或 true 关闭，Promise 兑现后关闭，拒绝时保持打开
+			return Utils.runGuard(hook && hook(e), () => (isActive.value = false));
 		};
 
 		// 用户点击确定的回调 兼容portal设计

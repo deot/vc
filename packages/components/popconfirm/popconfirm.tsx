@@ -8,6 +8,7 @@ import { Customer } from '../customer/index';
 import { useLocale } from '../locale';
 import { useAttrs } from '@deot/vc-hooks';
 import { props as popconfirmProps } from './popconfirm-props';
+import { Utils } from '@deot/vc-shared';
 
 const COMPONENT_NAME = 'vc-popconfirm';
 
@@ -58,18 +59,10 @@ export const Popconfirm = defineComponent({
 			e.preventDefault();
 			if (!isActive.value) return;
 
-			const fn = hook && hook(e);
-			if (fn && fn.then) {
-				return fn
-					.then((res: any) => {
-						isActive.value = false;
-						sync();
-						return res;
-					});
-			} else if (!fn || fn === true) {
+			return Utils.runGuard(hook && hook(e), () => {
 				isActive.value = false;
 				sync();
-			}
+			});
 		};
 
 		const handleOk = (...rest: any[]) => {

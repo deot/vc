@@ -2242,3 +2242,39 @@ describe('MModal 静态方法 (alert / operation / destroy)', () => {
 		expect(document.body.querySelectorAll('.vcm-modal').length).toBe(0);
 	});
 });
+
+describe('前置回调的统一规则', () => {
+	it('MModalView：onOk 同步返回 true 时关闭（与 Modal 一致）', async () => {
+		const wrapper = mount(MModalView, {
+			attachTo: document.body,
+			props: { modelValue: true, mode: 'alert', content: 'x', onOk: () => true }
+		});
+		await flush();
+
+		await wrapper.findAll('.vcm-modal__footer .vcm-modal__button')[1].trigger('click');
+		await flush();
+		expect((wrapper.vm as any).isActive).toBe(false);
+		wrapper.unmount();
+	});
+
+	it('ModalView：onOk 返回的 Promise 被拒绝时保持打开，且不产生未处理的拒绝', async () => {
+		const unhandled = vi.fn();
+		process.on('unhandledRejection', unhandled);
+		const onOk = vi.fn(() => Promise.reject(new Error('keep')));
+		const wrapper = mount(ModalView, {
+			attachTo: document.body,
+			props: { modelValue: true, content: 'x', onOk }
+		});
+		await flush();
+
+		const buttons = wrapper.findAll('.vc-modal__footer .vc-button');
+		await buttons[buttons.length - 1].trigger('click');
+		await Utils.sleep(300);
+
+		expect(onOk).toHaveBeenCalledTimes(1);
+		expect((wrapper.vm as any).isActive).toBe(true);
+		expect(unhandled).not.toHaveBeenCalled();
+		process.off('unhandledRejection', unhandled);
+		wrapper.unmount();
+	});
+});

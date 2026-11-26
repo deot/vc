@@ -3,7 +3,7 @@
 import { getCurrentInstance, ref, onMounted, onUnmounted, watch } from 'vue';
 import type { SetupContext } from 'vue';
 import { useDrag } from '@deot/vc-hooks';
-import { toRem } from '@deot/vc-shared';
+import { toRem, Utils } from '@deot/vc-shared';
 import type { Props } from './notice-view-props';
 
 import { Icon } from '../icon';
@@ -90,18 +90,8 @@ export const useNoticeView = (
 
 		const cancel = instance.vnode.props?.onBeforeClose || props.onBeforeClose || (() => {});
 
-		const fn = cancel && cancel(e);
-		if (fn && fn.then) {
-			return fn
-				.then(() => {
-					isActive.value = false;
-					return true;
-				});
-		} else if (!fn || fn === true) {
-			isActive.value = false;
-			return true;
-		}
-		return false;
+		// 拒绝时保持显示（上滑关闭时回弹）
+		return Utils.runGuard(cancel(e), () => (isActive.value = false));
 	};
 
 	// 上滑关闭（移动端）：按住暂停计时，只跟随向上的位移；松手超过阈值则关闭，否则回弹并重新计时

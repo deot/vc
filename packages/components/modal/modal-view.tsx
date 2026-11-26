@@ -20,6 +20,7 @@ import { Scroller } from '../scroller';
 import { useLocale } from '../locale';
 
 import { props as modalProps } from './modal-view-props';
+import { Utils } from '@deot/vc-shared';
 
 const COMPONENT_NAME = 'vc-modal';
 // 宽高上限：视口减去留白（四周各 10px）。wrapper 铺满视口，百分比即相对视口，随窗口变化
@@ -134,16 +135,7 @@ export const ModalView = defineComponent({
 		const handleBefore = (e: any, hook: any) => {
 			if (!isActive.value) return;
 
-			const fn = hook && hook(e);
-			if (fn && fn.then) {
-				return fn
-					.then((res: any) => {
-						isActive.value = false;
-						return res;
-					});
-			} else if (!fn || fn === true) {
-				isActive.value = false;
-			}
+			return Utils.runGuard(hook && hook(e), () => (isActive.value = false));
 		};
 
 		// 用户点击确定的回调 兼容portal设计

@@ -778,3 +778,26 @@ describe('MNotice', () => {
 		wrapper.unmount();
 	});
 });
+
+describe('onBeforeClose 返回的 Promise 被拒绝', () => {
+	it('保持显示，且不产生未处理的拒绝', async () => {
+		const onBeforeClose = vi.fn(() => Promise.reject(new Error('keep')));
+		const unhandled = vi.fn();
+		process.on('unhandledRejection', unhandled);
+		const wrapper = mount(NoticeView, {
+			attachTo: document.body,
+			props: { content: 'x', duration: 0, onBeforeClose }
+		});
+		await flush();
+
+		await wrapper.find('.vc-notice__close').trigger('click');
+		await flushTransition();
+
+		expect(isVisible(wrapper)).toBe(true);
+		expect(onBeforeClose).toHaveBeenCalledTimes(1);
+		expect(wrapper.emitted('close')).toBeFalsy();
+		expect(unhandled).not.toHaveBeenCalled();
+		process.off('unhandledRejection', unhandled);
+		wrapper.unmount();
+	}, 10000);
+});

@@ -3,6 +3,7 @@ import type { SetupContext } from 'vue';
 import { useKeyboard } from '@deot/vc-hooks';
 import { useLocale } from '../locale';
 import type { Props } from './drawer-view-props';
+import { Utils } from '@deot/vc-shared';
 
 export type DrawerEmits = ['close', 'update:modelValue', 'visible-change', 'portal-fulfilled'];
 type DrawerProps = Pick<
@@ -59,15 +60,7 @@ export const useDrawer = (props: DrawerProps, { emit, expose }: SetupContext<Dra
 	const handleBefore = (e: any, hook: (...args: any[]) => any) => {
 		if (!isActive.value) return;
 
-		const fn = hook(e);
-		if (fn && fn.then) {
-			return fn.then((res: any) => {
-				isActive.value = false;
-				return res;
-			});
-		} else if (!fn || fn === true) {
-			isActive.value = false;
-		}
+		return Utils.runGuard(hook(e), () => (isActive.value = false));
 	};
 
 	/**
@@ -77,10 +70,7 @@ export const useDrawer = (props: DrawerProps, { emit, expose }: SetupContext<Dra
 	 */
 	const shouldClose = (e?: any): boolean | Promise<boolean> => {
 		if (!props.closeWithCancel) return true;
-		const fn = handleCancel(e);
-		return fn && fn.then
-			? fn.then(() => true, () => false)
-			: (!fn || fn === true);
+		return Utils.runGuard(handleCancel(e), () => {});
 	};
 
 	const handleClose = (e: any, closable: boolean) => {

@@ -10,6 +10,7 @@ import { TransitionSlide } from '../transition';
 import { Customer } from '../customer/index';
 import * as Stack from './stack';
 import type { StackItem } from './stack';
+import { Utils } from '@deot/vc-shared';
 
 const COMPONENT_NAME = 'vc-message';
 
@@ -81,16 +82,7 @@ export const MessageView = defineComponent({
 
 			const cancel = instance.vnode.props?.onBeforeClose || props.onBeforeClose || (() => {});
 
-			const fn = cancel && cancel(e);
-			if (fn && fn.then) {
-				return fn
-					.then((res: any) => {
-						isActive.value = false;
-						return res;
-					});
-			} else if (!fn || fn === true) {
-				isActive.value = false;
-			}
+			return Utils.runGuard(cancel(e), () => (isActive.value = false));
 		};
 
 		watch(() => props.content, setContent, { immediate: true });

@@ -254,3 +254,25 @@ describe('计时 / 状态', () => {
 		wrapper.unmount();
 	});
 });
+
+describe('onBeforeClose 返回的 Promise 被拒绝', () => {
+	it('保持显示，且不产生未处理的拒绝', async () => {
+		const onBeforeClose = vi.fn(() => Promise.reject(new Error('keep')));
+		const unhandled = vi.fn();
+		process.on('unhandledRejection', unhandled);
+		const wrapper = mount(MessageView, {
+			attachTo: document.body,
+			props: { content: 'x', duration: 0, closable: true, onBeforeClose }
+		});
+		await nextTick();
+
+		await wrapper.find('.vc-message__close').trigger('click');
+		await new Promise(resolve => setTimeout(resolve, 20));
+
+		expect(onBeforeClose).toHaveBeenCalledTimes(1);
+		expect(wrapper.emitted('close')).toBeFalsy();
+		expect(unhandled).not.toHaveBeenCalled();
+		process.off('unhandledRejection', unhandled);
+		wrapper.unmount();
+	});
+});
