@@ -666,3 +666,17 @@ describe('MDatePickerView 范围', () => {
 		leaf.destroy();
 	});
 });
+
+describe('MDatePicker disabled', () => {
+	it('禁用时不打开弹层', async () => {
+		const wrapper = mount(() => <MDatePicker label="日期" disabled />, { attachTo: document.body });
+		await nextTick();
+
+		expect(wrapper.find('.vcm-date-picker').classes()).toContain('is-disabled');
+		await wrapper.find('.vcm-date-picker').trigger('click');
+		await new Promise(resolve => setTimeout(resolve, 50));
+		expect(document.querySelector('.vcm-popup')).toBeNull();
+		wrapper.unmount();
+		document.body.innerHTML = '';
+	});
+});

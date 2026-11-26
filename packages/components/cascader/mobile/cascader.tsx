@@ -54,6 +54,7 @@ export const MCascader = defineComponent({
 		);
 
 		const handleClick = () => {
+			if (props.disabled) return;
 			trigger.open({
 				...pick(props, coreKeys),
 				modelValue: currentValue.value
@@ -65,7 +66,7 @@ export const MCascader = defineComponent({
 				return (<span class="vcm-cascader-plaintext">{ formatterValue.value }</span>);
 			}
 			return (
-				<div class="vcm-cascader" onClick={handleClick}>
+				<div class={['vcm-cascader', { 'is-disabled': props.disabled }]} onClick={handleClick}>
 					{
 						slots.default
 							? slots.default({
@@ -76,7 +77,7 @@ export const MCascader = defineComponent({
 									<MListItem
 										label={props.label}
 										labelWidth={props.labelWidth}
-										arrow={props.arrow}
+										arrow={props.disabled ? false : props.arrow}
 										extra={formatterValue.value}
 									/>
 								)

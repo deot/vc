@@ -57,6 +57,7 @@ export const MDatePicker = defineComponent({
 		});
 
 		const handleClick = () => {
+			if (props.disabled) return;
 			trigger.open({
 				type: props.type,
 				format: props.format,
@@ -80,7 +81,7 @@ export const MDatePicker = defineComponent({
 				return (<span class="vcm-date-picker-plaintext">{ formatterValue.value }</span>);
 			}
 			return (
-				<div class="vcm-date-picker" onClick={handleClick}>
+				<div class={['vcm-date-picker', { 'is-disabled': props.disabled }]} onClick={handleClick}>
 					{
 						slots.default
 							? slots.default({
@@ -91,7 +92,7 @@ export const MDatePicker = defineComponent({
 									<MListItem
 										label={props.label}
 										labelWidth={props.labelWidth}
-										arrow={props.arrow}
+										arrow={props.disabled ? false : props.arrow}
 										extra={formatterValue.value}
 									/>
 								)

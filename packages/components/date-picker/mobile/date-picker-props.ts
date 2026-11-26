@@ -37,6 +37,10 @@ export const props = {
 	...(pick(viewProps, viewKeys) as Pick<typeof viewProps, typeof viewKeys[number]>),
 	cancelText: String,
 	okText: String,
+	disabled: {
+		type: Boolean,
+		default: false
+	},
 	// 只读文字与没有值时的文字
 	...pickerTriggerProps,
 	formatter: Function as PropType<(value: any, format: string, dates: Date[]) => any>

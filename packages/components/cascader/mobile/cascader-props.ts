@@ -16,6 +16,10 @@ export const coreOmitKeys = ['visible', 'onOk', 'onCancel'] as const;
 export const props = {
 	...(pick(listItemProps, listItemKeys) as Pick<typeof listItemProps, typeof listItemKeys[number]>),
 	...(omit(coreProps, coreOmitKeys) as Omit<typeof coreProps, typeof coreOmitKeys[number]>),
+	disabled: {
+		type: Boolean,
+		default: false
+	},
 	// 只读文字与没有值时的文字
 	...pickerTriggerProps,
 	// 根据路径文字生成显示内容，同桌面端

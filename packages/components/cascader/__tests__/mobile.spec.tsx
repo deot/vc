@@ -434,3 +434,18 @@ describe('MCascader', () => {
 		leaf.destroy();
 	});
 });
+
+describe('MCascader disabled', () => {
+	it('禁用时不打开弹层、不显示箭头', async () => {
+		const wrapper = mount(() => (
+			<MCascader modelValue={[]} data={createData()} label="分类" disabled />
+		), { attachTo: document.body });
+		await flush();
+
+		expect(wrapper.find('.vcm-cascader').classes()).toContain('is-disabled');
+		await wrapper.find('.vcm-cascader').trigger('click');
+		await flush();
+		expect(document.querySelector('.vcm-popup')).toBeNull();
+		wrapper.unmount();
+	});
+});
