@@ -5,7 +5,7 @@ import type { PropType } from 'vue';
 import { props as inputNumberProps } from '../input-number-props';
 
 import { MInput } from './input';
-import { useInputNumber } from '../use-input-number';
+import { useInputNumber, emits } from '../use-input-number';
 import { getPlaintextChildren } from '../utils';
 
 const COMPONENT_NAME = 'vcm-input-number';
@@ -31,6 +31,7 @@ export const MInputNumber = defineComponent({
 		}
 	},
 	inheritAttrs: false,
+	emits: [...emits],
 	setup(props, context) {
 		const { slots, attrs } = context;
 		const { input, displayValue, listeners, plusDisabled, minusDisabled, handleStepper } = useInputNumber(props, context);

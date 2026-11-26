@@ -5,7 +5,7 @@ import { props as inputNumberProps } from './input-number-props';
 
 import { Icon } from '../icon/index';
 import { Input } from './input';
-import { useInputNumber } from './use-input-number';
+import { useInputNumber, emits } from './use-input-number';
 import { getPlaintextChildren } from './utils';
 
 const COMPONENT_NAME = 'vc-input-number';
@@ -14,6 +14,7 @@ export const InputNumber = defineComponent({
 	name: COMPONENT_NAME,
 	props: inputNumberProps,
 	inheritAttrs: false,
+	emits: [...emits],
 	setup(props, context) {
 		const { slots, attrs } = context;
 		const { input, displayValue, listeners, plusDisabled, minusDisabled, handleStepper } = useInputNumber(props, context);

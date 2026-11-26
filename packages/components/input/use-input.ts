@@ -16,8 +16,7 @@ export const emits = [
 	'keydown',
 	'keypress',
 	'keyup',
-	'enter',
-	'tip'
+	'enter'
 ] as const;
 
 type Emits = typeof emits[number][];

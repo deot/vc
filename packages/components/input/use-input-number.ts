@@ -1,12 +1,18 @@
-import { ref, watch, computed } from 'vue';
+import { ref, watch, computed, camelize, toHandlerKey } from 'vue';
 import type { Ref, SetupContext } from 'vue';
 import type { Props } from './input-number-props';
 import { useNativeEmitter } from './use-native-emitter';
+import { emits as inputEmits } from './use-input';
+
+// InputNumber / MInputNumber 声明的 emits：Input 的事件加上自己的 tip
+export const emits = [...inputEmits, 'tip'] as const;
+
+type Emits = typeof emits[number][];
 import { useLocale } from '../locale';
 
 type Value = Props['modelValue'];
 
-export const useInputNumber = (props: Props, context: SetupContext) => {
+export const useInputNumber = (props: Props, context: SetupContext<Emits>) => {
 	const { t } = useLocale();
 	const { emit, attrs, expose } = context;
 	// 内部 Input 组件，原生 focus / blur / click 转发给它
@@ -248,7 +254,10 @@ export const useInputNumber = (props: Props, context: SetupContext) => {
 		afterDebounce(e, value);
 	};
 
+	// 声明了 emits 后这些监听不再经 attrs 传给 Input，未接管的事件在这里原样转发
+	const forwards = Object.fromEntries(inputEmits.map(name => [toHandlerKey(camelize(name)), (...args: any[]) => emit(name, ...args)]));
 	const listeners = {
+		...forwards,
 		'onEnter': handleEnter,
 		'onFocus': handleFocus,
 		'onBlur': handleBlur,

@@ -620,3 +620,15 @@ describe('InputNumber plaintext', () => {
 		wrapper.unmount();
 	});
 });
+
+describe('InputNumber emits', () => {
+	it.each([InputNumber, MInputNumber])('声明 Input 的事件与 tip，未接管的事件照常转发：$name', async (component) => {
+		expect(component.emits).toEqual(expect.arrayContaining(['clear', 'keydown', 'tip']));
+		const onKeydown = vi.fn();
+		const wrapper = mount(component, { props: { modelValue: 1, onKeydown } });
+
+		await wrapper.find('input').trigger('keydown', { key: 'a' });
+		expect(onKeydown).toHaveBeenCalledTimes(1);
+		wrapper.unmount();
+	});
+});
