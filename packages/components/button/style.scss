@@ -216,6 +216,7 @@ $sizes: (
 	font-size: size(medium, font-size);
 	font-weight: 400;
 	line-height: size(medium, line-height);
+	white-space: nowrap;
 	cursor: pointer;
 	background: $background-color-lightest;
 	border: unitfix(1) solid transparent;
