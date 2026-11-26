@@ -68,10 +68,11 @@ export const useSwitch = (props: Props, context: SetupContext<['update:modelValu
 
 		if (fn && fn.then) {
 			isLoading.value = true;
+			// 拒绝表示不切换，在这里接住，避免成为未处理的 Promise 拒绝
 			fn.then((res: any) => {
 				callback();
 				return res;
-			}).finally(() => {
+			}, () => {}).finally(() => {
 				isLoading.value = false;
 			});
 		} else if (!fn) {

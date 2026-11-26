@@ -374,3 +374,19 @@ describe('mobile', () => {
 		expect(disabled.attributes('tabindex')).toBe('-1');
 	});
 });
+
+describe('click 返回的 Promise 被拒绝', () => {
+	it('不切换、清除加载状态，且不产生未处理的拒绝', async () => {
+		const unhandled = vi.fn();
+		process.on('unhandledRejection', unhandled);
+		const wrapper = mount(() => <Switch onClick={() => Promise.reject(new Error('blocked'))} />);
+
+		await wrapper.find('.vc-switch__wrapper').trigger('click');
+		await Utils.sleep(20);
+
+		expect(wrapper.classes()).not.toContain('is-checked');
+		expect(wrapper.classes()).not.toContain('is-loading');
+		expect(unhandled).not.toHaveBeenCalled();
+		process.off('unhandledRejection', unhandled);
+	});
+});
