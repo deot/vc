@@ -537,3 +537,19 @@ describe('Textarea plaintext', () => {
 		empty.unmount();
 	});
 });
+
+describe('change', () => {
+	it('与 input 同步触发，原生失焦的 change 不再派发', async () => {
+		const onChange = vi.fn();
+		const wrapper = mount(() => <Textarea onChange={onChange} />);
+		const textarea = wrapper.find('textarea');
+
+		textarea.element.value = 'a';
+		await textarea.trigger('input');
+		expect(onChange).toHaveBeenCalledTimes(1);
+		expect(onChange.mock.calls[0][0]).toBe('a');
+
+		await textarea.trigger('change');
+		expect(onChange).toHaveBeenCalledTimes(1);
+	});
+});

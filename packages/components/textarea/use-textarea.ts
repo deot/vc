@@ -123,10 +123,6 @@ export const useTextarea = (props: Props, context: SetupContext<Emits>) => {
 		props.allowDispatch && formItem?.blur?.(currentValue.value);
 	};
 
-	const handleChange = (e: any) => {
-		emit('change', e);
-	};
-
 	const handleInput = (e: any) => {
 		if (isOnComposition.value) return;
 		let value = textarea.value!.value;
@@ -194,7 +190,8 @@ export const useTextarea = (props: Props, context: SetupContext<Emits>) => {
 			onCompositionupdate: handleComposition,
 			onCompositionend: handleComposition,
 			onInput: handleInput,
-			onChange: handleChange,
+			// change 与 input 同步触发（同 Input），不转发原生失焦的 change
+			onChange: undefined,
 			onPaste: handlePaste
 		};
 	});
