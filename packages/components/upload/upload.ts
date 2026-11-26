@@ -63,7 +63,8 @@ export const createUpload = (feedback: UploadFeedback) => defineComponent({
 
 			emit('error', { cause });
 
-			throw new VcError('vc-upload', cause);
+			// 只在开发环境打印；不抛出：调用处不 await，抛出会成为未处理的 Promise 拒绝，失败已通过 error 事件与提示反馈
+			new VcError('vc-upload', cause);
 		};
 
 		const post = async (file: UploadFile, leaf: UploadCycleLeaf) => {

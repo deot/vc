@@ -2199,3 +2199,28 @@ describe('UploadTask', () => {
 		wrapper.unmount();
 	});
 });
+
+describe('Upload 出错时不产生未处理的拒绝', () => {
+	afterEach(() => {
+		document.body.innerHTML = '';
+		vi.restoreAllMocks();
+	});
+
+	it('文件类型不匹配：只派发 error', async () => {
+		vi.spyOn(Message, 'error').mockImplementation((() => ({})) as any);
+		const unhandled = vi.fn();
+		process.on('unhandledRejection', unhandled);
+		const onError = vi.fn();
+		const wrapper = mount(Upload, {
+			props: { accept: 'image/*', onError } as any
+		});
+
+		(wrapper.vm as any).uploadFiles([createFile('a.txt', 'text/plain')]);
+		await flush();
+		await new Promise(resolve => setTimeout(resolve, 0));
+
+		expect(onError).toHaveBeenCalledTimes(1);
+		expect(unhandled).not.toHaveBeenCalled();
+		process.off('unhandledRejection', unhandled);
+	});
+});
