@@ -153,7 +153,6 @@ $sizes: (
 		white-space: nowrap;
 		background-color: $background-color-lightest;
 		box-sizing: border-box;
-		user-select: none;
 		align-items: center;
 
 		@include when(center) {

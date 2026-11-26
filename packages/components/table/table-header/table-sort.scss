@@ -13,6 +13,7 @@ $unit: localfix(table-sort, unit, 1px);
 	height: calc(#{$unit} * 20);
 	overflow: initial;
 	cursor: pointer;
+	user-select: none;
 	flex-direction: column;
 	align-items: center;
 

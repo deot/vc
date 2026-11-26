@@ -12,6 +12,7 @@ $foreground-color-inactive: varfix(foreground-color-inactive, table-filter);
 	width: localfix(table-filter, size, 20px);
 	height: localfix(table-filter, size, 20px);
 	cursor: pointer;
+	user-select: none;
 	justify-content: center;
 	align-items: center;
 

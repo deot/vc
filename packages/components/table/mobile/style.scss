@@ -106,8 +106,12 @@ $sizes: (
 		@include hit-area(calc(var(--vc-table-th-padding-y) * -1) remfix(-12));
 	}
 
-	// 排序由点整个表头单元格切换，三角只作指示
+	// 排序由点整个表头单元格切换，三角只作指示；可排序的表头整格是点按目标，长按不选中文字
 	.vc-table-sort {
 		pointer-events: none;
+	}
+
+	.vc-table__th.is-sortable {
+		user-select: none;
 	}
 }
