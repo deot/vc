@@ -1,5 +1,13 @@
 # @deot/vc-hooks ChangeLog
 
+## v1.2.8
+
+_2026-11-26_
+
+### Features
+
+- feat(shared): utils, add runGuard for before-callbacks ([6397149](https://github.com/deot/vc/commit/6397149c364bbc595f76de842fbcd9c9a461aba5))
+
 ## v1.2.7
 
 _2026-11-25_

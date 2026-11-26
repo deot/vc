@@ -1,5 +1,31 @@
 # @deot/vc-components ChangeLog
 
+## v1.2.8
+
+_2026-11-26_
+
+### Bugfixes
+
+- fix: scroller, type every member exposed on the ref ([6770b09](https://github.com/deot/vc/commit/6770b09b6a4e20c8f0492f26025005ed6cdcce40))
+- fix: defer, chart, countdown, artboard, resizer, radio, print, small fixes from the source review ([4479877](https://github.com/deot/vc/commit/4479877f4d1ced19cba43d20358dbe0524afac9b))
+- fix: popover, expose update() on MPopover ([638949e](https://github.com/deot/vc/commit/638949e81a0692b8a251fc1a6941f500ed5369bb))
+- fix: textarea, emit change only together with input ([331e449](https://github.com/deot/vc/commit/331e449afaff0da7f81610bd468bb6c62326ca69))
+- fix: input-number, declare its own emits and forward Input events ([17f368b](https://github.com/deot/vc/commit/17f368babc16ebc02b32dd2677fe3b03078849de))
+- fix: table, artboard, clipboard, image, declare the emitted events ([1a36263](https://github.com/deot/vc/commit/1a36263f7470c3f01ddee5a3459a7ccb77243f1c))
+- fix: upload, stop rethrowing errors nobody awaits ([86acd79](https://github.com/deot/vc/commit/86acd796ca237ada55e9129a1f86f4807c4f5a09))
+- fix: switch, keep a rejected click promise from going unhandled ([1fdb421](https://github.com/deot/vc/commit/1fdb42183ef159ae7826f2495dbbdb31d9343bf0))
+- fix: modal, drawer, popconfirm, message, notice, share one rule for before-callbacks ([2d024c7](https://github.com/deot/vc/commit/2d024c7496892168129f319eb40ec3d82e3d2e5d))
+
+### Features
+
+- feat: cascader, date-picker, add disabled to MCascader and MDatePicker ([70b589a](https://github.com/deot/vc/commit/70b589a68f59d1ca75ecbea76c9c27c509fc252c))
+- feat(shared): utils, add runGuard for before-callbacks ([6397149](https://github.com/deot/vc/commit/6397149c364bbc595f76de842fbcd9c9a461aba5))
+
+### Updates
+
+- style: button, input, textarea, table, tag, remove dead style code ([b51e1a0](https://github.com/deot/vc/commit/b51e1a0fa1e154a004ce82de51b2503f07f9520b))
+- chore(locale): force-publish `1.2.7` -> `1.2.8`
+
 ## v1.2.7
 
 _2026-11-25_

@@ -1,6 +1,6 @@
 {
   "name": "@deot/vc-hooks",
-  "version": "1.2.7",
+  "version": "1.2.8",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -30,7 +30,7 @@
     }
   },
   "dependencies": {
-    "@deot/vc-shared": "^1.2.7"
+    "@deot/vc-shared": "^1.2.8"
   },
   "devDependencies": {
     "@deot/helper": "^1.1.24"

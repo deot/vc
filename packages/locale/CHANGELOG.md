@@ -1,5 +1,13 @@
 # @deot/vc-locale ChangeLog
 
+## v1.2.8
+
+_2026-11-26_
+
+### Force Update Package
+
+- `1.2.7` -> `1.2.8`
+
 ## v1.2.7
 
 _2026-11-25_
