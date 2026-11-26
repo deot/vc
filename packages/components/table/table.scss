@@ -87,7 +87,6 @@ $sizes: (
 	color: $foreground-color;
 	background-color: $background-color-lightest;
 	box-sizing: border-box;
-	flex: 1;
 
 	@include element(cell) {
 		width: 100%;
