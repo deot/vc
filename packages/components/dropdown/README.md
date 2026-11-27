@@ -343,8 +343,7 @@ const handleClick = (value) => {
 <!--
 <config lang="json5">
 {
-	mobile: true,
-	local: false
+	mobile: true
 }
 </config>
 -->
@@ -568,4 +567,4 @@ DropdownItem 应置于 Dropdown 的内容中使用。移动端入口导出 `MDro
 
 菜单项支持 `--vc-dropdown-color-dark-lighter`（文字）、`--vc-dropdown-color-primary`（悬停与选中）、`--vc-dropdown-background-color-primary-light`（悬停背景）、`--vc-dropdown-color-dark-extralight`（禁用文字）和 `--vc-dropdown-color-neutral-light`（分割线），缺省时使用同名全局 token。
 
-浮层背景、阴影和箭头由 Popover 提供。默认浮层挂载在 `body`，主题变量应设置在浮层能继承的位置，或通过 `portalStyle` / `portalClass` 设置。
+浮层背景、阴影和箭头由 Popover 提供。默认浮层挂载在弹层挂载点 `VcInstance.options.Portal.element`（未设置时为 `body`），主题变量应设置在浮层能继承的位置，或通过 `portalStyle` / `portalClass` 设置。

@@ -481,8 +481,7 @@ const handleEnter = () => {
 <!--
 <config lang="json5">
 {
-	mobile: true,
-	local: false
+	mobile: true
 }
 </config>
 -->

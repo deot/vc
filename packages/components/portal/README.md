@@ -993,7 +993,7 @@ const handleClose = () => (isActive.value = false);
 | --- | --- | --- | --- | --- |
 | propsData | 显式传给包装组件的 props | `Record<string, any>` | - | - |
 | name | 实例注册标识；不同服务建议显式区分，避免重名替换 | `string` | - | 构造配置的 name、wrapper.name 或自动生成值 |
-| element | 已存在的挂载目标；未找到时不会插入页面 | `string \| HTMLElement` | - | `'body'` |
+| element | 已存在的挂载目标；未找到时不会插入页面 | `string \| HTMLElement` | - | `VcInstance.options.Portal.element`，未设置时为 `'body'` |
 | tag | 内部挂载容器标签；默认通常仅将其元素子节点移入目标 | `string` | - | `'div'` |
 | fragment | 保留挂载容器，适合多根节点及根节点的条件变化 | `boolean` | - | `false` |
 | insertion | 插入目标首个元素之前或末尾 | `string` | `first` / `last` | `'last'` |

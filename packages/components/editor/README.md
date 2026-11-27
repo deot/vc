@@ -349,18 +349,17 @@ const handleSelect = ({ value: id, prefix, item }) => {
 - 选择项（标题、字体、字号、对齐、行高、字间距）用动作面板，当前值高亮；文字颜色、背景色用底部弹出层的色块网格（色块 64）。
 - 链接、视频、公式的输入用底部弹出层；光标停在链接里时仍以浮层显示预览。
 - `toolbarPlacement` 默认 `keyboard`：聚焦时工具栏固定在虚拟键盘上方，按 `visualViewport` 计算位置，原位置保留占位；光标被工具栏挡住时滚动页面。失焦或禁用时回到编辑区顶部。
-- 停靠时工具栏移到 `body` 下（脱离编辑器的层叠上下文，不会被页面上后面的内容盖住）；移动端工具栏的尺寸变量写在工具栏的标记类 `vcm-editor-toolbar` 上，覆盖时设置在它上面。
+- 停靠时工具栏移到弹层挂载点 `VcInstance.options.Portal.element` 下（未设置时为 `body`；脱离编辑器的层叠上下文，不会被页面上后面的内容盖住）；移动端工具栏的尺寸变量写在工具栏的标记类 `vcm-editor-toolbar` 上，覆盖时设置在它上面。
 - 提及（`mentionOptions`）同样是跟随光标的下拉，750 稿尺寸，按可视区翻转、限高；点按选中，不默认高亮。
 - 点击图片用移动端查看器预览；`enhancer` 收到的 `mobile` 为 `true`。
 
-下例第一个编辑器使用默认的 `toolbarPlacement="keyboard"`，第二个固定在顶部并精简工具，第三个开启提及；最后用 `MEditorView` 展示内容。工具栏停靠、动作面板与弹出层都挂到 `body`，因此在独立页面中预览。
+下例第一个编辑器使用默认的 `toolbarPlacement="keyboard"`，第二个固定在顶部并精简工具，第三个开启提及；最后用 `MEditorView` 展示内容。工具栏停靠、动作面板与弹出层都挂到弹层挂载点，在文档的移动端预览中收在预览列内。
 
 :::playground
 <!--
 <config lang="json5">
 {
-	mobile: true,
-	local: false
+	mobile: true
 }
 </config>
 -->

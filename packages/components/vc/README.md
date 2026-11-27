@@ -405,6 +405,7 @@ Portal 的独立 app 不自动继承主应用的插件或 `provide`，可在这�
 | --- | --- | --- |
 | install | 在独立弹层 app 挂载前调用，接收 `app`，用于安装插件或注入依赖 | `undefined` |
 | aliveRules | 在 `alive` 模式下，点击路径中的元素匹配 `className` 或 `id` 正则时不触发外部点击关闭 | 未设置时使用 `{ className: /(vc-portal-alive)/ }` |
+| element | 所有弹层的默认挂载点（选择器或元素）：Portal 静态调用、Popover / MDropdown / PortalView 等的 Teleport、Tour、Notice 的容器、MEditor 停靠的工具栏、Watermark 的 fullscreen 都挂到这里；移动端在 JS 里换算 750 稿长度时也在这里测量 `--vc-rem`。组件上显式传的 `to` / `element` 仍然优先 | `'body'` |
 
 ```js
 import { VcInstance } from '@deot/vc';

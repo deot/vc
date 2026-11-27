@@ -404,7 +404,7 @@ const handleFiles = () => {
 
 `MFilePreview` 的属性、插槽、结构与 `FilePreview` 相同，根节点另有标记类 `.vcm-file-preview`，结构样式与主题参数共用；各档尺寸按 750 稿随 `--vc-rem` 缩放，见示例后的尺寸表。
 
-下例切换 `size` 与 `type`；点开为移动端查看器，`MImagePreview.open`、`MFilePreview.open` 直接打开。查看器挂到 `body`，因此在独立页面中预览。
+下例切换 `size` 与 `type`；点开为移动端查看器，`MImagePreview.open`、`MFilePreview.open` 直接打开。查看器挂到弹层挂载点，在文档的移动端预览中收在预览列内。
 
 :::playground
 <!--

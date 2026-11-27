@@ -930,7 +930,7 @@ const timeOptions = { disabledHours: [0, 1, 2, 3, 4, 5, 6, 7, 8, 19, 20, 21, 22,
 | close | 弹层关闭 | - | - |
 | error | 前置回调同步抛错 | `error` | 捕获的错误 |
 
-`@before-ok` / JSX `onBeforeOk` 是前置回调，接收尚未格式化的 `Date[]`；`@before-clear` / `onBeforeClear` 不传参数。返回的 Promise resolve 后继续，reject 时中止。它们不是提交完成事件。
+`@before-ok` / JSX `onBeforeOk` 是前置回调，接收尚未格式化的 `Date[]`；`@before-clear` / `onBeforeClear` 不传参数。返回的 Promise resolve 后继续，reject 时中止（组件内部接住，不会产生未处理的拒绝）。它们不是提交完成事件。
 
 ### DatePicker 插槽
 

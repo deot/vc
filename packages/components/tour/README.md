@@ -93,7 +93,7 @@ const handleAdd = () => {
 
 Tour 参数、事件回调和 Portal 的 `slots/components/uses/install/onDestroyed` 等配置放在同一个对象中。`Tour.open(options)` 同步返回可等待的 `PortalLeaf`，挂载后可以通过 `leaf.wrapper` 调用实例方法，结束后通过 `await leaf` 获取结果；`Tour.destroy()` 强制清理默认 Portal 名称下的引导。
 
-静态调用通过 Portal 的 `element` 指定挂载容器，声明式组件使用 `to`，都支持选择器或 DOM 元素。默认挂载到 body。
+静态调用通过 Portal 的 `element` 指定挂载容器，声明式组件使用 `to`，都支持选择器或 DOM 元素。默认挂载到弹层挂载点 `VcInstance.options.Portal.element`（未设置时为 body）。
 
 操作 `onClick(event, context)` 返回 `false`、抛错或 Promise 拒绝时保留当前步骤，其余结果继续。等待期间禁止其他导航和普通关闭。左右键、目标点击、蒙层推进和实例方法复用对应回调；`goTo` 和外部 `current` 更新直接请求指定步骤。
 
@@ -175,8 +175,7 @@ onBeforeUnmount(() => {
 <!--
 <config lang="json5">
 {
-	mobile: true,
-	local: false
+	mobile: true
 }
 </config>
 -->
@@ -783,7 +782,7 @@ Tour.open({ cache: 'feature-guide-v1', steps: [{ element: '#feature-entry', titl
 
 全局参数通过 `--vc-<参数>` 配置，单个引导通过 `--vc-tour-<参数>` 覆盖。同一参数可能作用于多个区域。
 
-卡片与蒙层由 Portal 挂载，覆盖变量需作用于实际引导根节点或其祖先。默认挂载到 body，调用方容器上的变量不会自动继承；可通过 `wrapperStyle` 设置当前引导的 CSS 变量，例如 `{ '--vc-tour-border-radius': '12px' }`。声明式组件和 `Tour.open(options)` 都支持这种方式。
+卡片与蒙层由 Portal 挂载，覆盖变量需作用于实际引导根节点或其祖先。默认挂载到弹层挂载点（未设置 `VcInstance.options.Portal.element` 时为 body），调用方容器上的变量不会自动继承；可通过 `wrapperStyle` 设置当前引导的 CSS 变量，例如 `{ '--vc-tour-border-radius': '12px' }`。声明式组件和 `Tour.open(options)` 都支持这种方式。
 
 内嵌的 [Button](../button/README.md#主题与局部覆盖) 使用自己的主题入口；`--vc-tour-color-primary` 只覆盖当前进度点，按钮主色通过 `--vc-button-color-primary` 设置。
 

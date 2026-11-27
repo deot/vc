@@ -352,7 +352,7 @@ const handleReset = () => {
 
 ## 移动端
 
-`MUploadPicker` 的属性、事件、插槽、结构与 `UploadPicker` 相同，根节点另有标记类 `.vcm-upload-picker`；尺寸按 750 稿随 `--vc-rem` 缩放，375 宽下与桌面端同 px。多种类型时点「上传」先用 ActionSheet 选择类型，预览打开移动端查看器，因此示例在独立页面中运行；底栏切换 `rem` 可查看不同屏宽下的效果。
+`MUploadPicker` 的属性、事件、插槽、结构与 `UploadPicker` 相同，根节点另有标记类 `.vcm-upload-picker`；尺寸按 750 稿随 `--vc-rem` 缩放，375 宽下与桌面端同 px。多种类型时点「上传」先用 ActionSheet 选择类型，预览打开移动端查看器；底栏切换 `rem` 可查看不同屏宽下的效果。
 
 :::playground
 <!--
