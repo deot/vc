@@ -87,3 +87,91 @@ describe('use-rem.ts', () => {
 		root.unmount();
 	});
 });
+
+describe('useRem({ element })', () => {
+	// 每个挂载点给出不同的探针宽度：模拟各自继承到的 --vc-rem
+	const widths = new Map<Element, number>();
+	let rect: ReturnType<typeof vi.spyOn>;
+	const probeIn = (host: Element) => [...host.children].find(el => (el as HTMLElement).style.width.includes('--vc-rem')) as HTMLElement | undefined;
+
+	beforeEach(() => {
+		rect = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+			const host = this.parentElement;
+			return { width: host && this === probeIn(host) ? widths.get(host) || 0 : 0 } as DOMRect;
+		});
+	});
+
+	afterEach(() => {
+		rect.mockRestore();
+		widths.clear();
+		document.body.innerHTML = '';
+	});
+
+	const createIn = (element?: HTMLElement | string) => {
+		let rem!: ReturnType<typeof useRem>;
+		const root = mount(defineComponent(() => {
+			rem = useRem({ element });
+			return () => h('div');
+		}));
+		return { rem, root };
+	};
+
+	it('探针建在指定的挂载点下，读数取各自的宽度', () => {
+		const a = document.createElement('div');
+		const b = document.createElement('div');
+		document.body.append(a, b);
+		widths.set(a, 375);
+		widths.set(b, 480);
+
+		const first = createIn(a);
+		const second = createIn(b);
+		expect(probeIn(a)).toBeTruthy();
+		expect(probeIn(b)).toBeTruthy();
+		expect(first.rem.value).toBe(0.5);
+		expect(second.rem.value).toBe(0.64);
+		expect(first.rem).not.toBe(second.rem);
+
+		first.root.unmount();
+		second.root.unmount();
+	});
+
+	it('同一挂载点共用一个探针，最后一个使用者卸载后移除；其它挂载点不受影响', () => {
+		const a = document.createElement('div');
+		const b = document.createElement('div');
+		document.body.append(a, b);
+		widths.set(a, 375);
+		widths.set(b, 375);
+
+		const first = createIn(a);
+		const second = createIn(a);
+		const other = createIn(b);
+		expect(first.rem).toBe(second.rem);
+		expect([...a.children]).toHaveLength(1);
+
+		first.root.unmount();
+		expect(probeIn(a)).toBeTruthy();
+		second.root.unmount();
+		expect(probeIn(a)).toBeUndefined();
+		expect(probeIn(b)).toBeTruthy();
+		other.root.unmount();
+		expect(probeIn(b)).toBeUndefined();
+	});
+
+	it('传选择器时按选择器查找，找不到回退 body', () => {
+		const a = document.createElement('div');
+		a.className = 'rem-host';
+		document.body.append(a);
+		widths.set(a, 414);
+
+		const found = createIn('.rem-host');
+		expect(probeIn(a)).toBeTruthy();
+		expect(found.rem.value).toBe(414 / 750);
+		found.root.unmount();
+
+		widths.set(document.body, 375);
+		const fallback = createIn('.missing');
+		expect(probeIn(document.body)).toBeTruthy();
+		expect(fallback.rem.value).toBe(0.5);
+		fallback.root.unmount();
+	});
+});
