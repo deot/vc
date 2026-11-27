@@ -17,6 +17,7 @@ import { EditorToolbar, EditorPrompt, useFormats, parseToolbar } from './toolbar
 import { useKeyboardDock } from './toolbar/use-keyboard-dock';
 import { EditorMention } from './editor-mention';
 import type { FormatValue, PromptMode } from './toolbar';
+import { getPortalElement } from '../portal/utils';
 
 export const emits = ['ready', 'blur', 'focus', 'input', 'update:modelValue', 'change', 'mention-select'] as const;
 
@@ -244,10 +245,10 @@ export const useEditor = (
 				{{ extend: slots.extend }}
 			</EditorToolbar>
 		);
-		// 可能停靠（移动端 keyboard）时才包 Teleport：停靠时移到 body。fixed 的工具栏留在编辑器里会受祖先限制——
+		// 可能停靠（移动端 keyboard）时才包 Teleport：停靠时移到弹层挂载点（Portal.element，缺省 body）。fixed 的工具栏留在编辑器里会受祖先限制——
 		// 根节点（isolation）或弹出层等祖先形成的层叠上下文让它被后面的内容盖住，有 transform 的祖先还会让 fixed 改以它为参照
 		return mobile && props.toolbarPlacement === 'keyboard'
-			? (<Teleport to="body" disabled={!isDocked.value}>{ vnode }</Teleport>)
+			? (<Teleport to={getPortalElement()} disabled={!isDocked.value}>{ vnode }</Teleport>)
 			: vnode;
 	};
 

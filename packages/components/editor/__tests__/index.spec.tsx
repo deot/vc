@@ -1134,6 +1134,26 @@ describe('MEditor', () => {
 		wrapper.unmount();
 	});
 
+	it('docks the toolbar into Portal.element when it is configured', async () => {
+		const viewport = Object.assign(new EventTarget(), { offsetTop: 0, offsetLeft: 0, width: 375, height: 500 });
+		Object.defineProperty(window, 'visualViewport', { configurable: true, value: viewport });
+		vi.spyOn(window, 'innerHeight', 'get').mockReturnValue(800);
+		const host = document.createElement('div');
+		document.body.appendChild(host);
+		const original = { ...VcInstance.options.Portal };
+		VcInstance.configure({ Portal: { ...original, element: host } });
+
+		const { wrapper, editor } = await mountMobile();
+		editor.emitter.emit('selection-change', { index: 0, length: 0 });
+		await flush();
+		// 停靠时移到弹层挂载点（Portal.element）下
+		expect((document.querySelector('.vc-editor__toolbar') as HTMLElement).parentElement).toBe(host);
+
+		wrapper.unmount();
+		VcInstance.configure({ Portal: { ...original } });
+		host.remove();
+	});
+
 	it('docks the toolbar above the keyboard while focused', async () => {
 		const viewport = Object.assign(new EventTarget(), { offsetTop: 0, offsetLeft: 0, width: 375, height: 500 });
 		// jsdom 没有 visualViewport
