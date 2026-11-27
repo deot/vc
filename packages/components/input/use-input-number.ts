@@ -249,7 +249,11 @@ export const useInputNumber = (props: Props, context: SetupContext<Emits>) => {
 		const value$ = transformValue(compareWithBoundary(isNaN(value) ? '' : value, 'button'));
 
 		const before = attrs.onBefore as any;
-		const state = (await before?.(value$) !== false);
+		// 与 onAfter 一致：返回 false 或拒绝时不步进
+		let state = false;
+		try {
+			state = (await before?.(value$)) !== false;
+		} catch { /* empty */ }
 		state && sync(value$, {});
 		afterDebounce(e, value);
 	};

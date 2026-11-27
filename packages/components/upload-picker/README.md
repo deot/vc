@@ -491,7 +491,7 @@ onBeforeUnmount(() => urls.forEach(url => URL.revokeObjectURL(url)));
 | file-error | 上传阶段失败 | `{ stage, cause, message, file, result, type }` | stage 为 'upload'；前置取消不会触发 |
 | error | 上传错误 | `{ cause, type }` | cause 为错误信息；桌面端入口拒绝（都不支持、超出总数）时 type 为空 |
 | complete | 一个类型的一次上传周期结束 | `{ result, type }` | result 含 total/completed/succeeded/failed/responses/queues |
-| remove-before | 删除前等待回调完成 | `(position, type)` | position 为在列表中的位置；等待返回的 Promise，reject 中止删除，返回 false 不会中止 |
+| remove-before | 删除前等待回调完成 | `(position, type)` | position 为在列表中的位置；等待返回的 Promise，reject 中止删除（组件内部接住，不会产生未处理的拒绝），返回 false 不会中止 |
 
 上传事件接收一个对象参数，`type` 表示文件类型。回调类型可从 `@deot/vc` 导入 `UploadPickerCallback`。`file-before` 和 `remove-before` 在 JSX 中分别对应 `onFileBefore` 和 `onRemoveBefore`。
 

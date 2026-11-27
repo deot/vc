@@ -831,3 +831,23 @@ describe('UploadPicker', () => {
 		expect(objectWrapper.emitted('update:modelValue')?.at(-1)?.[0]).toBeNull();
 	});
 });
+
+describe('remove-before 拒绝 = 中止删除', () => {
+	it('拒绝时保留该项、不同步，且不产生未处理的拒绝', async () => {
+		const unhandled = vi.fn();
+		process.on('unhandledRejection', unhandled);
+		const onRemoveBefore = vi.fn(() => Promise.reject(new Error('cancel')));
+		const wrapper = mount(UploadPicker, {
+			props: { modelValue: [files[0], files[3]], picker: ['image', 'file'], onRemoveBefore }
+		});
+
+		await wrapper.find('.vc-file-row .vc-upload-picker__delete').trigger('click');
+		await sleep(10);
+
+		expect(onRemoveBefore).toHaveBeenCalledTimes(1);
+		expect(wrapper.emitted('update:modelValue')).toBeFalsy();
+		expect(wrapper.find('.vc-file-row.is-file').exists()).toBe(true);
+		expect(unhandled).not.toHaveBeenCalled();
+		process.off('unhandledRejection', unhandled);
+	});
+});

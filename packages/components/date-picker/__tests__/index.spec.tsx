@@ -3676,3 +3676,36 @@ describe('DatePicker firstDayOfWeek', () => {
 		wrapper.unmount();
 	});
 });
+
+describe('before-ok / before-clear 拒绝 = 中止', () => {
+	afterEach(() => {
+		document.body.innerHTML = '';
+	});
+
+	it('before-ok 拒绝时不派发 ok，且不产生未处理的拒绝', async () => {
+		const unhandled = vi.fn();
+		process.on('unhandledRejection', unhandled);
+		const onOk = vi.fn();
+		const wrapper = mount(() => (
+			<DatePicker
+				open
+				confirm
+				modelValue={new Date(2023, 0, 1)}
+				onBeforeOk={() => Promise.reject(new Error('block'))}
+				onOk={onOk}
+			/>
+		), { attachTo: document.body });
+		await flush();
+		await sleep(20);
+		await flush();
+		const buttons = document.querySelectorAll('.vc-date-confirm .vc-button');
+		(buttons[buttons.length - 1] as HTMLElement).click();
+		await flush();
+		await sleep(20);
+
+		expect(onOk).not.toHaveBeenCalled();
+		expect(unhandled).not.toHaveBeenCalled();
+		process.off('unhandledRejection', unhandled);
+		wrapper.unmount();
+	});
+});

@@ -166,12 +166,9 @@ export const useBase = (props: Props, context: SetupContext<Emits>, options: Opt
 	const executePromise = (promiseFn: any, cb: any, param?: any) => {
 		try {
 			const promise = promiseFn && promiseFn(param);
-			if (promise && promise.then()) {
-				promise.then(() => {
-					cb();
-				}).catch(() => {
-					return;
-				});
+			if (promise && typeof promise.then === 'function') {
+				// 兑现后继续，拒绝表示中止（在这里接住）
+				promise.then(() => cb(), () => {});
 			} else {
 				cb();
 			}

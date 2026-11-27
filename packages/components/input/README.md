@@ -916,7 +916,7 @@ const handleCancel = () => {
 | 事件名 | 说明 | 回调参数 | 参数说明 |
 | --- | --- | --- | --- |
 | tip | 超出边界或无法继续步进 | `({ type, message, value?, tag })` | type 为 `'max' \| 'min'`；message 为本地化提示；value 为校正前的值（已到边界的按钮操作不传）；tag 为 `'input' \| 'button'` |
-| before | 步进更新前回调，对应 onBefore | `(value)` | 接收转换后的值，可返回 Promise；返回 false 阻止本次更新 |
+| before | 步进更新前回调，对应 onBefore | `(value)` | 接收转换后的值，可返回 Promise；返回 false 或 Promise 拒绝时阻止本次更新 |
 | after | 失焦、回车或步进停止 500ms 后回调，对应 onAfter | `(value)` | 失焦/回车接收归整结果，步进接收校正前的计算值；返回 false 或 Promise 拒绝时回滚 |
 | plus / minus | 覆盖默认增减逻辑，对应 onPlus / onMinus | `()` | 直接执行调用方逻辑，跳过内部边界判断、before 和 after |
 

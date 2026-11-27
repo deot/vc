@@ -632,3 +632,22 @@ describe('InputNumber emits', () => {
 		wrapper.unmount();
 	});
 });
+
+describe('InputNumber before 拒绝 = 不步进', () => {
+	it('与 after 一致：拒绝时不更新值，且不产生未处理的拒绝', async () => {
+		const unhandled = vi.fn();
+		process.on('unhandledRejection', unhandled);
+		const onUpdate = vi.fn();
+		const wrapper = mount(InputNumber, {
+			props: { 'modelValue': 1, 'step': 1, 'onUpdate:modelValue': onUpdate, 'onBefore': () => Promise.reject(new Error('x')) } as any
+		});
+
+		await wrapper.find('.vc-input-number__up').trigger('click');
+		await new Promise(resolve => setTimeout(resolve, 20));
+
+		expect(onUpdate).not.toHaveBeenCalled();
+		expect(unhandled).not.toHaveBeenCalled();
+		process.off('unhandledRejection', unhandled);
+		wrapper.unmount();
+	});
+});

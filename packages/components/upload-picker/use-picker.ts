@@ -213,7 +213,12 @@ export const usePicker = (props: Props, context: SetupContext<Emits>, options: {
 
 	const handleRemove = async (item: PickerItem) => {
 		const onRemoveBefore = instance.vnode.props?.onRemoveBefore;
-		onRemoveBefore && await onRemoveBefore(currentValue.value.indexOf(item), item.type);
+		// 拒绝表示中止删除：在这里接住，不再向外抛出（否则成为未处理的 Promise 拒绝）
+		try {
+			onRemoveBefore && await onRemoveBefore(currentValue.value.indexOf(item), item.type);
+		} catch {
+			return;
+		}
 
 		currentValue.value = currentValue.value.filter(it => it !== item);
 		// 失败项只在内部，不触发同步

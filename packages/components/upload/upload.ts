@@ -287,11 +287,11 @@ export const createUpload = (feedback: UploadFeedback) => defineComponent({
 			const skip = enhancer({ instance });
 			if (skip && typeof skip !== 'boolean') {
 				let skip$ = false;
+				// 拒绝按未接管处理（继续选择文件），在这里接住
 				skip
 					.then((v) => {
 						skip$ = typeof v === 'undefined' ? true : !!v;
-						return v;
-					})
+					}, () => {})
 					.finally(() => {
 						skip$ || el.click?.();
 					});

@@ -2224,3 +2224,23 @@ describe('Upload 出错时不产生未处理的拒绝', () => {
 		process.off('unhandledRejection', unhandled);
 	});
 });
+
+describe('Upload enhancer 拒绝', () => {
+	afterEach(() => vi.restoreAllMocks());
+
+	it('按未接管处理（触发 input.click），且不产生未处理的拒绝', async () => {
+		const unhandled = vi.fn();
+		process.on('unhandledRejection', unhandled);
+		const clickSpy = vi.spyOn(HTMLInputElement.prototype, 'click').mockImplementation(() => {});
+		const enhancer = vi.fn(() => Promise.reject(new Error('x')));
+		const wrapper = mount(Upload, { props: { enhancer } as any });
+
+		await wrapper.trigger('click');
+		await flush();
+		await new Promise(resolve => setTimeout(resolve, 0));
+
+		expect(clickSpy).toHaveBeenCalledTimes(1);
+		expect(unhandled).not.toHaveBeenCalled();
+		process.off('unhandledRejection', unhandled);
+	});
+});
