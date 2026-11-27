@@ -15,13 +15,7 @@
 <!--
 <config lang="json5">
 {
-	mobile: true,
-	previewInset: [12, 0],
-	previewVariables: [{
-		name: '--rem',
-		label: 'rem',
-		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
-	}]
+	mobile: true
 }
 </config>
 -->
@@ -103,14 +97,7 @@ const iconActions = [
 <!--
 <config lang="json5">
 {
-	mobile: true,
-	local: false,
-	previewInset: [12, 0],
-	previewVariables: [{
-		name: '--rem',
-		label: 'rem',
-		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
-	}]
+	mobile: true
 }
 </config>
 -->
@@ -182,13 +169,7 @@ const handleRemove = item => new Promise((resolve, reject) => {
 <!--
 <config lang="json5">
 {
-	mobile: true,
-	previewInset: [12, 0],
-	previewVariables: [{
-		name: '--rem',
-		label: 'rem',
-		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
-	}]
+	mobile: true
 }
 </config>
 -->

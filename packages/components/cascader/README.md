@@ -14,7 +14,6 @@
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -78,7 +77,6 @@ const values = reactive({ click: [], hover: [] });
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -139,7 +137,6 @@ const handleClear = () => {
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -200,7 +197,6 @@ const formatter = labels => labels[labels.length - 1];
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -258,7 +254,6 @@ const values = reactive({ right: [], left: [], auto: [] });
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -323,7 +318,6 @@ const handleChange = (nextValue, nextLabels) => {
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -383,7 +377,6 @@ const handleChange = (nextValue, nextLabels) => {
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -455,7 +448,6 @@ const numberValue = ref('1,12');
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -521,7 +513,6 @@ const options = ['A', 'B'].map(group => ({
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -577,7 +568,6 @@ const loadData = ({ row }) => {
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -638,7 +628,6 @@ const value = ref([]);
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -731,7 +720,6 @@ const handleClose = () => {
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -787,7 +775,6 @@ const value = ref(['2500', '2500-3']);
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -847,14 +834,7 @@ const options = [
 <!--
 <config lang="json5">
 {
-	mobile: true,
-	local: false,
-	previewInset: [12, 0],
-	previewVariables: [{
-		name: '--rem',
-		label: 'rem',
-		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
-	}]
+	mobile: true
 }
 </config>
 -->
@@ -974,14 +954,7 @@ const handleClear = () => {
 <!--
 <config lang="json5">
 {
-	mobile: true,
-	local: false,
-	previewInset: [12, 0],
-	previewVariables: [{
-		name: '--rem',
-		label: 'rem',
-		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
-	}]
+	mobile: true
 }
 </config>
 -->

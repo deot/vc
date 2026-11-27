@@ -20,7 +20,6 @@
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -120,7 +119,6 @@ const handleReset = () => {
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -196,7 +194,6 @@ const model = reactive({ name: '', category: '', extra: '' });
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -306,7 +303,6 @@ const handleResetFirst = () => {
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -405,7 +401,6 @@ FormItem 的 `error` 设置外部错误文案（如接口返回），设为 `''`
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -528,7 +523,6 @@ const handleFieldValidate = async () => {
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -609,7 +603,6 @@ const handleSubmit = async () => {
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -674,14 +667,7 @@ const handleSubmit = async () => {
 <!--
 <config lang="json5">
 {
-	mobile: true,
-	local: false,
-	previewInset: [12, 0],
-	previewVariables: [{
-		name: '--rem',
-		label: 'rem',
-		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
-	}]
+	mobile: true
 }
 </config>
 -->

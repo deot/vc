@@ -16,7 +16,6 @@
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -56,7 +55,6 @@ import { Grid, GridItem } from '@deot/vc';
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -107,7 +105,6 @@ import { Grid, GridItem } from '@deot/vc';
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -147,7 +144,6 @@ const getSpan = ({ index }) => (index === 0 ? [2, 6] : void 0);
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -228,7 +224,6 @@ const justifyContent = ref('start');
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -264,7 +259,6 @@ import { Grid, GridItem } from '@deot/vc';
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -307,13 +301,7 @@ const handleToggle = () => {
 <!--
 <config lang="json5">
 {
-	mobile: true,
-	previewInset: [12, 0],
-	previewVariables: [{
-		name: '--rem',
-		label: 'rem',
-		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
-	}]
+	mobile: true
 }
 </config>
 -->

@@ -16,7 +16,6 @@
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -92,7 +91,6 @@ const handleToggle = () => {
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>

@@ -18,7 +18,6 @@
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16,
 	expandable: true
 }
@@ -102,7 +101,6 @@ Tour 参数、事件回调和 Portal 的 `slots/components/uses/install/onDestro
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16,
 	expandable: true
 }
@@ -178,13 +176,7 @@ onBeforeUnmount(() => {
 <config lang="json5">
 {
 	mobile: true,
-	local: false,
-	previewInset: [12, 0],
-	previewVariables: [{
-		name: '--rem',
-		label: 'rem',
-		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
-	}]
+	local: false
 }
 </config>
 -->
@@ -269,7 +261,6 @@ const handleTargetClick = () => {
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16,
 	expandable: true
 }
@@ -398,7 +389,6 @@ Tour 的 `title`、`content`、`progress` 插槽作用于所有步骤，步骤�
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16,
 	expandable: true
 }
@@ -567,7 +557,6 @@ const handleFirst = () => {
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16,
 	expandable: true
 }
@@ -684,7 +673,6 @@ onBeforeUnmount(() => clearTimeout(timer));
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16,
 	expandable: true
 }

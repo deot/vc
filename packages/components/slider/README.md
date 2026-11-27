@@ -14,7 +14,6 @@
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -60,7 +59,6 @@ const value3 = ref([20, 60]);
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -138,7 +136,6 @@ const handleReset = () => {
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -182,7 +179,6 @@ const value2 = ref([20, 60]);
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -226,7 +222,6 @@ const value2 = ref([20, 60]);
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -271,7 +266,6 @@ const value2 = ref([20, 45]);
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -323,7 +317,6 @@ const marks = {
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -375,7 +368,6 @@ const marks = { 0: '0', 10: '10', 20: '20', 60: '60', 100: '100' };
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -427,7 +419,6 @@ const marks = { 0: '0', 50: '50', 100: '100' };
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -484,7 +475,6 @@ const formatHidden = () => {
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -571,13 +561,7 @@ const marks = { 0: '0', 25: '25', 50: '50', 75: '75', 100: '100' };
 <!--
 <config lang="json5">
 {
-	mobile: true,
-	previewInset: [12, 0],
-	previewVariables: [{
-		name: '--rem',
-		label: 'rem',
-		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
-	}]
+	mobile: true
 }
 </config>
 -->

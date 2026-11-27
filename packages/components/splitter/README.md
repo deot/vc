@@ -18,7 +18,6 @@
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -118,7 +117,6 @@ const handleResizeEnd = (e) => {
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -170,7 +168,6 @@ import { Splitter, SplitterPanel } from '@deot/vc';
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -238,7 +235,6 @@ const handleCollapseChange = ({ index, collapsed }) => {
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -285,7 +281,6 @@ import { Splitter, SplitterPanel } from '@deot/vc';
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -338,7 +333,6 @@ import { Splitter, SplitterPanel } from '@deot/vc';
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>

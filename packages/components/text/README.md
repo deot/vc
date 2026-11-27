@@ -16,7 +16,6 @@
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -81,7 +80,6 @@ const line = ref(1);
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -143,7 +141,6 @@ const content = '这是一段较长的说明文字，用来对比默认省略符
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -201,7 +198,6 @@ const fileName = '2026年第三季度示例内容说明与结构展示文档.fin
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -286,7 +282,6 @@ const handleExpandChange = (expanded) => {
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -348,7 +343,6 @@ const content = '这是一段较长的说明文字，截断后悬停可以在弹
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>

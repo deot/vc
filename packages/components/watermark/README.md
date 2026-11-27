@@ -17,7 +17,6 @@
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -67,7 +66,6 @@ import { Watermark } from '@deot/vc';
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -118,7 +116,6 @@ import { Watermark } from '@deot/vc';
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -158,7 +155,6 @@ const src = `data:image/svg+xml,${encodeURIComponent(svg)}`;
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -214,7 +210,6 @@ import { Watermark } from '@deot/vc';
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -275,7 +270,6 @@ const handleSelect = (item) => {
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>

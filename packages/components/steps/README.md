@@ -15,7 +15,6 @@
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -83,7 +82,6 @@ Steps 的 `status` 只作用于当前步，默认为 `pending`；设为 `error` 
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -132,7 +130,6 @@ import { Steps, Step } from '@deot/vc';
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -191,7 +188,6 @@ const labelPosition = ref('right');
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -245,7 +241,6 @@ const handleChange = (value) => {
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -310,7 +305,6 @@ const renderDot = ({ index, status, dot }) => {
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -356,13 +350,7 @@ const current = ref(2);
 <!--
 <config lang="json5">
 {
-	mobile: true,
-	previewInset: [12, 0],
-	previewVariables: [{
-		name: '--rem',
-		label: 'rem',
-		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
-	}]
+	mobile: true
 }
 </config>
 -->

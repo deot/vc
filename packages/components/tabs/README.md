@@ -14,7 +14,6 @@
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -70,7 +69,6 @@ const handleClick = () => {
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -119,7 +117,6 @@ const size = ref('medium');
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -166,7 +163,6 @@ const value = ref('first');
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -230,7 +226,6 @@ const handleRemove = (removedValue, index) => {
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -280,7 +275,6 @@ const isStepper = ref(true);
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -334,7 +328,6 @@ const keyword = ref('');
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -397,7 +390,6 @@ const renderLabel = ({ index }) => h('strong', `函数标签 ${index + 1}`);
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -450,13 +442,7 @@ import { Affix, Scroller, Tabs, TabsPane } from '@deot/vc';
 <!--
 <config lang="json5">
 {
-	mobile: true,
-	previewInset: [12, 0],
-	previewVariables: [{
-		name: '--rem',
-		label: 'rem',
-		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
-	}]
+	mobile: true
 }
 </config>
 -->
@@ -565,13 +551,7 @@ const handleRemove = (removedValue, index) => {
 <!--
 <config lang="json5">
 {
-	mobile: true,
-	previewInset: [12, 0],
-	previewVariables: [{
-		name: '--rem',
-		label: 'rem',
-		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
-	}]
+	mobile: true
 }
 </config>
 -->

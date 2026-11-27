@@ -466,6 +466,35 @@
 				}
 			},
 			locales,
+			components: {
+				playground: {
+					// 桌面示例都可切到文件视图；移动端分栏下 views 不生效
+					views: ['runtime', 'files'],
+					mobileDefaults: {
+						// 750 稿：--vc-rem 跟随 --rem，auto 按预览列宽计算（480 宽封顶）
+						previewVariables: [{
+							name: '--rem',
+							label: '屏宽',
+							values: [
+								'auto',
+								{ label: '375', value: '0.5px' },
+								{ label: '414', value: '0.552px' },
+								{ label: '480', value: '0.64px' },
+								{ label: '750', value: '1px' }
+							]
+						}]
+					},
+					// local 移动端分栏：命令式弹层（Modal.open、MToast、Message 等走 Portal 的）挂到预览区内
+					overlay: {
+						setup({ element, modules }) {
+							const vc = modules['@deot/vc'];
+							if (!vc?.VcInstance) return;
+							vc.VcInstance.configure({ Portal: { ...vc.VcInstance.options.Portal, element } });
+							return () => vc.Portal?.clearAll?.();
+						}
+					}
+				}
+			},
 			routes: Object.fromEntries([
 				['/', {
 					content: {

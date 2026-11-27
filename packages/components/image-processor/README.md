@@ -17,7 +17,6 @@
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -92,7 +91,6 @@ const image = `data:image/svg+xml,${encodeURIComponent(svg)}`;
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -167,7 +165,6 @@ const handleEnhance = (imageData, options) => {
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>

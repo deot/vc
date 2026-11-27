@@ -16,7 +16,6 @@
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -53,7 +52,6 @@ const targetTime = Date.now() + 25 * 60 * 1000;
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -104,7 +102,6 @@ const handleSwitchInterval = () => {
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -140,7 +137,6 @@ const targetTime = Date.now() + 26 * 60 * 60 * 1000;
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -194,7 +190,6 @@ const handleRestart = () => {
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -254,7 +249,6 @@ const renderBlocks = ({ hour, minute, second }) => [hour, minute, second].map(
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>

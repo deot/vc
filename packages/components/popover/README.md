@@ -16,7 +16,6 @@
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16,
 	expandable: true
 }
@@ -104,7 +103,6 @@ const handleVisibleChange = (key, visible) => {
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16,
 	expandable: true
 }
@@ -210,7 +208,6 @@ const placements = [
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16,
 	expandable: true
 }
@@ -309,7 +306,6 @@ const handleAlways = playground.run(320, { visible: isAlways }, () => {
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16,
 	expandable: true
 }
@@ -378,7 +374,6 @@ const container = ref();
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16,
 	expandable: true
 }
@@ -481,7 +476,6 @@ const handleSelect = (option) => {
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16,
 	expandable: true
 }
@@ -542,7 +536,6 @@ const data = [
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16,
 	expandable: true
 }
@@ -650,7 +643,6 @@ const handleReady = () => {
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16,
 	expandable: true
 }
@@ -757,7 +749,6 @@ const isWide = ref(true);
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16,
 	expandable: true
 }
@@ -813,7 +804,6 @@ const handleVisibleChange = (key, visible) => {
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16,
 	expandable: true
 }
@@ -868,13 +858,7 @@ onUnmounted(() => leaf?.destroy());
 <config lang="json5">
 {
 	mobile: true,
-	local: false,
-	previewInset: [12, 0],
-	previewVariables: [{
-		name: '--rem',
-		label: 'rem',
-		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
-	}]
+	local: false
 }
 </config>
 -->

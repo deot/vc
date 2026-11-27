@@ -25,7 +25,6 @@
 <config lang="json5">
 {
 	entry: 'App.vue',
-	views: ['runtime', 'files'],
 	previewInset: 16,
 	expandable: true
 }
@@ -223,7 +222,6 @@ onMounted(() => (isActive.value = true));
 <config lang="json5">
 {
 	entry: 'App.vue',
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -369,7 +367,6 @@ onMounted(() => emit('ready'));
 <config lang="json5">
 {
 	entry: 'App.vue',
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -538,7 +535,6 @@ const handleConfirm = () => emit('portal-fulfilled', props.id);
 <config lang="json5">
 {
 	entry: 'App.vue',
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -687,7 +683,6 @@ Portal 创建独立 app，不自动继承调用页面的 `provide`、插件或�
 <config lang="json5">
 {
 	entry: 'App.vue',
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -874,7 +869,6 @@ const handleClose = () => emit('portal-destroyed');
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>

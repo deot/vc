@@ -15,7 +15,6 @@
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -52,7 +51,6 @@ const options = [
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -99,7 +97,6 @@ const data = { code: 'NO-000128', name: '条目 128', type: '类型 A' };
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -152,7 +149,6 @@ const options = [
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -240,7 +236,6 @@ const options = [
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -295,7 +290,6 @@ Descriptions 的 `columns`、`span` 和单项的 `span` 都可以写成 `{ xs, s
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -328,7 +322,6 @@ const options = [
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -385,7 +378,6 @@ const groups = [
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -434,7 +426,6 @@ image 的数据可以是逗号分隔的字符串、地址数组，或 `{ source 
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -501,13 +492,7 @@ VcInstance.configure({
 <config lang="json5">
 {
 	mobile: true,
-	local: false,
-	previewInset: [12, 0],
-	previewVariables: [{
-		name: '--rem',
-		label: 'rem',
-		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
-	}]
+	local: false
 }
 </config>
 -->

@@ -16,7 +16,6 @@
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16,
 	expandable: true
 }
@@ -89,7 +88,6 @@ const handleCancel = () => {
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16,
 	expandable: true
 }
@@ -165,7 +163,6 @@ const types = ['warning', 'info', 'success', 'error'];
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16,
 	expandable: true
 }
@@ -265,7 +262,6 @@ const placements = [
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16,
 	expandable: true
 }
@@ -333,7 +329,6 @@ const handleClose = () => {
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16,
 	expandable: true
 }

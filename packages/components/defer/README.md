@@ -33,7 +33,6 @@ Defer 最终会渲染全部数据，不是虚拟列表。**每个任务只提交
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>

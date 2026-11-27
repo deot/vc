@@ -15,7 +15,6 @@
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -72,7 +71,6 @@ const handleClick = ({ row }) => {
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -125,7 +123,6 @@ const tableData = ref([
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -175,7 +172,6 @@ const tableData = ref([
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -227,7 +223,6 @@ const tableData = ref([
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -302,7 +297,6 @@ const headerCellStyle = ({ columnIndex }) => (columnIndex === 1 ? { color: 'var(
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -359,7 +353,6 @@ const tableData = ref(Array.from({ length: 7 }, (_, index) => ({
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -424,7 +417,6 @@ const tableData = ref(Array.from({ length: 4 }, (_, index) => ({
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -530,7 +522,6 @@ const handleClear = () => {
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -635,7 +626,6 @@ Table 只维护排序交互，数据排序由调用方处理。下面通过 `v-m
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -705,7 +695,6 @@ const handleSortChange = ({ prop, order }) => {
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -782,7 +771,6 @@ const handleToggle = (column) => {
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -843,7 +831,6 @@ const handleFilter = (value) => {
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -900,7 +887,6 @@ const handleFilter = (value) => {
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -989,7 +975,6 @@ const handleExpandChange = ({ maxLevel }) => {
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -1091,7 +1076,6 @@ const handleDelete = (row) => {
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -1162,7 +1146,6 @@ const handleExpandChange = ({ expandedRows }) => {
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -1296,7 +1279,6 @@ const handleDelete = (row) => {
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -1387,7 +1369,6 @@ const handleDragend = ({ dropped }) => {
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -1466,7 +1447,6 @@ const handleDrop = ({ rows, from, to }) => {
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -1549,7 +1529,6 @@ const handleDragend = ({ dropped }) => {
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -1673,7 +1652,6 @@ Window / Scroller
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	local: false,
 	viewport: [800, 360],
 	previewInset: 16
@@ -1800,7 +1778,6 @@ onBeforeUnmount(() => {
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -1856,7 +1833,6 @@ const getSummary = ({ data }) => [
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -1896,7 +1872,6 @@ const getSpan = ({ rowIndex, columnIndex }) => {
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -1959,7 +1934,6 @@ const handleResize = ({ column, width, oldWidth }) => {
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -2029,13 +2003,7 @@ const handleToggle = () => {
 <!--
 <config lang="json5">
 {
-	mobile: true,
-	previewInset: [12, 0],
-	previewVariables: [{
-		name: '--rem',
-		label: 'rem',
-		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
-	}]
+	mobile: true
 }
 </config>
 -->

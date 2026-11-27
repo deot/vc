@@ -20,7 +20,6 @@
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -87,7 +86,6 @@ const handleVisibleChange = (visible) => {
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -153,7 +151,6 @@ const handleSearch = ({ keyword, prefix }) => {
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -212,7 +209,6 @@ const handleLoad = (keyword, instance, { prefix }) => new Promise((resolve) => {
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -256,7 +252,6 @@ const data = Array.from({ length: 10000 }, (_, index) => `成员${index + 1}`);
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -366,7 +361,6 @@ const renderLabel = ({ row }) => `${row.label} · ${row.description}`;
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -433,13 +427,7 @@ const handleEnter = () => {
 <config lang="json5">
 {
 	mobile: true,
-	local: false,
-	previewInset: [12, 0],
-	previewVariables: [{
-		name: '--rem',
-		label: 'rem',
-		values: ['auto', '0.5px', '0.552px', '0.64px', '1px']
-	}]
+	local: false
 }
 </config>
 -->

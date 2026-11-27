@@ -18,7 +18,6 @@
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -71,7 +70,6 @@ const url = 'https://dummyimage.com/160x100/555/fff.png?text=Image';
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -122,7 +120,6 @@ const urls = [1, 2, 3, 4].map(index => `https://dummyimage.com/320x240/555/fff.p
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
@@ -192,7 +189,6 @@ const handleFormat = ({ value, type }) => {
 <!--
 <config lang="json5">
 {
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>

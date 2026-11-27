@@ -53,7 +53,6 @@ app.use(vc);
 <config lang="json5">
 {
 	entry: 'App.vue',
-	views: ['runtime', 'files'],
 	previewInset: 16
 }
 </config>
