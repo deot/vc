@@ -2,6 +2,7 @@ import { toRem } from '@deot/vc-shared';
 import { Portal } from '../portal';
 import type { Props } from './notice-view-props';
 import type { PortalOptions } from '../portal/default-options';
+import { resolvePortalElement } from '../portal/utils';
 
 type Options = Partial<Props & {
 	insertion: PortalOptions['insertion'];
@@ -47,15 +48,17 @@ export const createNotice = (View: any, options: { mobile?: boolean } = {}) => {
 			}
 		});
 
-		if (!number && document.body.contains(el)) {
-			document.body.removeChild(el);
+		if (!number && el.parentNode) {
+			el.remove();
 			setTop();
 		}
 	};
 
 	const create = (mode?: Props['mode'], defaults: Options = {}) => (options$: Options) => {
-		if (!document.body.contains(el)) {
-			document.body.appendChild(el);
+		// 容器挂在弹层挂载点（Portal.element，缺省 body）下；挂载点变化后移过去
+		const root = resolvePortalElement();
+		if (el.parentNode !== root) {
+			root.appendChild(el);
 		}
 
 		// 全局通知都在同一容器内排列：top 设置容器位置，以最新一次调用为准（不传时为样式中的默认值）

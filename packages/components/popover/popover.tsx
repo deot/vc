@@ -6,6 +6,7 @@ import { pick } from 'lodash-es';
 import { props as popoverProps, viewKeys } from './popover-props';
 import { PopoverView } from './popover-view';
 import { isInArea, isEditable, keepFocus } from './utils';
+import { getPortalElement } from '../portal/utils';
 
 const COMPONENT_NAME = 'vc-popover';
 
@@ -163,7 +164,7 @@ export const Popover = defineComponent({
 
 		// 只传弹层的属性：trigger、tag 等属于触发器；插槽只传浮层用的，触发器的 default 不传
 		const renderPopup = () => isRendered.value && (
-			<Teleport to={props.to || 'body'} disabled={isInline.value}>
+			<Teleport to={props.to || getPortalElement()} disabled={isInline.value}>
 				<PopoverView
 					// 切换触发方式时重新挂载：弹层按 hover 绑定、解绑的监听要对得上
 					key={`${renderKey.value}-${isHover.value}`}

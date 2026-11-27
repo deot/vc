@@ -114,7 +114,6 @@ export const Text = defineComponent({
 				isClamp.value && (isClamped.value = el.scrollHeight > el.clientHeight);
 				if (!truncated.value) return;
 				const leaf = Popover.open({
-					element: document.body,
 					name: 'vc-text-popover', // 确保不重复创建
 					triggerElement: el,
 					hover: true,

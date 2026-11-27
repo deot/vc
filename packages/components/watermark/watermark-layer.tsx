@@ -6,6 +6,7 @@ import { loadImage } from '../image-processor/utils';
 import { props as watermarkProps } from './watermark-props';
 import { drawImage, drawText, getFont, toPair } from './utils';
 import type { WatermarkFont, WatermarkTile } from './utils';
+import { getPortalElement } from '../portal/utils';
 
 const COMPONENT_NAME = 'vc-watermark-layer';
 
@@ -18,8 +19,8 @@ export const WatermarkLayer = defineComponent({
 	props: watermarkProps,
 	setup(props, { attrs }) {
 		const layer = shallowRef<HTMLElement>();
-		// 挂载目标：满屏时默认为 body，避开会让固定定位失效的祖先（transform、filter 等）
-		const to = computed(() => props.to || (props.fullscreen ? 'body' : undefined));
+		// 挂载目标：满屏时默认为弹层挂载点（Portal.element，缺省 body），避开会让固定定位失效的祖先（transform、filter 等）
+		const to = computed(() => props.to || (props.fullscreen ? getPortalElement() : undefined));
 		// to 解析出的元素
 		const target = shallowRef<HTMLElement | null>(null);
 		// 水印层被移除、篡改或更换容器后递增，使其重建

@@ -269,7 +269,6 @@ export const TableHeader = defineComponent({
 			}
 			const { tooltip } = column;
 			const leaf: PortalLeaf = Popover.open({
-				element: document.body,
 				name: 'vc-table-header-popover', // 确保不重复创建
 				triggerElement: trigger,
 				hover: !mobile,

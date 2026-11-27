@@ -36,7 +36,6 @@ export const useHoverPopover = (create: typeof Popover.open = Popover.open) => {
 		close();
 		trigger = triggerEl;
 		const leaf: PortalLeaf = create({
-			element: document.body,
 			triggerElement: triggerEl,
 			hover: true,
 			alone: true,

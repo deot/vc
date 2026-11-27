@@ -1,5 +1,6 @@
 import { defineComponent, Fragment, h, Teleport } from 'vue';
 import { props as portalProps } from './portal-view-props';
+import { getPortalElement } from './utils';
 
 const COMPONENT_NAME = 'vc-portal-view';
 
@@ -18,7 +19,7 @@ export const PortalView = defineComponent({
 				Fragment,
 				[
 					h(props.tag, { class: 'vc-portal-view' }, slots?.default?.()),
-					h(Teleport as any, { to: 'body' }, slots?.content?.())
+					h(Teleport as any, { to: getPortalElement() }, slots?.content?.())
 				]
 			);
 		};

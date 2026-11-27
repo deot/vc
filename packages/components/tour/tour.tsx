@@ -19,6 +19,7 @@ import { props as tourProps, emits as tourEmits } from './tour-props';
 import { TourPortal } from './tour-view';
 import type { useTour } from './use-tour';
 import type { TourProvide, TourStepDeclaration } from './types';
+import { getPortalElement } from '../portal/utils';
 
 const COMPONENT_NAME = 'vc-tour';
 
@@ -76,7 +77,7 @@ export const Tour = defineComponent({
 			if (tourInstance) return;
 			tourInstance = TourPortal.popup({
 				...getOptions(),
-				element: props.to || 'body',
+				element: props.to || getPortalElement(),
 				slots,
 				parent: instance.parent!,
 				onDestroyed: () => {

@@ -6,6 +6,7 @@ import { props as dropdownProps } from './dropdown-props';
 import { useDropdown } from '../use-dropdown';
 import { MPopup } from '../../popup/index.m';
 import { ScrollerManager } from '../../scroller/core/manager';
+import { getPortalElement } from '../../portal/utils';
 
 const COMPONENT_NAME = 'vcm-dropdown';
 
@@ -211,7 +212,7 @@ export const MDropdown = defineComponent({
 					{renderTrigger()}
 					{
 						isRendered.value && (
-							<Teleport to={props.to || 'body'} disabled={disabled}>
+							<Teleport to={props.to || getPortalElement()} disabled={disabled}>
 								{renderPortal()}
 							</Teleport>
 						)

@@ -1,5 +1,6 @@
 import { composedPath } from '@deot/helper-dom';
 import { getPadding } from '../scroller/utils';
+import { resolvePortalElement } from '../portal/utils';
 
 /**
  * 弹层节点 → 触发节点
@@ -77,7 +78,8 @@ export const measureText = (value: string) => {
 	content.textContent = value;
 	container.appendChild(content);
 	wrapper.appendChild(container);
-	document.body.appendChild(wrapper);
+	// 与浮层放在同一挂载点下，继承相同的 CSS 变量（如移动端的 --vc-rem）
+	resolvePortalElement().appendChild(wrapper);
 
 	const [, right, , left] = getPadding(content);
 	const style = getComputedStyle(content);

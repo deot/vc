@@ -420,7 +420,8 @@ describe('Text 弹层 (mouseenter)', () => {
 		expect(arg.content).toBe('abcdefg');
 		expect(arg.hover).toBe(true);
 		expect(arg.name).toBe('vc-text-popover');
-		expect(arg.element).toBe(document.body);
+		// 不传 element：跟随 Portal 的默认挂载点（VcInstance.options.Portal.element，缺省 body）
+		expect(arg.element).toBeUndefined();
 		expect(arg.triggerElement).toBe(wrapper.element);
 
 		wrapper.unmount();

@@ -5,6 +5,7 @@ import { getScale } from '../utils';
 import { ScrollerManager } from './manager';
 import { getAxisKeys, resolveExternalCarrier } from './carrier';
 import type { ExternalCarrier } from './carrier';
+import { getPortalElement } from '../../portal/utils';
 
 const AXIS_KEYS = getAxisKeys(true);
 const SHARED = { shared: true };
@@ -143,7 +144,7 @@ export const useCarrierArea = (options: UseCarrierAreaOptions) => {
 		if (!options.portal()) return node;
 		return [
 			h('span', { ref: placeholder, class: options.placeholderClass }),
-			h(Teleport, { to: 'body' }, [node])
+			h(Teleport, { to: getPortalElement() }, [node])
 		];
 	};
 
