@@ -1,5 +1,17 @@
 # @deot/vc-hooks ChangeLog
 
+## v1.2.10
+
+_2026-11-27_
+
+### Features
+
+- feat: use-rem, measure at a given element ([0fee18d](https://github.com/deot/vc/commit/0fee18d391d3e20d7a1ba3bb780fec5474c280a4))
+
+### Updates
+
+- chore(shared): force-publish `1.2.8` -> `1.2.10`
+
 ## v1.2.8
 
 _2026-11-26_

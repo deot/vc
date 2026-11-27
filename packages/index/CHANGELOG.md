@@ -1,5 +1,24 @@
 # @deot/vc ChangeLog
 
+## v1.2.10
+
+_2026-11-27_
+
+### Bugfixes
+
+- fix(components): editor, dock the mobile toolbar at Portal.element ([62180ff](https://github.com/deot/vc/commit/62180ffcd7f272a65a0655be7b586fbfb8856a7a))
+- fix(components): upload-picker, date-picker, upload, input-number, catch rejections that mean cancel ([b8e48bf](https://github.com/deot/vc/commit/b8e48bfde8b6513b2cf0f0c936da976978992dc3))
+- fix(components): measure --vc-rem at the overlay mount point ([2b1e6ee](https://github.com/deot/vc/commit/2b1e6ee6ca51a4d3316f802e8110f1c057394c3b))
+
+### Features
+
+- feat(components): portal, mount every overlay at Portal.element ([a4fa9e3](https://github.com/deot/vc/commit/a4fa9e311ca1c8a29d7b59f96cd9bb659d80af0e))
+- feat(hooks): use-rem, measure at a given element ([0fee18d](https://github.com/deot/vc/commit/0fee18d391d3e20d7a1ba3bb780fec5474c280a4))
+
+### Updates
+
+- chore(shared): force-publish `1.2.8` -> `1.2.10`
+
 ## v1.2.9
 
 _2026-11-26_
