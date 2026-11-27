@@ -8,6 +8,7 @@ import type { ExternalCarrier } from '../../scroller/core/carrier';
 import { RecycleList } from '../../recycle-list/index';
 import { isScrollOf, useScrollIdle } from '../../scroller/core/scroll-idle';
 import { resolveListCarrier, scrollIntoScroller } from './scroll';
+import { resolvePortalElement } from '../../portal/utils';
 
 const COMPONENT_NAME = 'vc-select-list';
 // 虚拟化时的初始预估行高（桌面端 px、移动端 750 稿）；行渲染出来后改用实际高度，见 handleRowResize
@@ -66,7 +67,7 @@ export const SelectList = defineComponent({
 		// 渲染出来的行的实际高度（px），代替初始的预估值
 		const measured = ref<number>();
 		// 750 稿上 1 个单位的 px
-		const rem = props.mobile ? useRem() : undefined;
+		const rem = props.mobile ? useRem({ element: resolvePortalElement() }) : undefined;
 		const getEstimateSize = () => {
 			if (!measured.value) return ESTIMATE_SIZE[+props.mobile];
 			return rem?.value ? measured.value / rem.value : measured.value;

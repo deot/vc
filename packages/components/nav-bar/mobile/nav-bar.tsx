@@ -10,6 +10,7 @@ import { MIcon } from '../../icon/index.m';
 import { useLocale } from '../../locale';
 import { getScroller, getScrollingElement, isWindow } from '../../scroller/utils';
 import { VcInstance } from '../../vc';
+import { resolvePortalElement } from '../../portal/utils';
 
 const COMPONENT_NAME = 'vcm-nav-bar';
 const PROGRESS_VAR = '--vc-nav-bar-progress';
@@ -21,7 +22,7 @@ export const MNavBar = defineComponent({
 	setup(props, { slots, emit }) {
 		const instance = getCurrentInstance()!;
 		const { t } = useLocale();
-		const rem = useRem();
+		const rem = useRem({ element: resolvePortalElement() });
 
 		const current = shallowRef<HTMLDivElement>();
 

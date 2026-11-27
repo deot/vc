@@ -10,6 +10,7 @@ import { useLocale } from '../locale';
 import { useCarrierArea, getCarrierArea } from '../scroller/core/carrier-area';
 import type { ExternalCarrier } from '../scroller/core/carrier';
 import type { Props } from './back-top-props';
+import { resolvePortalElement } from '../portal/utils';
 
 // 用户自己开始滚动时停止回到顶部的动画
 const INTERRUPTS = ['wheel', 'touchstart', 'keydown', 'mousedown'] as const;
@@ -39,7 +40,7 @@ export const useBackTop = (
 	const { slots, emit, expose, attrs } = context;
 	const name = options.mobile ? 'vc-back-top vcm-back-top' : 'vc-back-top';
 	const toLength = options.mobile ? toRem : toPx;
-	const rem = options.mobile ? useRem() : null;
+	const rem = options.mobile ? useRem({ element: resolvePortalElement() }) : null;
 	const { t } = useLocale();
 
 	const button = shallowRef<HTMLButtonElement>();

@@ -34,6 +34,7 @@ import { useWheelForward } from './use-wheel-forward';
 import { useBlockDrag } from './use-block-drag';
 import { useColumnDrag } from './use-column-drag';
 import type { Nullable } from '@deot/helper-shared';
+import { resolvePortalElement } from '../../portal/utils';
 
 const COMPONENT_NAME = 'vc-table';
 
@@ -80,7 +81,7 @@ export const useTable = (
 	const { layout } = store;
 
 	// 移动端的数字长度（列宽、高度、行高）是 750 稿：按 unit（1 个单位的 px）换算成 px 后进入布局，之后的计算两端相同
-	const rem = mobile ? useRem() : undefined;
+	const rem = mobile ? useRem({ element: resolvePortalElement() }) : undefined;
 	if (rem) {
 		store.states.unit = rem.value;
 		watch(rem, (v) => {

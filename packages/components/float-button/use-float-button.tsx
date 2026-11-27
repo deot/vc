@@ -7,6 +7,7 @@ import { useGesture, useRem } from '@deot/vc-hooks';
 import { Icon } from '../icon';
 import { useCarrierArea, getCarrierArea } from '../scroller/core/carrier-area';
 import type { Props, FloatButtonAxis, FloatButtonOffset } from './float-button-props';
+import { resolvePortalElement } from '../portal/utils';
 
 const SHARED = { shared: true };
 // 吸边、方向键移动的过渡时长（ms），与样式中的 transition 一致
@@ -52,7 +53,7 @@ export const useFloatButton = (
 ) => {
 	const { slots, emit, expose, attrs } = context;
 	const name = options.mobile ? 'vc-float-button vcm-float-button' : 'vc-float-button';
-	const rem = options.mobile ? useRem() : null;
+	const rem = options.mobile ? useRem({ element: resolvePortalElement() }) : null;
 
 	const button = shallowRef<HTMLButtonElement>();
 	// 首次定位前、边界区域移出视口、KeepAlive 失活时隐藏

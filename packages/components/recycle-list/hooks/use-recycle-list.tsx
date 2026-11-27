@@ -33,6 +33,7 @@ import { Store } from '../store';
 import type { RecycleListItemNodeRaw, ScrollLeaf } from '../store';
 import { Viewport } from '../viewport';
 import { Measuring } from '../../measuring';
+import { resolvePortalElement } from '../../portal/utils';
 
 const isTouch = typeof document !== 'undefined' && 'ontouchend' in document;
 // scrollToIndex 定位后重排时重新定位目标项的时长（ms）：覆盖随后几帧内的渲染测量与预估值调整
@@ -72,7 +73,7 @@ export const useRecycleList = (
 	const leaf = instance as unknown as ScrollLeaf;
 	const store = props.store || new Store(props);
 	// 移动端的 gap / estimateSize 是 750 稿长度：store 按 unit（1 个单位的 px）换算
-	const rem = mobile ? useRem() : undefined;
+	const rem = mobile ? useRem({ element: resolvePortalElement() }) : undefined;
 	rem && (store.states.unit = rem.value);
 	const K = useDirectionKeys();
 	const isMounted = ref(false);

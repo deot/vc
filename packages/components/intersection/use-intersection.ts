@@ -5,6 +5,7 @@ import { getScroller } from '../scroller/utils';
 import { IntersectionManager } from './core/manager';
 import type { IntersectionChange } from './core/manager';
 import type { Props, IntersectionOffset } from './intersection-props';
+import { resolvePortalElement } from '../portal/utils';
 
 export type IntersectionChangeEvent = Omit<IntersectionChange, 'entry'> & {
 	// 不支持 IntersectionObserver 时为 null
@@ -44,7 +45,7 @@ export const useIntersection = (
 ) => {
 	const { slots, emit, expose } = context;
 	const name = options.mobile ? 'vc-intersection vcm-intersection' : 'vc-intersection';
-	const rem = options.mobile ? useRem() : null;
+	const rem = options.mobile ? useRem({ element: resolvePortalElement() }) : null;
 
 	const current = shallowRef<HTMLElement>();
 	const visible = ref(false);
